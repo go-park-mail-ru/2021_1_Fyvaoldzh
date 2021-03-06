@@ -1,25 +1,10 @@
 package main
 
 import (
-	"net/http"
 
-	"github.com/labstack/echo"
 )
 
-
-func ListenAndServe(e *echo.Echo) {
-	e.Logger.Fatal(e.Start(":1323"))
-}
-
 func main() {
-	// Echo instance
-	e := echo.New()
-
-	// Route => handler
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!\n")
-	})
-
-	// Start server
-	ListenAndServe(e)
+	e := server.NewServer()
+	server.ListenAndServe(e)
 }

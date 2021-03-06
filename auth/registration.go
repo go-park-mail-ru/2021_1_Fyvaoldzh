@@ -5,11 +5,14 @@ import (
 	"log"
 	"net/http"
 
+	model "github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 
 )
 
+
 func Register(c echo.Context) error {
-	u := new(User)
+
+	u := new(model.User)
 	err := c.Bind(u)
 	if err != nil {
 		log.Println(err)
