@@ -1,30 +1,16 @@
 package auth
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"sync"
-
-	"github.com/labstack/echo"
 )
 
-type Handlers struct {
+type LoginHandler struct {
 	Mu     *sync.Mutex
 }
 
-func (h *Handlers) All(c echo.Context) {
-	encoder := json.NewEncoder(c.Response().Writer)
-	h.Mu.Lock()
-	err := encoder.Encode(h.Events)
-	h.Mu.Unlock()
-	if err != nil {
-		log.Println(err)
-		c.Response().Write([]byte("{}"))
-		return
-	}
-}
-
-type LoginHandler struct{
-
+var userBase = []models.User {
+	{"moroz", "moroz@mail.ru"},
+	{"danya", "danya@mail.ru"},
+	{"mail", "mail@mail.ru"},
 }

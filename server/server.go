@@ -4,23 +4,21 @@ import (
 	"net/http"
 	"sync"
 
-	model "github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/auth"
 
 	"github.com/labstack/echo"
 )
 
+
 func NewServer() *echo.Echo {
 	e := echo.New()
-	regHandler :=
+	regHandler := auth.RegisterHandler{Mu: &sync.Mutex{}}
 
 
-	e.GET("/", func(c echo.Context) error {
-		handlers.All(c)
+	e.POST("/register", func(c echo.Context) error {
+		regHandler.CreateUser()
 		return c.JSON(http.StatusOK, "ok")
 	})
-
-	//e.POST("/users", UserJson)
-
 
 	return e
 }
