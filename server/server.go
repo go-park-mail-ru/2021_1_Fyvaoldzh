@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"myapp/events"
 	mytype "myapp/events"
 	"net/http"
@@ -10,7 +9,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-type User struct {
+//Закомменчено, так как это часть пока что висит на Насте
+/*type User struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
@@ -22,7 +22,7 @@ func UserJson(c echo.Context) error {
 		log.Println(err)
 	}
 	return c.JSON(http.StatusCreated, u.Name+u.Email)
-}
+}*/
 
 func NewServer() *echo.Echo {
 	e := echo.New()
@@ -30,11 +30,17 @@ func NewServer() *echo.Echo {
 		Events: make([]mytype.Event, 0),
 		Mu:     &sync.Mutex{},
 	}
-	e.GET("/", handlers.All(c echo.Context))
+	e.GET("/", func(c echo.Context) error {
+		handlers.All(c)
+		return c.JSON(http.StatusOK, "ok")
+	})
 	e.GET("/events/:id", events.GetEvent)
 	e.GET("/show", events.Show)
-	e.POST("/users", UserJson)
-	e.POST("/create", events.CreateEvent)
+	//e.POST("/users", UserJson)
+	e.POST("/create", func(c echo.Context) error {
+		handlers.Create(c)
+		return c.JSON(http.StatusOK, "ok")
+	})
 
 	return e
 }
@@ -42,3 +48,5 @@ func NewServer() *echo.Echo {
 func ListenAndServe(e *echo.Echo) {
 	e.Logger.Fatal(e.Start(":1323"))
 }
+
+//curl -v -X POST -H "Content-Type: application/json" -d '{"Title": "dada", "Description": "yaya"}' http://localhost:1323/create

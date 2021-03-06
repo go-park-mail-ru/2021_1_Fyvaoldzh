@@ -2,9 +2,9 @@ package events
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/labstack/echo"
@@ -26,7 +26,7 @@ type Handlers struct {
 	Mu     *sync.Mutex
 }
 
-func All(h *Handlers, c echo.Context) error {
+func (h *Handlers) All(c echo.Context) {
 	encoder := json.NewEncoder(c.Response().Writer)
 	h.Mu.Lock()
 	err := encoder.Encode(h.Events)
@@ -34,9 +34,37 @@ func All(h *Handlers, c echo.Context) error {
 	if err != nil {
 		log.Println(err)
 		c.Response().Write([]byte("{}"))
-		return c.JSON(http.StatusOK, encoder)
+		return
 	}
-	return c.JSON(http.StatusOK, encoder)
+}
+
+func (h *Handlers) Create(c echo.Context) {
+	defer c.Request().Body.Close()
+
+	decoder := json.NewDecoder(c.Request().Body)
+
+	newEventInput := new(EventInput)
+	err := decoder.Decode(newEventInput)
+	if err != nil {
+		log.Println(err)
+		c.Response().Write([]byte("{}"))
+		return
+	}
+
+	fmt.Println(newEventInput)
+	h.Mu.Lock()
+
+	var id uint64 = 0
+	if len(h.Events) > 0 {
+		id = h.Events[len(h.Events)-1].ID + 1
+	}
+
+	h.Events = append(h.Events, Event{
+		ID:          id,
+		Title:       newEventInput.Title,
+		Description: newEventInput.Description,
+	})
+	h.Mu.Unlock()
 }
 
 func GetEvent(c echo.Context) error {
@@ -48,25 +76,4 @@ func Show(c echo.Context) error {
 	city := c.QueryParam("city")
 	typeEvent := c.QueryParam("typeEvent")
 	return c.JSON(http.StatusOK, "type "+typeEvent+" in city "+city)
-}
-
-func CreateEvent(c echo.Context) error {
-	name := c.FormValue("name")
-	img, err := c.FormFile("image")
-	if err != nil {
-		log.Println(err)
-	}
-	src, err := img.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	dst, err := os.Create(img.Filename)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	return c.HTML(http.StatusOK, "<b>Thank you! "+name+"</b>")
 }
