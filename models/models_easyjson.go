@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2b7633eDecode20211FyvaoldzhModels(in *jlexer.Lexer, out *User) {
+func easyjsonD2b7633eDecodeGithubComGoParkMailRu20211FyvaoldzhModels(in *jlexer.Lexer, out *User) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -40,6 +40,8 @@ func easyjsonD2b7633eDecode20211FyvaoldzhModels(in *jlexer.Lexer, out *User) {
 			out.Name = string(in.String())
 		case "email":
 			out.Email = string(in.String())
+		case "password":
+			out.Password = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -50,7 +52,7 @@ func easyjsonD2b7633eDecode20211FyvaoldzhModels(in *jlexer.Lexer, out *User) {
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncode20211FyvaoldzhModels(out *jwriter.Writer, in User) {
+func easyjsonD2b7633eEncodeGithubComGoParkMailRu20211FyvaoldzhModels(out *jwriter.Writer, in User) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -64,29 +66,34 @@ func easyjsonD2b7633eEncode20211FyvaoldzhModels(out *jwriter.Writer, in User) {
 		out.RawString(prefix)
 		out.String(string(in.Email))
 	}
+	{
+		const prefix string = ",\"password\":"
+		out.RawString(prefix)
+		out.String(string(in.Password))
+	}
 	out.RawByte('}')
 }
 
 // MarshalJSON supports json.Marshaler interface
 func (v User) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncode20211FyvaoldzhModels(&w, v)
+	easyjsonD2b7633eEncodeGithubComGoParkMailRu20211FyvaoldzhModels(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v User) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncode20211FyvaoldzhModels(w, v)
+	easyjsonD2b7633eEncodeGithubComGoParkMailRu20211FyvaoldzhModels(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *User) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecode20211FyvaoldzhModels(&r, v)
+	easyjsonD2b7633eDecodeGithubComGoParkMailRu20211FyvaoldzhModels(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *User) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecode20211FyvaoldzhModels(l, v)
+	easyjsonD2b7633eDecodeGithubComGoParkMailRu20211FyvaoldzhModels(l, v)
 }

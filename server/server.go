@@ -1,6 +1,8 @@
 package server
 
 import (
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/profile"
+	"log"
 	"net/http"
 	"sync"
 
@@ -12,12 +14,40 @@ import (
 
 func NewServer() *echo.Echo {
 	e := echo.New()
+
 	regHandler := auth.RegisterHandler{Mu: &sync.Mutex{}}
+	loginHandler := auth.LoginHandler{Mu: &sync.Mutex{}}
+	profileHandler := profile.UserHandler{Mu: &sync.Mutex{}}
 
 
 	e.POST("/register", func(c echo.Context) error {
-		regHandler.CreateUser()
+		err := regHandler.CreateUser(c)
+		if err != nil {
+			// do some code
+			// return err
+		}
+		log.Println(auth.UserBase)
 		return c.JSON(http.StatusOK, "ok")
+	})
+
+	e.GET("/login", func(c echo.Context) error {
+		err := loginHandler.Login(c)
+		if err != nil {
+			// do some code
+			// return err
+		}
+
+		return c.JSON(http.StatusOK, "ok")
+	})
+
+	e.GET("/profile", func(c echo.Context) error {
+		json, err := profileHandler.GetProfile(c)
+		if err != nil {
+			// do some code
+			// return err
+		}
+
+		return c.JSON(http.StatusOK, json)
 	})
 
 	return e

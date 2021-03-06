@@ -19,12 +19,14 @@ func (h *RegisterHandler) CreateUser(c echo.Context) error {
 	defer c.Request().Body.Close()
 	newUser := &models.User{}
 
+	log.Println(c.Request().Body)
 	err := easyjson.UnmarshalFromReader(c.Request().Body, newUser)
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	userBase = append(userBase, *newUser)
-
+	h.Mu.Lock()
+	UserBase = append(UserBase, *newUser)
+	h.Mu.Unlock()
 	return nil
 }
