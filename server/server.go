@@ -19,6 +19,7 @@ func NewServer() *echo.Echo {
 	e.GET("/show", handlers.Show)
 	e.POST("/create", handlers.Create)
 	e.DELETE("/event/:id", handlers.Delete)
+	//Какие еще методы необходимо реализовать на данном этапе?
 
 	return e
 }

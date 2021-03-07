@@ -48,6 +48,7 @@ func (h *Handlers) All(c echo.Context) error {
 	return nil
 }
 
+//Есть ли вариант не пользоваться EventInput, а просто анмаршалить не все поля в Event, потом руками дописывать id?
 func (h *Handlers) Create(c echo.Context) error {
 	defer c.Request().Body.Close()
 
