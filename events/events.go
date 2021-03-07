@@ -1,79 +1,111 @@
 package events
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
+	"myapp/models"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/labstack/echo"
+	"github.com/mailru/easyjson"
 )
 
-type EventInput struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-}
-
-type Event struct {
-	ID          uint64 `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-}
-
 type Handlers struct {
-	Events []Event
+	Events models.Events
 	Mu     *sync.Mutex
+	IdMax  uint64
 }
 
-func (h *Handlers) All(c echo.Context) {
-	encoder := json.NewEncoder(c.Response().Writer)
-	h.Mu.Lock()
-	err := encoder.Encode(h.Events)
-	h.Mu.Unlock()
+//Как тут будет выгоднее? Такой способ или же честно найти, копировать последний элемент на место удаляемого, а затем усечь слайс?
+func (h *Handlers) Delete(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		log.Println(err)
-		c.Response().Write([]byte("{}"))
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
+	newEvents := h.Events[:0]
+
+	for _, event := range h.Events {
+		if event.ID != uint64(id) {
+			newEvents = append(newEvents, event)
+		}
+	}
+
+	h.Events = newEvents
+	//Нужно ли здесь почистить старый слайс? Я че-то уже под вечер не соображаю
+
+	return nil
 }
 
-func (h *Handlers) Create(c echo.Context) {
+func (h *Handlers) All(c echo.Context) error {
+	if _, err := easyjson.MarshalToWriter(h.Events, c.Response().Writer); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}
+
+func (h *Handlers) Create(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	decoder := json.NewDecoder(c.Request().Body)
+	newEventInput := &models.EventInput{}
 
-	newEventInput := new(EventInput)
-	err := decoder.Decode(newEventInput)
-	if err != nil {
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, newEventInput); err != nil {
 		log.Println(err)
-		c.Response().Write([]byte("{}"))
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	fmt.Println(newEventInput)
 	h.Mu.Lock()
 
-	var id uint64 = 0
-	if len(h.Events) > 0 {
-		id = h.Events[len(h.Events)-1].ID + 1
-	}
+	//id := h.IdMax++   Почему так не работает?
+	h.IdMax++
+	id := h.IdMax
 
-	h.Events = append(h.Events, Event{
+	h.Events = append(h.Events, models.Event{
 		ID:          id,
 		Title:       newEventInput.Title,
 		Description: newEventInput.Description,
+		TypeEvent:   newEventInput.TypeEvent,
 	})
 	h.Mu.Unlock()
+	return nil
 }
 
-func GetEvent(c echo.Context) error {
-	id := c.Param("id")
-	return c.JSON(http.StatusOK, "event "+id)
+func (h *Handlers) GetEvent(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	for _, event := range h.Events {
+		if event.ID == uint64(id) {
+			if _, err = easyjson.MarshalToWriter(event, c.Response().Writer); err != nil {
+				log.Println(err)
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			}
+		}
+	}
+
+	return nil
 }
 
-func Show(c echo.Context) error {
-	city := c.QueryParam("city")
+//Не думаю, что это правильный подход, но пока что не могу придумать ничего лучше, по крайней мере это работает
+func (h *Handlers) Show(c echo.Context) error {
 	typeEvent := c.QueryParam("typeEvent")
-	return c.JSON(http.StatusOK, "type "+typeEvent+" in city "+city)
+	//showEvents := new(models.Events)   Почему на такую запись го ругается, что это не слайс?
+	var showEvents []models.Event
+	for _, event := range h.Events {
+		if event.TypeEvent == typeEvent {
+			showEvents = append(showEvents, event)
+		}
+	}
+	if _, err := easyjson.MarshalToWriter(models.Events(showEvents), c.Response().Writer); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return nil
 }
