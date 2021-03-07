@@ -1,7 +1,7 @@
 package profile
 
 import (
-	"fmt"
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/auth"
 	"github.com/labstack/echo"
 	"net/http"
 	"sync"
@@ -13,20 +13,18 @@ type UserHandler struct {
 
 
 
-func (h *UserHandler) GetProfile(c echo.Context) (string,error) {
+func (h *UserHandler) GetProfile(c echo.Context) (string, *echo.HTTPError) {
 	defer c.Request().Body.Close()
 	//authorized := false
 
 	cookie, err := c.Cookie("SID")
-	fmt.Println(cookie)
 	if err != nil {
-		return "", echo.NewHTTPError(http.StatusForbidden, err.Error())
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	fmt.Println(cookie.Name)
-	fmt.Println(cookie.Value)
-
-
+	if auth.Store[cookie.Value] == 0 {
+		return "", echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
 
 
 	return "", nil

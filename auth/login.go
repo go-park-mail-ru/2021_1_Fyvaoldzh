@@ -2,13 +2,11 @@ package auth
 
 import (
 	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 )
@@ -18,14 +16,15 @@ type LoginHandler struct {
 }
 
 var UserBase = []models.User {
-	{"moroz", "moroz@mail.ru", "123456"},
-	{"matros", "matros@mail.ru", "123456"},
-	{"mail", "mail@mail.ru", "123456"},
+	{1, "moroz", "moroz@mail.ru", "123456"},
+	{2, "matros", "matros@mail.ru", "123456"},
+	{3, "mail", "mail@mail.ru", "123456"},
 }
 
-var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-// заменить как-нибудь потом
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+var (
+	Store = make(map[string]int)
+	letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+)
 
 
 func RandStringRunes(n int) string {
@@ -36,46 +35,76 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-func isExistingUser(user *models.User) bool {
+
+func isCorrectUser(user *models.User) (bool, int) {
 	for _, value := range UserBase {
-		if value == *user {
-			return true
+		if value.Email == (*user).Email && value.Password == (*user).Password {
+			return true, value.Id
 		}
 	}
-	return false
+	return false, 0
 }
 
-func (h *LoginHandler) Login(c echo.Context) error {
+
+func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 	defer c.Request().Body.Close()
 	u := &models.User{}
 
+	// ---------------------
+	log.Println(UserBase)
+	// ---------------------
+
 	log.Println(c.Request().Body)
-	err := easyjson.UnmarshalFromReader(c.Request().Body, u)
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+
+	_, err := c.Cookie("SID")
+	if err == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
 	}
 
-	if !isExistingUser(u) {
-		//возврат ошибки
-	}
 
 	key := RandStringRunes(32)
 
-	s, _ := store.Get(c.Request(), key)
-
-	err = s.Save(c.Request(), c.Response())
+	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	// ставим куку
-	// здесь явно что-то не то
-	cookie := new(http.Cookie)
-	cookie.Name = "SID"
-	cookie.Value = key
-	cookie.Expires = time.Now().Add(24 * time.Hour)
+	isExisting, uid := isCorrectUser(u)
+	if !isExisting {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	newCookie := &http.Cookie{
+		Name:    "SID",
+		Value:   key,
+		Expires: time.Now().Add(10 * time.Hour),
+	}
+
+	Store[key] = uid
+
+	c.SetCookie(newCookie)
+
+	return nil
+}
+
+func (h *LoginHandler) Logout(c echo.Context) *echo.HTTPError {
+	defer c.Request().Body.Close()
+
+	cookie, err := c.Cookie("SID")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	uid := Store[cookie.Value]
+	if uid == 0 {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	delete(Store, cookie.Value)
+
+	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
 
 	return nil
 }
+

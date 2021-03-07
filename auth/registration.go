@@ -15,7 +15,19 @@ type RegisterHandler struct {
 	Mu     *sync.Mutex
 }
 
-func (h *RegisterHandler) CreateUser(c echo.Context) error {
+// временно айдишники
+var id = 4
+
+func isExistingUser(user *models.User) bool {
+	for _, value := range UserBase {
+		if value.Email == (*user).Email {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	defer c.Request().Body.Close()
 	newUser := &models.User{}
 
@@ -25,6 +37,14 @@ func (h *RegisterHandler) CreateUser(c echo.Context) error {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+
+	if isExistingUser(newUser) {
+		return echo.NewHTTPError(http.StatusBadRequest, "user with this email does exist")
+	}
+
+	newUser.Id = id
+	id++
+
 	h.Mu.Lock()
 	UserBase = append(UserBase, *newUser)
 	h.Mu.Unlock()
