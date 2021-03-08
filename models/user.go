@@ -3,14 +3,29 @@ package models
 type User struct {
 	Id int
 	Login  string `json:"login"`
-	Name string `json:"name"`
 	Password string `json:"password"`
 }
 
-type Profile struct {
+type RegData struct {
+	Id int
+	Name string `json:"name"`
+	Login  string `json:"login"`
+	Password string `json:"password"`
+}
+
+type UserProfile struct {
 	Uid int
-	Birthday string `json:"birthday"`
+	Name string `json:"name"`
 	Age int `json:"age"`
+	City string `json:"city"`
+	Followers int `json:"followers"`
+	About string `json:"about"`
+}
+
+type UserOwnProfile struct {
+	Uid int
+	Name string `json:"name"`
+	Birthday string `json:"birthday"`
 	City string `json:"city"`
 	Email string `json:"email"`
 	Visited int `json:"visited"`

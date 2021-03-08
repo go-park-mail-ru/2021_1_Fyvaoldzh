@@ -20,7 +20,7 @@ func NewServer() *echo.Echo {
 	profileHandler := profile.UserHandler{Mu: &sync.Mutex{}}
 
 
-	e.POST("/register", func(c echo.Context) error {
+	e.POST("/api/v1/register", func(c echo.Context) error {
 		err := regHandler.CreateUser(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
@@ -29,7 +29,7 @@ func NewServer() *echo.Echo {
 		return c.JSON(http.StatusOK, "ok")
 	})
 
-	e.POST("/login", func(c echo.Context) error {
+	e.POST("/api/v1/login", func(c echo.Context) error {
 		err := loginHandler.Login(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
@@ -38,16 +38,25 @@ func NewServer() *echo.Echo {
 		return c.JSON(http.StatusOK, "login successful")
 	})
 
-	e.GET("/profile", func(c echo.Context) error {
-		js, err := profileHandler.GetProfile(c)
+	e.GET("/api/v1/profile/:id", func(c echo.Context) error {
+		err := profileHandler.GetUserProfile(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
 		}
 
-		return c.JSON(http.StatusOK, js)
+		return c.JSON(http.StatusOK, "ok")
 	})
 
-	e.GET("/logout", func(c echo.Context) error {
+	e.GET("/api/v1/profile", func(c echo.Context) error {
+		err := profileHandler.GetProfile(c)
+		if err != nil {
+			return c.JSON(err.Code, err.Error())
+		}
+
+		return c.JSON(http.StatusOK, "ok")
+	})
+
+	e.GET("/api/v1/logout", func(c echo.Context) error {
 		err := loginHandler.Logout(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
@@ -56,8 +65,8 @@ func NewServer() *echo.Echo {
 		return c.JSON(http.StatusOK, "ok")
 	})
 
-	e.PUT("/profile", func(c echo.Context) error {
-		_, err := profileHandler.UpdateProfile(c)
+	e.PUT("/api/v1/profile", func(c echo.Context) error {
+		err := profileHandler.UpdateProfile(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
 		}
