@@ -39,12 +39,12 @@ func NewServer() *echo.Echo {
 	})
 
 	e.GET("/profile", func(c echo.Context) error {
-		json, err := profileHandler.GetProfile(c)
+		js, err := profileHandler.GetProfile(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
 		}
 
-		return c.JSON(http.StatusOK, json)
+		return c.JSON(http.StatusOK, js)
 	})
 
 	e.GET("/logout", func(c echo.Context) error {
@@ -52,6 +52,16 @@ func NewServer() *echo.Echo {
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
 		}
+
+		return c.JSON(http.StatusOK, "ok")
+	})
+
+	e.PUT("/profile", func(c echo.Context) error {
+		// тута обновление профиля
+		//err := loginHandler.Logout(c)
+		//if err != nil {
+		//	return c.JSON(err.Code, err.Error())
+		//}
 
 		return c.JSON(http.StatusOK, "ok")
 	})

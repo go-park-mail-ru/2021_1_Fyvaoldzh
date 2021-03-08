@@ -20,7 +20,7 @@ var id = 4
 
 func isExistingUser(user *models.User) bool {
 	for _, value := range UserBase {
-		if value.Email == (*user).Email {
+		if value.Login == (*user).Login {
 			return true
 		}
 	}
@@ -39,14 +39,19 @@ func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	}
 
 	if isExistingUser(newUser) {
-		return echo.NewHTTPError(http.StatusBadRequest, "user with this email does exist")
+		return echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
 	}
 
 	newUser.Id = id
 	id++
 
+	var newProfile models.Profile
+	newProfile.Uid = newUser.Id
+
+
 	h.Mu.Lock()
 	UserBase = append(UserBase, *newUser)
+	ProfileBase = append(ProfileBase, newProfile)
 	h.Mu.Unlock()
 	return nil
 }
