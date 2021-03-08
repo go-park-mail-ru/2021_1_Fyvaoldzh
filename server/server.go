@@ -13,7 +13,7 @@ func NewServer() *echo.Echo {
 		Events: events.BaseEvents,
 		Mu:     &sync.Mutex{},
 	}
-	e.GET("/", handlers.GetAllEvents)
+	e.GET("/api/v1/", handlers.GetAllEvents)
 	e.GET("/api/v1/event/:id", handlers.GetOneEvent)
 	e.GET("/api/v1/event", handlers.GetEvents)
 	e.POST("/api/v1/create", handlers.Create)

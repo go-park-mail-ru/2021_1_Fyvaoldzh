@@ -1,6 +1,7 @@
 package events
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -36,12 +37,11 @@ func (h *Handlers) Delete(c echo.Context) error {
 	for i := range h.Events {
 		if h.Events[i].ID == uint64(id) {
 			h.Events = append(h.Events[:i], h.Events[i+1:]...)
-			//Или здесь запоминать удаляемый элемент, а затем ретернить его json'ом?
 			return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" succesfully deleted \n")
 		}
 	}
 
-	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
 }
 
 func (h *Handlers) GetAllEvents(c echo.Context) error {
@@ -63,12 +63,10 @@ func (h *Handlers) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	//fmt.Println(newEvent)
 	h.Mu.Lock()
 
 	h.IdMax++
-	id := h.IdMax
-	newEvent.ID = id
+	newEvent.ID = h.IdMax
 
 	h.Events = append(h.Events, *newEvent)
 	h.Mu.Unlock()
@@ -108,15 +106,14 @@ func (h *Handlers) GetEvents(c echo.Context) error {
 	return nil
 }
 
-//Не знаю, где какие ошибки правильно выкидывать
 func (h *Handlers) Save(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	img, err := c.FormFile("image")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	src, err := img.Open()
@@ -125,21 +122,24 @@ func (h *Handlers) Save(c echo.Context) error {
 	}
 	defer src.Close()
 
-	dst, err := os.Create(fmt.Sprint(id))
+	fileName := fmt.Sprint(id) + img.Filename
+
+	dst, err := os.Create(fileName)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	for i := range h.Events {
 		if h.Events[i].ID == uint64(id) {
-			h.Events[i].Image = "myapp/" + fmt.Sprint(id)
+			h.Events[i].Image = "myapp/" + fileName
+			return c.JSON(http.StatusOK, h.Events[i])
 		}
 	}
 
-	return nil
+	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
 }
