@@ -2,7 +2,6 @@ package server
 
 import (
 	"myapp/events"
-	"myapp/models"
 	"sync"
 
 	"github.com/labstack/echo"
@@ -11,15 +10,15 @@ import (
 func NewServer() *echo.Echo {
 	e := echo.New()
 	handlers := events.Handlers{
-		Events: make([]models.Event, 0),
+		Events: events.BaseEvents,
 		Mu:     &sync.Mutex{},
 	}
-	e.GET("/", handlers.All)
-	e.GET("/event/:id", handlers.GetEvent)
-	e.GET("/show", handlers.Show)
-	e.POST("/create", handlers.Create)
-	e.DELETE("/event/:id", handlers.Delete)
-	//Какие еще методы необходимо реализовать на данном этапе?
+	e.GET("/", handlers.GetAllEvents)
+	e.GET("/api/v1/event/:id", handlers.GetOneEvent)
+	e.GET("/api/v1/event", handlers.GetEvents)
+	e.POST("/api/v1/create", handlers.Create)
+	e.DELETE("/api/v1/event/:id", handlers.Delete)
+	e.POST("/api/v1/save/:id", handlers.Save)
 
 	return e
 }

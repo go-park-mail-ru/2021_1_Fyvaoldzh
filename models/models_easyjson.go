@@ -26,7 +26,7 @@ func easyjsonD2b7633eDecodeMyappModels(in *jlexer.Lexer, out *Events) {
 		in.Delim('[')
 		if *out == nil {
 			if !in.IsDelim(']') {
-				*out = make(Events, 0, 1)
+				*out = make(Events, 0, 0)
 			} else {
 				*out = Events{}
 			}
@@ -83,87 +83,7 @@ func (v *Events) UnmarshalJSON(data []byte) error {
 func (v *Events) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeMyappModels(l, v)
 }
-func easyjsonD2b7633eDecodeMyappModels1(in *jlexer.Lexer, out *EventInput) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "title":
-			out.Title = string(in.String())
-		case "description":
-			out.Description = string(in.String())
-		case "typeEvent":
-			out.TypeEvent = string(in.String())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjsonD2b7633eEncodeMyappModels1(out *jwriter.Writer, in EventInput) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"title\":"
-		out.RawString(prefix[1:])
-		out.String(string(in.Title))
-	}
-	{
-		const prefix string = ",\"description\":"
-		out.RawString(prefix)
-		out.String(string(in.Description))
-	}
-	{
-		const prefix string = ",\"typeEvent\":"
-		out.RawString(prefix)
-		out.String(string(in.TypeEvent))
-	}
-	out.RawByte('}')
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v EventInput) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeMyappModels1(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v EventInput) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeMyappModels1(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *EventInput) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeMyappModels1(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *EventInput) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeMyappModels1(l, v)
-}
-func easyjsonD2b7633eDecodeMyappModels2(in *jlexer.Lexer, out *Event) {
+func easyjsonD2b7633eDecodeMyappModels1(in *jlexer.Lexer, out *Event) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -190,6 +110,8 @@ func easyjsonD2b7633eDecodeMyappModels2(in *jlexer.Lexer, out *Event) {
 			out.Description = string(in.String())
 		case "typeEvent":
 			out.TypeEvent = string(in.String())
+		case "image":
+			out.Image = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -200,7 +122,7 @@ func easyjsonD2b7633eDecodeMyappModels2(in *jlexer.Lexer, out *Event) {
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeMyappModels2(out *jwriter.Writer, in Event) {
+func easyjsonD2b7633eEncodeMyappModels1(out *jwriter.Writer, in Event) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -224,29 +146,34 @@ func easyjsonD2b7633eEncodeMyappModels2(out *jwriter.Writer, in Event) {
 		out.RawString(prefix)
 		out.String(string(in.TypeEvent))
 	}
+	{
+		const prefix string = ",\"image\":"
+		out.RawString(prefix)
+		out.String(string(in.Image))
+	}
 	out.RawByte('}')
 }
 
 // MarshalJSON supports json.Marshaler interface
 func (v Event) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeMyappModels2(&w, v)
+	easyjsonD2b7633eEncodeMyappModels1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Event) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeMyappModels2(w, v)
+	easyjsonD2b7633eEncodeMyappModels1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Event) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeMyappModels2(&r, v)
+	easyjsonD2b7633eDecodeMyappModels1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Event) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeMyappModels2(l, v)
+	easyjsonD2b7633eDecodeMyappModels1(l, v)
 }
