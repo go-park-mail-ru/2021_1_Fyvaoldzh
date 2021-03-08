@@ -57,11 +57,10 @@ func NewServer() *echo.Echo {
 	})
 
 	e.PUT("/profile", func(c echo.Context) error {
-		// тута обновление профиля
-		//err := loginHandler.Logout(c)
-		//if err != nil {
-		//	return c.JSON(err.Code, err.Error())
-		//}
+		_, err := profileHandler.UpdateProfile(c)
+		if err != nil {
+			return c.JSON(err.Code, err.Error())
+		}
 
 		return c.JSON(http.StatusOK, "ok")
 	})

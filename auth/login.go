@@ -15,13 +15,13 @@ type LoginHandler struct {
 	Mu     *sync.Mutex
 }
 
-var UserBase = []models.User {
+var UserBase = []*models.User {
 	{1, "moroz", "Анастасия", "123456"},
 	{2, "matros", "Матрос Матросович Матросов", "123456"},
 	{3, "mail", "Почтальон Печкин", "123456"},
 }
 
-var ProfileBase = []models.Profile{
+var ProfileBase = []*models.Profile{
 	{1, "6 февраля 2001 г.", 20, "Москва", "moroz@mail.ru",
 		12, 2, 36, "люблю котиков"},
 	{2, "7 февраля 1999 г.", 22, "Санкт-Петербург", "matros@mail.ru",
@@ -30,22 +30,22 @@ var ProfileBase = []models.Profile{
 		1000, 99, 123, "ваш любимый почтальон"},
 }
 
-func GetUser(uid int) models.User {
+func GetUser(uid int) *models.User {
 	for _, value := range UserBase {
 		if value.Id == uid {
 			return value
 		}
 	}
-	return models.User{}
+	return &models.User{}
 }
 
-func GetProfile(uid int) models.Profile {
+func GetProfile(uid int) *models.Profile {
 	for _, value := range ProfileBase {
 		if value.Uid == uid {
 			return value
 		}
 	}
-	return models.Profile{}
+	return &models.Profile{}
 }
 
 var (

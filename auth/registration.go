@@ -45,12 +45,12 @@ func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	newUser.Id = id
 	id++
 
-	var newProfile models.Profile
+	newProfile := &models.Profile{}
 	newProfile.Uid = newUser.Id
 
 
 	h.Mu.Lock()
-	UserBase = append(UserBase, *newUser)
+	UserBase = append(UserBase, newUser)
 	ProfileBase = append(ProfileBase, newProfile)
 	h.Mu.Unlock()
 	return nil

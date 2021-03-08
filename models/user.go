@@ -19,6 +19,14 @@ type Profile struct {
 	About string `json:"about"`
 }
 
+type UserData struct {
+	Name string `json:"name"`
+	Birthday string `json:"birthday"`
+	City string `json:"city"`
+	Email string `json:"email"`
+	About string `json:"about"`
+	Password string `json:"password"`
+}
 
 
 
