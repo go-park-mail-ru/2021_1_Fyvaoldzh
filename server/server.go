@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/profile"
 	"log"
 	"net/http"
@@ -25,7 +26,7 @@ func NewServer() *echo.Echo {
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
 		}
-		log.Println(auth.UserBase)
+		log.Println(models.UserBase)
 		return c.JSON(http.StatusOK, "ok")
 	})
 
@@ -67,6 +68,15 @@ func NewServer() *echo.Echo {
 
 	e.PUT("/api/v1/profile", func(c echo.Context) error {
 		err := profileHandler.UpdateProfile(c)
+		if err != nil {
+			return c.JSON(err.Code, err.Error())
+		}
+
+		return c.JSON(http.StatusOK, "ok")
+	})
+
+	e.PUT("/api/v1/upload_avatar", func(c echo.Context) error {
+		err := profileHandler.UploadAvatar(c)
 		if err != nil {
 			return c.JSON(err.Code, err.Error())
 		}

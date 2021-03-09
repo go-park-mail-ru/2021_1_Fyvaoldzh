@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
-
 )
 
 type RegisterHandler struct {
@@ -17,15 +16,6 @@ type RegisterHandler struct {
 
 // временно айдишники
 var id = 4
-
-func isExistingUser(user *models.User) bool {
-	for _, value := range UserBase {
-		if value.Login == (*user).Login {
-			return true
-		}
-	}
-	return false
-}
 
 func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	defer c.Request().Body.Close()
@@ -42,7 +32,7 @@ func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	newUser.Login = newData.Login
 	newUser.Password = newData.Password
 
-	if isExistingUser(newUser) {
+	if models.IsExistingUser(newUser) {
 		return echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
 	}
 
@@ -55,8 +45,8 @@ func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 
 
 	h.Mu.Lock()
-	UserBase = append(UserBase, newUser)
-	ProfileBase = append(ProfileBase, newProfile)
+	models.UserBase = append(models.UserBase, newUser)
+	models.ProfileBase = append(models.ProfileBase, newProfile)
 	h.Mu.Unlock()
 	return nil
 }

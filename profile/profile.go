@@ -2,12 +2,15 @@ package profile
 
 import (
 	"errors"
+	"fmt"
 	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/auth"
 	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
+	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 )
@@ -28,7 +31,7 @@ func (h *UserHandler) GetProfile(c echo.Context) *echo.HTTPError {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	profile := auth.GetProfile(auth.Store[cookie.Value])
+	profile := models.GetProfile(auth.Store[cookie.Value])
 
 	if _, err = easyjson.MarshalToWriter(profile, c.Response().Writer); err != nil {
 		log.Println(err)
@@ -50,8 +53,8 @@ func (h *UserHandler) UpdateProfile(c echo.Context) *echo.HTTPError {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	user := auth.GetUser(auth.Store[cookie.Value])
-	profile := auth.GetProfile(user.Id)
+	user := models.GetUser(auth.Store[cookie.Value])
+	profile := models.GetProfile(user.Id)
 
 	ud := &models.UserData{}
 	err = easyjson.UnmarshalFromReader(c.Request().Body, ud)
@@ -68,6 +71,9 @@ func (h *UserHandler) UpdateProfile(c echo.Context) *echo.HTTPError {
 	}
 
 	if len(ud.Email) != 0 {
+		if models.IsExistingEMail(ud.Email) {
+			return  echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
+		}
 		profile.Email = ud.Email
 		//проверка на повторяемость почты
 	}
@@ -85,10 +91,98 @@ func (h *UserHandler) UpdateProfile(c echo.Context) *echo.HTTPError {
 		profile.City = ud.City
 	}
 
+	log.Println('0')
+	img, err := c.FormFile("avatar")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	log.Println('1')
+	if img == nil {
+		return nil
+	}
+
+	src, err := img.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer src.Close()
+
+	log.Println('3')
+
+	fileName := fmt.Sprint(user.Id) + img.Filename
+	dst, err := os.Create(fileName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer dst.Close()
+	log.Println('4')
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	log.Println('5')
+
 	log.Println(user)
 	log.Println(profile)
 	return nil
 }
+
+func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
+	defer c.Request().Body.Close()
+
+	cookie, err := c.Cookie("SID")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	if auth.Store[cookie.Value] == 0 {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	user := models.GetUser(auth.Store[cookie.Value])
+	profile := models.GetProfile(user.Id)
+
+	log.Println("0")
+	img, err := c.FormFile("avatar")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	log.Println("1")
+	if img == nil {
+		return nil
+	}
+
+	src, err := img.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer src.Close()
+
+	log.Println("3")
+
+	fileName := fmt.Sprint(user.Id) + img.Filename
+	dst, err := os.Create(fileName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer dst.Close()
+	log.Println("4")
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	log.Println("5")
+
+	profile.Avatar = fileName
+
+	log.Println(user)
+	log.Println(profile)
+	return nil
+}
+
+
 
 
 func (h *UserHandler) GetUserProfile(c echo.Context) *echo.HTTPError {
@@ -99,7 +193,7 @@ func (h *UserHandler) GetUserProfile(c echo.Context) *echo.HTTPError {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	user := auth.GetOtherUserProfile(id)
+	user := models.GetOtherUserProfile(id)
 
 	if user.Uid == 0 {
 		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
