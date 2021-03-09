@@ -19,7 +19,7 @@ func NewServer() *echo.Echo {
 	e := echo.New()
 		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"*"},
+		AllowCredentials: true,
 	}))
 
 	regHandler := auth.RegisterHandler{Mu: &sync.Mutex{}}
