@@ -3,8 +3,8 @@ package events
 import (
 	"errors"
 	"fmt"
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"io"
+	"kudago/models"
 	"log"
 	"net/http"
 	"os"
@@ -14,7 +14,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
 )
-
 
 type Handlers struct {
 	Events models.Events
@@ -79,6 +78,7 @@ func (h *Handlers) GetOneEvent(c echo.Context) error {
 				log.Println(err)
 				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
+			return nil
 		}
 	}
 
@@ -130,7 +130,7 @@ func (h *Handlers) Save(c echo.Context) error {
 
 	for i := range h.Events {
 		if h.Events[i].ID == uint64(id) {
-			h.Events[i].Image = "myapp/" + fileName
+			h.Events[i].Image = "kudago/" + fileName
 			return c.JSON(http.StatusOK, h.Events[i])
 		}
 	}

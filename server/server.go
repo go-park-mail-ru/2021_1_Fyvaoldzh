@@ -1,24 +1,23 @@
 package server
 
 import (
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/events"
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/profile"
+	"kudago/events"
+	"kudago/models"
+	"kudago/profile"
 	"log"
 	"net/http"
 	"sync"
 
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/auth"
+	"kudago/auth"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
 
-
 func NewServer() *echo.Echo {
 	e := echo.New()
-		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"},
 		AllowCredentials: true,
 	}))
 
@@ -30,7 +29,6 @@ func NewServer() *echo.Echo {
 		Events: models.BaseEvents,
 		Mu:     &sync.Mutex{},
 	}
-
 
 	e.POST("/api/v1/register", func(c echo.Context) error {
 		err := regHandler.CreateUser(c)
@@ -107,4 +105,3 @@ func NewServer() *echo.Echo {
 func ListenAndServe(e *echo.Echo) {
 	e.Logger.Fatal(e.Start(":1323"))
 }
-

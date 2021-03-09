@@ -3,15 +3,14 @@ package auth
 import (
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
+	"kudago/models"
 	"log"
 	"net/http"
 	"sync"
-
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 )
 
 type RegisterHandler struct {
-	Mu     *sync.Mutex
+	Mu *sync.Mutex
 }
 
 // временно айдишники
@@ -42,7 +41,6 @@ func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	newProfile := &models.UserOwnProfile{}
 	newProfile.Uid = newUser.Id
 	newProfile.Name = newData.Name
-
 
 	h.Mu.Lock()
 	models.UserBase = append(models.UserBase, newUser)

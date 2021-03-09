@@ -3,11 +3,11 @@ package profile
 import (
 	"errors"
 	"fmt"
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/auth"
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
 	"io"
+	"kudago/auth"
+	"kudago/models"
 	"log"
 	"net/http"
 	"os"
@@ -36,7 +36,7 @@ func (h *UserHandler) GetProfile(c echo.Context) *echo.HTTPError {
 	// некрасиво, но пока
 	for _, value := range models.PlanningEvent {
 		if value.Uid == profile.Uid {
-		profile.Event = append(profile.Event, models.GetEvent(value.Eid))
+			profile.Event = append(profile.Event, models.GetEvent(value.Eid))
 		}
 	}
 
@@ -68,7 +68,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) *echo.HTTPError {
 	ud := &models.UserData{}
 	err = easyjson.UnmarshalFromReader(c.Request().Body, ud)
 	if err != nil {
-		return  echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if len(ud.Name) != 0 {
@@ -81,7 +81,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) *echo.HTTPError {
 
 	if len(ud.Email) != 0 {
 		if models.IsExistingEMail(ud.Email) {
-			return  echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
+			return echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
 		}
 		profile.Email = ud.Email
 		//проверка на повторяемость почты
@@ -133,7 +133,6 @@ func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
 	}
 	defer src.Close()
 
-
 	fileName := fmt.Sprint(user.Id) + img.Filename
 	dst, err := os.Create(fileName)
 	if err != nil {
@@ -148,7 +147,6 @@ func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
 	profile.Avatar = fileName
 	return nil
 }
-
 
 func (h *UserHandler) GetUserProfile(c echo.Context) *echo.HTTPError {
 	defer c.Request().Body.Close()

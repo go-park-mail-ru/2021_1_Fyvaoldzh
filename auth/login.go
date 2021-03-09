@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
+	"kudago/models"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -11,14 +11,13 @@ import (
 )
 
 type LoginHandler struct {
-	Mu     *sync.Mutex
+	Mu *sync.Mutex
 }
 
 var (
-	Store = make(map[string]int)
+	Store       = make(map[string]int)
 	letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
-
 
 func RandStringRunes(n int) string {
 	b := make([]rune, n)
@@ -27,7 +26,6 @@ func RandStringRunes(n int) string {
 	}
 	return string(b)
 }
-
 
 func isCorrectUser(user *models.User) (bool, int) {
 	for _, value := range models.UserBase {
@@ -38,7 +36,6 @@ func isCorrectUser(user *models.User) (bool, int) {
 	return false, 0
 }
 
-
 func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 	defer c.Request().Body.Close()
 	u := &models.User{}
@@ -47,7 +44,6 @@ func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 	if err == nil && Store[cookie.Value] != 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
 	}
-
 
 	key := RandStringRunes(32)
 
@@ -62,9 +58,9 @@ func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 	}
 
 	newCookie := &http.Cookie{
-		Name:    "SID",
-		Value:   key,
-		Expires: time.Now().Add(10 * time.Hour),
+		Name:     "SID",
+		Value:    key,
+		Expires:  time.Now().Add(10 * time.Hour),
 		SameSite: http.SameSiteNoneMode,
 	}
 
@@ -94,4 +90,3 @@ func (h *LoginHandler) Logout(c echo.Context) *echo.HTTPError {
 
 	return nil
 }
-
