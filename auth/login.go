@@ -68,7 +68,6 @@ func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 	}
 
 	Store[key] = uid
-
 	c.SetCookie(newCookie)
 
 	return nil
