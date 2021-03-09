@@ -4,7 +4,6 @@ import (
 	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
-	"log"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -43,10 +42,6 @@ func isCorrectUser(user *models.User) (bool, int) {
 func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 	defer c.Request().Body.Close()
 	u := &models.User{}
-
-	// ---------------------
-	log.Println(models.UserBase)
-	// ---------------------
 
 	cookie, err := c.Cookie("SID")
 	if err == nil && Store[cookie.Value] != 0 {
