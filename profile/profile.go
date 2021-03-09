@@ -3,8 +3,6 @@ package profile
 import (
 	"errors"
 	"fmt"
-	"github.com/labstack/echo"
-	"github.com/mailru/easyjson"
 	"io"
 	"kudago/auth"
 	"kudago/models"
@@ -13,13 +11,16 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/labstack/echo"
+	"github.com/mailru/easyjson"
 )
 
 type UserHandler struct {
 	Mu *sync.Mutex
 }
 
-func (h *UserHandler) GetProfile(c echo.Context) *echo.HTTPError {
+func (h *UserHandler) GetProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie("SID")
@@ -148,7 +149,7 @@ func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
 	return nil
 }
 
-func (h *UserHandler) GetUserProfile(c echo.Context) *echo.HTTPError {
+func (h *UserHandler) GetUserProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	id, err := strconv.Atoi(c.Param("id"))

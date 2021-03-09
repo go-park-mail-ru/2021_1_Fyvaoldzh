@@ -48,23 +48,9 @@ func NewServer() *echo.Echo {
 		return c.JSON(http.StatusOK, "login successful")
 	})
 
-	e.GET("/api/v1/profile/:id", func(c echo.Context) error {
-		err := profileHandler.GetUserProfile(c)
-		if err != nil {
-			return c.JSON(err.Code, err.Error())
-		}
+	e.GET("/api/v1/profile/:id", profileHandler.GetUserProfile)
 
-		return c.JSON(http.StatusOK, "ok")
-	})
-
-	e.GET("/api/v1/profile", func(c echo.Context) error {
-		err := profileHandler.GetProfile(c)
-		if err != nil {
-			return c.JSON(err.Code, err.Error())
-		}
-
-		return c.JSON(http.StatusOK, "ok")
-	})
+	e.GET("/api/v1/profile", profileHandler.GetProfile)
 
 	e.GET("/api/v1/logout", func(c echo.Context) error {
 		err := loginHandler.Logout(c)
