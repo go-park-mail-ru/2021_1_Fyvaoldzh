@@ -25,7 +25,7 @@ type UserProfile struct {
 	Followers int `json:"followers"`
 	About string `json:"about"`
 	Avatar string `json:"avatar"`
-	Event Events `json:"events"`
+	Event []uint64 `json:"events"`
 }
 
 type UserOwnProfile struct {
@@ -39,7 +39,7 @@ type UserOwnProfile struct {
 	Followers int `json:"followers"`
 	About string `json:"about"`
 	Avatar string `json:"avatar"`
-	Event Events `json:"events"`
+	Event []uint64 `json:"events"`
 }
 
 type UserData struct {
