@@ -1,14 +1,20 @@
 package server
 
 import (
-	"myapp/events"
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/events"
 	"sync"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func NewServer() *echo.Echo {
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"*"},
+	}))
+
 	handlers := events.Handlers{
 		Events: events.BaseEvents,
 		Mu:     &sync.Mutex{},

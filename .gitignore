@@ -1,2 +1,5 @@
 go.mod
 go.sum
+.idea
+*.png
+*jpg

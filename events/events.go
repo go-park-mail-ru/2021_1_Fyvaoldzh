@@ -3,9 +3,9 @@ package events
 import (
 	"errors"
 	"fmt"
+	"github.com/go-park-mail-ru/2021_1_Fyvaoldzh/models"
 	"io"
 	"log"
-	"myapp/models"
 	"net/http"
 	"os"
 	"strconv"
