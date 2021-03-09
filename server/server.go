@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/middleware"
 )
 
 func NewServer() *echo.Echo {
