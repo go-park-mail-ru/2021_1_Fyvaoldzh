@@ -50,6 +50,8 @@ func easyjsonD2b7633eDecodeGithubComGoParkMailRu20211FyvaoldzhModels(in *jlexer.
 			out.About = string(in.String())
 		case "avatar":
 			out.Avatar = string(in.String())
+		case "events":
+			(out.Event).UnmarshalEasyJSON(in)
 		default:
 			in.SkipRecursive()
 		}
@@ -98,6 +100,11 @@ func easyjsonD2b7633eEncodeGithubComGoParkMailRu20211FyvaoldzhModels(out *jwrite
 		const prefix string = ",\"avatar\":"
 		out.RawString(prefix)
 		out.String(string(in.Avatar))
+	}
+	{
+		const prefix string = ",\"events\":"
+		out.RawString(prefix)
+		(in.Event).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }
@@ -164,6 +171,8 @@ func easyjsonD2b7633eDecodeGithubComGoParkMailRu20211FyvaoldzhModels1(in *jlexer
 			out.About = string(in.String())
 		case "avatar":
 			out.Avatar = string(in.String())
+		case "events":
+			(out.Event).UnmarshalEasyJSON(in)
 		default:
 			in.SkipRecursive()
 		}
@@ -227,6 +236,11 @@ func easyjsonD2b7633eEncodeGithubComGoParkMailRu20211FyvaoldzhModels1(out *jwrit
 		const prefix string = ",\"avatar\":"
 		out.RawString(prefix)
 		out.String(string(in.Avatar))
+	}
+	{
+		const prefix string = ",\"events\":"
+		out.RawString(prefix)
+		(in.Event).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }
@@ -551,7 +565,7 @@ func easyjsonD2b7633eDecodeGithubComGoParkMailRu20211FyvaoldzhModels5(in *jlexer
 		case "Uid":
 			out.Uid = int(in.Int())
 		case "Eid":
-			out.Eid = int(in.Int())
+			out.Eid = uint64(in.Uint64())
 		default:
 			in.SkipRecursive()
 		}
@@ -574,7 +588,7 @@ func easyjsonD2b7633eEncodeGithubComGoParkMailRu20211FyvaoldzhModels5(out *jwrit
 	{
 		const prefix string = ",\"Eid\":"
 		out.RawString(prefix)
-		out.Int(int(in.Eid))
+		out.Uint64(uint64(in.Eid))
 	}
 	out.RawByte('}')
 }

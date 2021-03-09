@@ -15,12 +15,6 @@ import (
 	"github.com/mailru/easyjson"
 )
 
-var BaseEvents = models.Events{
-	{125, "Идущий к реке", "У реки", "Я в своем познаии настолько преисполнился", "11.11.1111 11:11", " ", "Пушкина", "cognition", "myapp/125"},
-	{126, "Димон заминированный тапок", "На дороге", "Мне абсолютно все равно", "12.12.1212 12:12", " ", "Колотушкина", "cognition", "myapp/126"},
-	{127, "exampleTitle", "examplePlace", "exampleText", "01.01.0001 00:00", "exampleSubway", "exampleStreet", "1", "myapp/127"},
-	{128, "Пример", "Место", "Пример без картинки", "12:00", "Примерное метро", "Примерная улица", "noImg", ""},
-}
 
 type Handlers struct {
 	Events models.Events

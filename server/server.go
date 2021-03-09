@@ -27,7 +27,7 @@ func NewServer() *echo.Echo {
 	profileHandler := profile.UserHandler{Mu: &sync.Mutex{}}
 
 	handlers := events.Handlers{
-		Events: events.BaseEvents,
+		Events: models.BaseEvents,
 		Mu:     &sync.Mutex{},
 	}
 

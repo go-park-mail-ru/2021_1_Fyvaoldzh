@@ -1,5 +1,7 @@
 package models
 
+import "log"
+
 type User struct {
 	Id int
 	Login  string `json:"login"`
@@ -21,6 +23,7 @@ type UserProfile struct {
 	Followers int `json:"followers"`
 	About string `json:"about"`
 	Avatar string `json:"avatar"`
+	Event Events `json:"events"`
 }
 
 type UserOwnProfile struct {
@@ -34,6 +37,7 @@ type UserOwnProfile struct {
 	Followers int `json:"followers"`
 	About string `json:"about"`
 	Avatar string `json:"avatar"`
+	Event Events `json:"events"`
 }
 
 type UserData struct {
@@ -48,7 +52,7 @@ type UserData struct {
 
 type PlanningEvents struct {
 	Uid int
-	Eid int
+	Eid uint64
 }
 
 var UserBase = []*User{
@@ -59,11 +63,11 @@ var UserBase = []*User{
 
 var ProfileBase = []*UserOwnProfile{
 	{1, "Анастасия", "6 февраля 2001 г.", "Москва", "moroz@mail.ru",
-		12, 2, 36, "люблю котиков", "public/1.png"},
+		12, 2, 36, "люблю котиков", "1.png", nil},
 	{2, "Матрос Матросович Матросов", "7 февраля 1999 г.", "Санкт-Петербург", "matros@mail.ru",
-		77, 15, 1000, "главный матрос на корабле", "public/1.png"},
+		77, 15, 1000, "главный матрос на корабле", "1.png", nil},
 	{3, "Почтальон Печкин", "1 марта 1997 г.", "Москва", "pechkin@mail.ru",
-		1000, 99, 123, "ваш любимый почтальон", "public/2.png"},
+		1000, 99, 123, "ваш любимый почтальон", "2.png", nil},
 }
 
 var PlanningEvent = []*PlanningEvents{
@@ -130,9 +134,21 @@ func GetOtherUserProfile(uid int) *UserProfile {
 	otherProfile.City = value.City
 	otherProfile.About = value.About
 	otherProfile.Followers = value.Followers
+	otherProfile.Avatar = value.Avatar
+	otherProfile.Event = value.Event
 	// здесь оно будет по-умному высчитываться, но пока так
 	otherProfile.Age = 20
+	log.Println(otherProfile)
 	return otherProfile
+}
+
+func GetEvent(eid uint64) Event {
+	for _, value := range BaseEvents {
+		if value.ID == eid {
+			return value
+		}
+	}
+	return Event{}
 }
 
 

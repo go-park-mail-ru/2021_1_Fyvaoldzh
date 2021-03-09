@@ -33,6 +33,15 @@ func (h *UserHandler) GetProfile(c echo.Context) *echo.HTTPError {
 
 	profile := models.GetProfile(auth.Store[cookie.Value])
 
+	// некрасиво, но пока
+	for _, value := range models.PlanningEvent {
+		if value.Uid == profile.Uid {
+		profile.Event = append(profile.Event, models.GetEvent(value.Eid))
+		}
+	}
+
+	log.Println(profile)
+
 	if _, err = easyjson.MarshalToWriter(profile, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -91,40 +100,6 @@ func (h *UserHandler) UpdateProfile(c echo.Context) *echo.HTTPError {
 		profile.City = ud.City
 	}
 
-	log.Println('0')
-	img, err := c.FormFile("avatar")
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	log.Println('1')
-	if img == nil {
-		return nil
-	}
-
-	src, err := img.Open()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	defer src.Close()
-
-	log.Println('3')
-
-	fileName := fmt.Sprint(user.Id) + img.Filename
-	dst, err := os.Create(fileName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	defer dst.Close()
-	log.Println('4')
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	log.Println('5')
-
-	log.Println(user)
-	log.Println(profile)
 	return nil
 }
 
@@ -143,13 +118,11 @@ func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
 	user := models.GetUser(auth.Store[cookie.Value])
 	profile := models.GetProfile(user.Id)
 
-	log.Println("0")
 	img, err := c.FormFile("avatar")
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	log.Println("1")
 	if img == nil {
 		return nil
 	}
@@ -160,7 +133,6 @@ func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
 	}
 	defer src.Close()
 
-	log.Println("3")
 
 	fileName := fmt.Sprint(user.Id) + img.Filename
 	dst, err := os.Create(fileName)
@@ -168,21 +140,14 @@ func (h *UserHandler) UploadAvatar(c echo.Context) *echo.HTTPError {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer dst.Close()
-	log.Println("4")
 
 	if _, err = io.Copy(dst, src); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	log.Println("5")
 
 	profile.Avatar = fileName
-
-	log.Println(user)
-	log.Println(profile)
 	return nil
 }
-
-
 
 
 func (h *UserHandler) GetUserProfile(c echo.Context) *echo.HTTPError {
@@ -199,11 +164,18 @@ func (h *UserHandler) GetUserProfile(c echo.Context) *echo.HTTPError {
 		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
 	}
 
+	for _, value := range models.PlanningEvent {
+		if value.Uid == user.Uid {
+			user.Event = append(user.Event, models.GetEvent(value.Eid))
+		}
+	}
+
+	log.Println(user)
+
 	if _, err = easyjson.MarshalToWriter(user, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return nil
-
 }
