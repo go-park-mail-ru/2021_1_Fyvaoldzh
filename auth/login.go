@@ -66,6 +66,8 @@ func (h *LoginHandler) Login(c echo.Context) *echo.HTTPError {
 		Value:   key,
 		Expires: time.Now().Add(10 * time.Hour),
 		SameSite: http.SameSiteNoneMode,
+		Secure: true,
+		HttpOnly: true,
 	}
 
 	Store[key] = uid
