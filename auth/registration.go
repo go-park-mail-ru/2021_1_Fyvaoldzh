@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 )
 
 type RegisterHandler struct {
@@ -46,5 +47,18 @@ func (h *RegisterHandler) CreateUser(c echo.Context) *echo.HTTPError {
 	models.UserBase = append(models.UserBase, newUser)
 	models.ProfileBase = append(models.ProfileBase, newProfile)
 	h.Mu.Unlock()
+
+	key := RandStringRunes(32)
+
+	newCookie := &http.Cookie{
+		Name:     "SID",
+		Value:    key,
+		Expires:  time.Now().Add(10 * time.Hour),
+		SameSite: http.SameSiteNoneMode,
+	}
+
+	Store[key] = newUser.Id
+	c.SetCookie(newCookie)
+
 	return nil
 }
