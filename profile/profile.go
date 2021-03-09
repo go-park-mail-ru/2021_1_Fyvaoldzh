@@ -37,7 +37,7 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 	// некрасиво, но пока
 	for _, value := range models.PlanningEvent {
 		if value.Uid == profile.Uid {
-			profile.Event = append(profile.Event, models.GetEvent(value.Eid))
+			profile.Event = append(profile.Event, value.Eid)
 		}
 	}
 
@@ -165,7 +165,7 @@ func (h *UserHandler) GetUserProfile(c echo.Context) error {
 
 	for _, value := range models.PlanningEvent {
 		if value.Uid == user.Uid {
-			user.Event = append(user.Event, models.GetEvent(value.Eid))
+			user.Event = append(user.Event, value.Eid)
 		}
 	}
 

@@ -51,7 +51,28 @@ func easyjsonD2b7633eDecodeKudagoModels(in *jlexer.Lexer, out *UserProfile) {
 		case "avatar":
 			out.Avatar = string(in.String())
 		case "events":
-			(out.Event).UnmarshalEasyJSON(in)
+			if in.IsNull() {
+				in.Skip()
+				out.Event = nil
+			} else {
+				in.Delim('[')
+				if out.Event == nil {
+					if !in.IsDelim(']') {
+						out.Event = make([]uint64, 0, 8)
+					} else {
+						out.Event = []uint64{}
+					}
+				} else {
+					out.Event = (out.Event)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v1 uint64
+					v1 = uint64(in.Uint64())
+					out.Event = append(out.Event, v1)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -104,7 +125,18 @@ func easyjsonD2b7633eEncodeKudagoModels(out *jwriter.Writer, in UserProfile) {
 	{
 		const prefix string = ",\"events\":"
 		out.RawString(prefix)
-		(in.Event).MarshalEasyJSON(out)
+		if in.Event == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v2, v3 := range in.Event {
+				if v2 > 0 {
+					out.RawByte(',')
+				}
+				out.Uint64(uint64(v3))
+			}
+			out.RawByte(']')
+		}
 	}
 	out.RawByte('}')
 }
@@ -172,7 +204,28 @@ func easyjsonD2b7633eDecodeKudagoModels1(in *jlexer.Lexer, out *UserOwnProfile) 
 		case "avatar":
 			out.Avatar = string(in.String())
 		case "events":
-			(out.Event).UnmarshalEasyJSON(in)
+			if in.IsNull() {
+				in.Skip()
+				out.Event = nil
+			} else {
+				in.Delim('[')
+				if out.Event == nil {
+					if !in.IsDelim(']') {
+						out.Event = make([]uint64, 0, 8)
+					} else {
+						out.Event = []uint64{}
+					}
+				} else {
+					out.Event = (out.Event)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v4 uint64
+					v4 = uint64(in.Uint64())
+					out.Event = append(out.Event, v4)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -240,7 +293,18 @@ func easyjsonD2b7633eEncodeKudagoModels1(out *jwriter.Writer, in UserOwnProfile)
 	{
 		const prefix string = ",\"events\":"
 		out.RawString(prefix)
-		(in.Event).MarshalEasyJSON(out)
+		if in.Event == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+			out.RawString("null")
+		} else {
+			out.RawByte('[')
+			for v5, v6 := range in.Event {
+				if v5 > 0 {
+					out.RawByte(',')
+				}
+				out.Uint64(uint64(v6))
+			}
+			out.RawByte(']')
+		}
 	}
 	out.RawByte('}')
 }
@@ -633,9 +697,9 @@ func easyjsonD2b7633eDecodeKudagoModels6(in *jlexer.Lexer, out *Events) {
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v1 Event
-			(v1).UnmarshalEasyJSON(in)
-			*out = append(*out, v1)
+			var v7 Event
+			(v7).UnmarshalEasyJSON(in)
+			*out = append(*out, v7)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -649,11 +713,11 @@ func easyjsonD2b7633eEncodeKudagoModels6(out *jwriter.Writer, in Events) {
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v2, v3 := range in {
-			if v2 > 0 {
+		for v8, v9 := range in {
+			if v8 > 0 {
 				out.RawByte(',')
 			}
-			(v3).MarshalEasyJSON(out)
+			(v9).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
