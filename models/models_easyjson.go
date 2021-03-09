@@ -106,8 +106,16 @@ func easyjsonD2b7633eDecodeMyappModels1(in *jlexer.Lexer, out *Event) {
 			out.ID = uint64(in.Uint64())
 		case "title":
 			out.Title = string(in.String())
+		case "place":
+			out.Place = string(in.String())
 		case "description":
 			out.Description = string(in.String())
+		case "time":
+			out.Date = string(in.String())
+		case "subway":
+			out.Subway = string(in.String())
+		case "street":
+			out.Street = string(in.String())
 		case "typeEvent":
 			out.TypeEvent = string(in.String())
 		case "image":
@@ -137,9 +145,29 @@ func easyjsonD2b7633eEncodeMyappModels1(out *jwriter.Writer, in Event) {
 		out.String(string(in.Title))
 	}
 	{
+		const prefix string = ",\"place\":"
+		out.RawString(prefix)
+		out.String(string(in.Place))
+	}
+	{
 		const prefix string = ",\"description\":"
 		out.RawString(prefix)
 		out.String(string(in.Description))
+	}
+	{
+		const prefix string = ",\"time\":"
+		out.RawString(prefix)
+		out.String(string(in.Date))
+	}
+	{
+		const prefix string = ",\"subway\":"
+		out.RawString(prefix)
+		out.String(string(in.Subway))
+	}
+	{
+		const prefix string = ",\"street\":"
+		out.RawString(prefix)
+		out.String(string(in.Street))
 	}
 	{
 		const prefix string = ",\"typeEvent\":"

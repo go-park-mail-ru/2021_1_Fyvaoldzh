@@ -27,5 +27,5 @@ func ListenAndServe(e *echo.Echo) {
 	e.Logger.Fatal(e.Start(":1323"))
 }
 
-//curl -v -X POST -H "Content-Type: application/json" -d '{"title": "dada", "description": "yaya", "typeEvent": "rave"}' http://localhost:1323/create
-//curl -X DELETE localhost:1323/event/3
+//curl -v -X POST -H "Content-Type: application/json" -d '{"title": "dada", "description": "yaya", "typeEvent": "rave"}' http://localhost:1323/api/v1/create
+//curl -X DELETE localhost:1323/api/v1/event/3
