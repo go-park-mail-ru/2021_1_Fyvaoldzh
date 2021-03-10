@@ -51,6 +51,7 @@ func NewServer() *echo.Echo {
 	e.GET("/api/v1/profile/:id", profileHandler.GetUserProfile)
 
 	e.GET("/api/v1/profile", profileHandler.GetProfile)
+	e.GET("/api/v1/avatar/:id", profileHandler.GetAvatar)
 
 	e.GET("/api/v1/logout", func(c echo.Context) error {
 		err := loginHandler.Logout(c)

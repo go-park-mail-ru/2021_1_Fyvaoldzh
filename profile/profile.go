@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"kudago/auth"
 	"kudago/models"
 	"log"
@@ -174,6 +175,30 @@ func (h *UserHandler) GetUserProfile(c echo.Context) error {
 	if _, err = easyjson.MarshalToWriter(user, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}
+
+func (h *UserHandler) GetAvatar(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	profile := models.GetOtherUserProfile(id)
+
+	if profile.Uid == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
+	}
+
+	file, err := ioutil.ReadFile(profile.Avatar)
+	if err != nil {
+		log.Println("Cann't open file: " + profile.Avatar)
+	} else {
+			c.Response().Write(file)
 	}
 
 	return nil
