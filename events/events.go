@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"kudago/models"
 	"log"
 	"net/http"
@@ -130,10 +131,37 @@ func (h *Handlers) Save(c echo.Context) error {
 
 	for i := range h.Events {
 		if h.Events[i].ID == uint64(id) {
-			h.Events[i].Image = "kudago/" + fileName
+			h.Events[i].Image = fileName
 			return c.JSON(http.StatusOK, h.Events[i])
 		}
 	}
 
 	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
+}
+
+func (h *Handlers) GetImage(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var event models.Event
+
+	for i := range h.Events {
+		if h.Events[i].ID == uint64(id) {
+			event = h.Events[i]
+			break
+		}
+	}
+
+	file, err := ioutil.ReadFile(event.Image)
+	if err != nil {
+		log.Println("Cann't open file: " + event.Image)
+	} else {
+		c.Response().Write(file)
+	}
+
+	return nil
 }

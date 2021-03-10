@@ -86,6 +86,7 @@ func NewServer() *echo.Echo {
 	e.POST("/api/v1/create", handlers.Create)
 	e.DELETE("/api/v1/event/:id", handlers.Delete)
 	e.POST("/api/v1/save/:id", handlers.Save)
+	e.GET("api/v1/event/:id/image", handlers.GetImage)
 	return e
 }
 
