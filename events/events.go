@@ -22,17 +22,24 @@ type Handlers struct {
 	IdMax  uint64
 }
 
+func (h *Handlers) DeleteByID(id int) bool {
+	for i := range h.Events {
+		if h.Events[i].ID == uint64(id) {
+			h.Events = append(h.Events[:i], h.Events[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 func (h *Handlers) Delete(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	for i := range h.Events {
-		if h.Events[i].ID == uint64(id) {
-			h.Events = append(h.Events[:i], h.Events[i+1:]...)
-			return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" succesfully deleted \n")
-		}
+	if h.DeleteByID(id) {
+		return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" succesfully deleted \n")
 	}
 
 	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
@@ -47,6 +54,16 @@ func (h *Handlers) GetAllEvents(c echo.Context) error {
 	return nil
 }
 
+func (h *Handlers) CreateNewEvent(newEvent *models.Event) {
+	h.Mu.Lock()
+
+	h.IdMax++
+	newEvent.ID = h.IdMax
+
+	h.Events = append(h.Events, *newEvent)
+	h.Mu.Unlock()
+}
+
 func (h *Handlers) Create(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -57,14 +74,19 @@ func (h *Handlers) Create(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	h.Mu.Lock()
+	h.CreateNewEvent(newEvent)
 
-	h.IdMax++
-	newEvent.ID = h.IdMax
-
-	h.Events = append(h.Events, *newEvent)
-	h.Mu.Unlock()
 	return c.JSON(http.StatusOK, *newEvent)
+}
+
+//Как здесь сделать нормальный возврат ошибки? Приходится делать костыли на костыли, чтобы затестить функции. Так со всеми)
+func (h *Handlers) GetOneEventByID(id int) models.Event {
+	for _, event := range h.Events {
+		if event.ID == uint64(id) {
+			return event
+		}
+	}
+	return models.Event{}
 }
 
 func (h *Handlers) GetOneEvent(c echo.Context) error {
@@ -73,28 +95,31 @@ func (h *Handlers) GetOneEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	for _, event := range h.Events {
-		if event.ID == uint64(id) {
-			if _, err = easyjson.MarshalToWriter(event, c.Response().Writer); err != nil {
-				log.Println(err)
-				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			}
-			return nil
+	//Здесь из-за такого подхода вообще хаос какой-то. Дважды вызываем функцию, в общем бред
+	if h.GetOneEventByID(id).ID != 0 {
+		if _, err = easyjson.MarshalToWriter(h.GetOneEventByID(id), c.Response().Writer); err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+		return nil
 	}
 
 	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
 }
 
-func (h *Handlers) GetEvents(c echo.Context) error {
-	typeEvent := c.QueryParam("typeEvent")
+func (h *Handlers) GetEventsByType(typeEvent string) models.Events {
 	var showEvents models.Events
 	for _, event := range h.Events {
 		if event.TypeEvent == typeEvent {
 			showEvents = append(showEvents, event)
 		}
 	}
-	if _, err := easyjson.MarshalToWriter(showEvents, c.Response().Writer); err != nil {
+	return showEvents
+}
+
+func (h *Handlers) GetEvents(c echo.Context) error {
+	typeEvent := c.QueryParam("typeEvent")
+	if _, err := easyjson.MarshalToWriter(h.GetEventsByType(typeEvent), c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -147,18 +172,11 @@ func (h *Handlers) GetImage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	var event models.Event
-
-	for i := range h.Events {
-		if h.Events[i].ID == uint64(id) {
-			event = h.Events[i]
-			break
-		}
-	}
+	event := h.GetOneEventByID(id)
 
 	file, err := ioutil.ReadFile(event.Image)
 	if err != nil {
-		log.Println("Cann't open file: " + event.Image)
+		log.Println("Cannot open file: " + event.Image)
 	} else {
 		c.Response().Write(file)
 	}
