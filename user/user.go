@@ -96,6 +96,7 @@ func (h *HandlerUser) CreateUser(c echo.Context) error {
 		Value:    key,
 		Expires:  time.Now().Add(10 * time.Hour),
 		SameSite: http.SameSiteNoneMode,
+		HttpOnly: true,
 	}
 
 	h.Store[key] = newUser.Id
@@ -132,6 +133,7 @@ func (h *HandlerUser) Login(c echo.Context) error {
 		Value:    key,
 		Expires:  time.Now().Add(10 * time.Hour),
 		SameSite: http.SameSiteNoneMode,
+		HttpOnly: true,
 	}
 
 	h.Store[key] = uid
@@ -434,7 +436,7 @@ func (h *HandlerUser) GetAvatar(c echo.Context) error {
 
 	file, err := ioutil.ReadFile(profile.Avatar)
 	if err != nil {
-		log.Println("Cann't open file: " + profile.Avatar)
+		log.Println("Cannot open file: " + profile.Avatar)
 	} else {
 		c.Response().Write(file)
 	}
