@@ -17,13 +17,13 @@ import (
 	"time"
 )
 
-// ----------bases------------
+// -----------------bases-----------------
 type HandlerUser struct {
-	UserBase []*models.User
+	UserBase    []*models.User
 	ProfileBase []*models.UserOwnProfile
-	PlanningEvent []*models.PlanningEvents
-	Store map[string]int
-	Mu *sync.Mutex
+	UserEvent   []*models.UserEvents
+	Store       map[string]uint64
+	Mu          *sync.Mutex
 }
 
 var UserBase = []*models.User{
@@ -34,47 +34,67 @@ var UserBase = []*models.User{
 
 var ProfileBase = []*models.UserOwnProfile{
 	{1, "Анастасия", "6 февраля 2001 г.", "Москва", "moroz@mail.ru",
-		12, 2, 36, "люблю котиков", "1.png", nil},
+		12, 2, 36, "люблю котиков", "1default.png", nil},
 	{2, "Матрос Матросович Матросов", "7 февраля 1999 г.", "Санкт-Петербург", "matros@mail.ru",
 		77, 15, 1000, "главный матрос на корабле", "1.png", nil},
 	{3, "Почтальон Печкин", "1 марта 1997 г.", "Москва", "pechkin@mail.ru",
 		1000, 99, 123, "ваш любимый почтальон", "2.png", nil},
 }
 
-var PlanningEvent = []*models.PlanningEvents{
+var EventUserBase = []*models.UserEvents{
 	{1, 125},
 	{1, 126},
 	{2, 125},
 	{2, 127},
 }
 
-// -----------global----------
+// -----------------global-----------------
 
 var (
 	letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	id = 4
+	id          = uint64(4)
 )
 
+const n = uint8(32)
 
-// ---------api register----------
+// -----------------api register-----------------
 
 func (h *HandlerUser) CreateUser(c echo.Context) error {
 	defer c.Request().Body.Close()
+
+	cookie, err := c.Cookie("SID")
+	if err == nil && h.Store[cookie.Value] != 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+	}
+
 	newData := &models.RegData{}
 
 	log.Println(c.Request().Body)
-	err := easyjson.UnmarshalFromReader(c.Request().Body, newData)
+	err = easyjson.UnmarshalFromReader(c.Request().Body, newData)
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	id, err = h.CreateUserProfile(newData)
+	if err != nil {
+		return err
+	}
+
+	c.SetCookie(CreateCookie(h, n, id))
+
+	return nil
+}
+
+// -----------------api user-profile-----------------
+
+func (h *HandlerUser) CreateUserProfile(data *models.RegData) (uint64, error) {
 	newUser := &models.User{}
-	newUser.Login = newData.Login
-	newUser.Password = newData.Password
+	newUser.Login = data.Login
+	newUser.Password = data.Password
 
 	if IsExistingUser(h, newUser) {
-		return echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
+		return 0, echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
 	}
 
 	newUser.Id = id
@@ -82,30 +102,16 @@ func (h *HandlerUser) CreateUser(c echo.Context) error {
 
 	newProfile := &models.UserOwnProfile{}
 	newProfile.Uid = newUser.Id
-	newProfile.Name = newData.Name
+	newProfile.Name = data.Name
 
 	h.Mu.Lock()
-	UserBase = append(UserBase, newUser)
-	ProfileBase = append(ProfileBase, newProfile)
+	h.UserBase = append(h.UserBase, newUser)
+	h.ProfileBase = append(h.ProfileBase, newProfile)
 	h.Mu.Unlock()
-
-	key := RandStringRunes(32)
-
-	newCookie := &http.Cookie{
-		Name:     "SID",
-		Value:    key,
-		Expires:  time.Now().Add(10 * time.Hour),
-		SameSite: http.SameSiteNoneMode,
-		HttpOnly: true,
-	}
-
-	h.Store[key] = newUser.Id
-	c.SetCookie(newCookie)
-
-	return nil
+	return newUser.Id, nil
 }
 
-// -----------api login----------
+// -----------------api login-----------------
 
 func (h *HandlerUser) Login(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -116,28 +122,17 @@ func (h *HandlerUser) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
 	}
 
-	key := RandStringRunes(32)
-
 	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	isExisting, uid := isCorrectUser(h, u)
-	if !isExisting {
+	isCorrect, uid := isCorrectUser(h, u)
+	if !isCorrect {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
-	newCookie := &http.Cookie{
-		Name:     "SID",
-		Value:    key,
-		Expires:  time.Now().Add(10 * time.Hour),
-		SameSite: http.SameSiteNoneMode,
-		HttpOnly: true,
-	}
-
-	h.Store[key] = uid
-	c.SetCookie(newCookie)
+	c.SetCookie(CreateCookie(h, n, uid))
 
 	return nil
 }
@@ -163,7 +158,7 @@ func (h *HandlerUser) Logout(c echo.Context) error {
 	return nil
 }
 
-// ---------api profile-----------------
+// -----------------api profile-----------------
 
 func (h *HandlerUser) GetProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -178,17 +173,39 @@ func (h *HandlerUser) GetProfile(c echo.Context) error {
 	}
 
 	profile := GetProfile(h, h.Store[cookie.Value])
+	profile.Event = getUserEvents(h, profile.Uid)
 
-	// некрасиво, но пока
-	for _, value := range h.PlanningEvent {
-		if value.Uid == profile.Uid {
-			profile.Event = append(profile.Event, value.Eid)
+	if _, err = easyjson.MarshalToWriter(profile, c.Response().Writer); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}
+
+func (h *HandlerUser) GetUserProfile(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	user := GetOtherUserProfile(h, uint64(id))
+
+	if user.Uid == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
+	}
+
+	for _, value := range h.UserEvent {
+		if value.Uid == user.Uid {
+			user.Event = append(user.Event, value.Eid)
 		}
 	}
 
-	log.Println(profile)
+	log.Println(user)
 
-	if _, err = easyjson.MarshalToWriter(profile, c.Response().Writer); err != nil {
+	if _, err = easyjson.MarshalToWriter(user, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -214,12 +231,37 @@ func (h *HandlerUser) UpdateProfile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	if httperr := changeProfileData(h, ud, h.Store[cookie.Value]); httperr != nil {
+	httperr := changeProfileData(h, ud, h.Store[cookie.Value])
+	if httperr != nil {
 		return httperr
 	}
 
 	return nil
 }
+func (h *HandlerUser) GetAvatar(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	profile := GetOtherUserProfile(h, uint64(id))
+
+	if profile.Uid == 0 {
+		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
+	}
+
+	file, err := ioutil.ReadFile(profile.Avatar)
+	if err != nil {
+		log.Println("Cannot open file: " + profile.Avatar)
+	} else {
+		c.Response().Write(file)
+	}
+
+	return nil
+}
+
 
 func (h *HandlerUser) UploadAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -266,10 +308,9 @@ func (h *HandlerUser) UploadAvatar(c echo.Context) error {
 	return nil
 }
 
+// -----------------helpful functions-----------------
 
-// ---------helpful functions-----------
-
-func RandStringRunes(n int) string {
+func RandStringRunes(n uint8) string {
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
@@ -277,7 +318,8 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
-// --------------users-------------- //
+// -----------------users-----------------
+
 func IsExistingEMail(h *HandlerUser, email string) bool {
 	for _, value := range h.ProfileBase {
 		if value.Email == email {
@@ -287,7 +329,7 @@ func IsExistingEMail(h *HandlerUser, email string) bool {
 	return false
 }
 
-func GetUser(h *HandlerUser, uid int) *models.User {
+func GetUser(h *HandlerUser, uid uint64) *models.User {
 	for _, value := range h.UserBase {
 		if value.Id == uid {
 			return value
@@ -296,7 +338,7 @@ func GetUser(h *HandlerUser, uid int) *models.User {
 	return &models.User{}
 }
 
-func isCorrectUser(h *HandlerUser, user *models.User) (bool, int) {
+func isCorrectUser(h *HandlerUser, user *models.User) (bool, uint64) {
 	for _, value := range h.UserBase {
 		if value.Login == (*user).Login && value.Password == (*user).Password {
 			return true, value.Id
@@ -314,9 +356,23 @@ func IsExistingUser(h *HandlerUser, user *models.User) bool {
 	return false
 }
 
-// --------------profile------------
+func CreateCookie(h *HandlerUser, n uint8, id uint64) *http.Cookie {
+	key := RandStringRunes(n)
 
-func GetProfile(h *HandlerUser, uid int) *models.UserOwnProfile {
+	newCookie := &http.Cookie{
+		Name:     "SID",
+		Value:    key,
+		Expires:  time.Now().Add(10 * time.Hour),
+		HttpOnly: true,
+	}
+
+	h.Store[key] = id
+	return newCookie
+}
+
+// -----------------profile-----------------
+
+func GetProfile(h *HandlerUser, uid uint64) *models.UserOwnProfile {
 	for _, value := range h.ProfileBase {
 		if value.Uid == uid {
 			return value
@@ -325,7 +381,7 @@ func GetProfile(h *HandlerUser, uid int) *models.UserOwnProfile {
 	return &models.UserOwnProfile{}
 }
 
-func changeProfileData(h *HandlerUser, ud *models.UserData, uid int) error {
+func changeProfileData(h *HandlerUser, ud *models.UserData, uid uint64) error {
 	user := GetUser(h, uid)
 	profile := GetProfile(h, uid)
 
@@ -342,7 +398,6 @@ func changeProfileData(h *HandlerUser, ud *models.UserData, uid int) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
 		}
 		profile.Email = ud.Email
-		//проверка на повторяемость почты
 	}
 
 	if len(ud.About) != 0 {
@@ -351,7 +406,7 @@ func changeProfileData(h *HandlerUser, ud *models.UserData, uid int) error {
 
 	if len(ud.Birthday) != 0 {
 		profile.Birthday = ud.Birthday
-		// код на изменение age
+		// код на изменение age, который будет, когда будет формат даты
 	}
 
 	if len(ud.City) != 0 {
@@ -361,37 +416,7 @@ func changeProfileData(h *HandlerUser, ud *models.UserData, uid int) error {
 	return nil
 }
 
-func (h *HandlerUser) GetUserProfile(c echo.Context) error {
-	defer c.Request().Body.Close()
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	user := GetOtherUserProfile(h, id)
-
-	if user.Uid == 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
-	}
-
-	for _, value := range h.PlanningEvent {
-		if value.Uid == user.Uid {
-			user.Event = append(user.Event, value.Eid)
-		}
-	}
-
-	log.Println(user)
-
-	if _, err = easyjson.MarshalToWriter(user, c.Response().Writer); err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	return nil
-}
-
-func GetOtherUserProfile(h *HandlerUser, uid int) *models.UserProfile {
+func GetOtherUserProfile(h *HandlerUser, uid uint64) *models.UserProfile {
 	value := &models.UserOwnProfile{}
 	flag := false
 
@@ -406,40 +431,17 @@ func GetOtherUserProfile(h *HandlerUser, uid int) *models.UserProfile {
 		return &models.UserProfile{}
 	}
 
-	otherProfile := &models.UserProfile{}
-	otherProfile.Uid = value.Uid
-	otherProfile.Name = value.Name
-	otherProfile.City = value.City
-	otherProfile.About = value.About
-	otherProfile.Followers = value.Followers
-	otherProfile.Avatar = value.Avatar
-	otherProfile.Event = value.Event
-	// здесь оно будет по-умному высчитываться, но пока так
-	otherProfile.Age = 20
-	log.Println(otherProfile)
-	return otherProfile
+	return models.ConvertOwnOther(*value)
 }
 
-func (h *HandlerUser) GetAvatar(c echo.Context) error {
-	defer c.Request().Body.Close()
+func getUserEvents(h *HandlerUser, uid uint64) []uint64 {
+	var events []uint64
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	for _, value := range h.UserEvent {
+		if value.Uid == uid {
+			events = append(events, value.Eid)
+		}
 	}
 
-	profile := GetOtherUserProfile(h, id)
-
-	if profile.Uid == 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
-	}
-
-	file, err := ioutil.ReadFile(profile.Avatar)
-	if err != nil {
-		log.Println("Cannot open file: " + profile.Avatar)
-	} else {
-		c.Response().Write(file)
-	}
-
-	return nil
+	return events
 }

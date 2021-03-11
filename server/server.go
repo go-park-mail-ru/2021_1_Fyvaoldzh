@@ -24,8 +24,8 @@ func NewServer() *echo.Echo {
 	userHandler := user.HandlerUser{
 		UserBase: user.UserBase,
 		ProfileBase: user.ProfileBase,
-		PlanningEvent: user.PlanningEvent,
-		Store: make(map[string]int),
+		UserEvent: user.EventUserBase,
+		Store: make(map[string]uint64),
 		Mu: &sync.Mutex{},
 	}
 
@@ -34,7 +34,7 @@ func NewServer() *echo.Echo {
 	e.POST("/api/v1/register", userHandler.CreateUser)
 
 	e.GET("/api/v1/profile", userHandler.GetProfile)
-	e.POST("/api/v1/profile/:id", userHandler.GetUserProfile)
+	e.GET("/api/v1/profile/:id", userHandler.GetUserProfile)
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 	e.PUT("/api/v1/profile", userHandler.UpdateProfile)
 	e.PUT("/api/v1/upload_avatar", userHandler.UploadAvatar)
