@@ -161,7 +161,9 @@ func TestSaveImage(t *testing.T) {
 	handler.SaveImage(img, 1)
 	if !reflect.DeepEqual(handler.Events[0], ExpectedEventImage) {
 		t.Errorf("expected: [%v], got: [%v]", ExpectedEventImage, handler.Events[0])
+		os.Remove("1.jpg")
 	}
+	os.Remove("1.jpg")
 }
 
 func setupEcho(t *testing.T, url, method string) (echo.Context,
