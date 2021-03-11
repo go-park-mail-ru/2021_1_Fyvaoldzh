@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"kudago/models"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
@@ -79,14 +80,13 @@ func (h *Handlers) Create(c echo.Context) error {
 	return c.JSON(http.StatusOK, *newEvent)
 }
 
-//Как здесь сделать нормальный возврат ошибки? Приходится делать костыли на костыли, чтобы затестить функции. Так со всеми)
-func (h *Handlers) GetOneEventByID(id int) models.Event {
+func (h *Handlers) GetOneEventByID(id int) (models.Event, error) {
 	for _, event := range h.Events {
 		if event.ID == uint64(id) {
-			return event
+			return event, nil
 		}
 	}
-	return models.Event{}
+	return models.Event{}, errors.New("event not found")
 }
 
 func (h *Handlers) GetOneEvent(c echo.Context) error {
@@ -95,16 +95,17 @@ func (h *Handlers) GetOneEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	//Здесь из-за такого подхода вообще хаос какой-то. Дважды вызываем функцию, в общем бред
-	if h.GetOneEventByID(id).ID != 0 {
-		if _, err = easyjson.MarshalToWriter(h.GetOneEventByID(id), c.Response().Writer); err != nil {
-			log.Println(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		return nil
-	}
+	event, err := h.GetOneEventByID(id)
 
-	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
+	}
+	if _, err = easyjson.MarshalToWriter(event, c.Response().Writer); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return nil
+
 }
 
 func (h *Handlers) GetEventsByType(typeEvent string) models.Events {
@@ -126,6 +127,31 @@ func (h *Handlers) GetEvents(c echo.Context) error {
 	return nil
 }
 
+func (h *Handlers) SaveImage(src multipart.File, id int) (models.Event, error) {
+	defer src.Close()
+
+	fileName := fmt.Sprint(id) + ".jpg"
+
+	dst, err := os.Create(fileName)
+	if err != nil {
+		return models.Event{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return models.Event{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	for i := range h.Events {
+		if h.Events[i].ID == uint64(id) {
+			h.Events[i].Image = fileName
+			return h.Events[i], nil
+		}
+	}
+
+	return models.Event{}, echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
+}
+
 func (h *Handlers) Save(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -135,33 +161,16 @@ func (h *Handlers) Save(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-
 	src, err := img.Open()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	defer src.Close()
 
-	fileName := fmt.Sprint(id) + img.Filename
-
-	dst, err := os.Create(fileName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	event, errSave := h.SaveImage(src, id)
+	if errSave != nil {
+		return errSave
 	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	for i := range h.Events {
-		if h.Events[i].ID == uint64(id) {
-			h.Events[i].Image = fileName
-			return c.JSON(http.StatusOK, h.Events[i])
-		}
-	}
-
-	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
+	return c.JSON(http.StatusOK, event)
 }
 
 func (h *Handlers) GetImage(c echo.Context) error {
@@ -172,7 +181,11 @@ func (h *Handlers) GetImage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	event := h.GetOneEventByID(id)
+	event, errFind := h.GetOneEventByID(id)
+
+	if errFind != nil {
+		log.Println("Cannot find file with id: " + fmt.Sprint(id))
+	}
 
 	file, err := ioutil.ReadFile(event.Image)
 	if err != nil {
