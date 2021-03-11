@@ -3,11 +3,8 @@ package server
 import (
 	"kudago/events"
 	"kudago/models"
-	"kudago/profile"
 	"kudago/user"
 	"sync"
-
-	"kudago/auth"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -24,7 +21,13 @@ func NewServer() *echo.Echo {
 		Events: models.BaseEvents,
 		Mu:     &sync.Mutex{},
 	}
-	userHandler := user.HandlerUser{UserBase: user.UserBase, ProfileBase: user.ProfileBase, PlanningEvent: user.PlanningEvent, Store: make(map[string]int), Mu: &sync.Mutex{}}
+	userHandler := user.HandlerUser{
+		UserBase: user.UserBase,
+		ProfileBase: user.ProfileBase,
+		PlanningEvent: user.PlanningEvent,
+		Store: make(map[string]int),
+		Mu: &sync.Mutex{},
+	}
 
 
 	e.POST("/api/v1/login", userHandler.Login)
