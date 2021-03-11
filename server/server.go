@@ -29,7 +29,6 @@ func NewServer() *echo.Echo {
 		Mu: &sync.Mutex{},
 	}
 
-
 	e.POST("/api/v1/login", userHandler.Login)
 	e.GET("/api/v1/logout", userHandler.Logout)
 	e.POST("/api/v1/register", userHandler.CreateUser)
