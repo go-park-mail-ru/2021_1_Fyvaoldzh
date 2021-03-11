@@ -154,7 +154,7 @@ func TestSaveImage(t *testing.T) {
 		Events: EventWithNoImage,
 		Mu:     &sync.Mutex{},
 	}
-	img, err := os.Open("2913aa38efbe34ebdb5a1d642dfa29d8.jpg")
+	img, err := os.Open("../2913aa38efbe34ebdb5a1d642dfa29d8.jpg")
 	if err != nil {
 		t.Error("No such file!")
 	}
