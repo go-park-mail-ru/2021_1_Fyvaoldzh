@@ -22,11 +22,11 @@ func NewServer() *echo.Echo {
 		Mu:     &sync.Mutex{},
 	}
 	userHandler := user.HandlerUser{
-		UserBase: user.UserBase,
+		UserBase:    user.UserBase,
 		ProfileBase: user.ProfileBase,
-		UserEvent: user.EventUserBase,
-		Store: make(map[string]uint64),
-		Mu: &sync.Mutex{},
+		UserEvent:   user.EventUserBase,
+		Store:       make(map[string]uint64),
+		Mu:          &sync.Mutex{},
 	}
 
 	e.POST("/api/v1/login", userHandler.Login)

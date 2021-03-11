@@ -76,12 +76,12 @@ func (h *HandlerUser) CreateUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	id, err = h.CreateUserProfile(newData)
+	uid, err := h.CreateUserProfile(newData)
 	if err != nil {
 		return err
 	}
 
-	c.SetCookie(CreateCookie(h, n, id))
+	c.SetCookie(CreateCookie(h, n, uid))
 
 	return nil
 }
@@ -127,7 +127,7 @@ func (h *HandlerUser) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	isCorrect, uid := isCorrectUser(h, u)
+	isCorrect, uid := IsCorrectUser(h, u)
 	if !isCorrect {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
@@ -186,24 +186,18 @@ func (h *HandlerUser) GetProfile(c echo.Context) error {
 func (h *HandlerUser) GetUserProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	id, err := strconv.Atoi(c.Param("id"))
+	uid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	user := GetOtherUserProfile(h, uint64(id))
+	user := GetOtherUserProfile(h, uint64(uid))
 
 	if user.Uid == 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("user does not exist"))
 	}
 
-	for _, value := range h.UserEvent {
-		if value.Uid == user.Uid {
-			user.Event = append(user.Event, value.Eid)
-		}
-	}
-
-	log.Println(user)
+	user.Event = getUserEvents(h, user.Uid)
 
 	if _, err = easyjson.MarshalToWriter(user, c.Response().Writer); err != nil {
 		log.Println(err)
@@ -241,15 +235,15 @@ func (h *HandlerUser) UpdateProfile(c echo.Context) error {
 func (h *HandlerUser) GetAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	id, err := strconv.Atoi(c.Param("id"))
+	uid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	profile := GetOtherUserProfile(h, uint64(id))
+	profile := GetOtherUserProfile(h, uint64(uid))
 
 	if profile.Uid == 0 {
-		return echo.NewHTTPError(http.StatusInternalServerError, errors.New("user does not exist"))
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("user does not exist"))
 	}
 
 	file, err := ioutil.ReadFile(profile.Avatar)
@@ -261,7 +255,6 @@ func (h *HandlerUser) GetAvatar(c echo.Context) error {
 
 	return nil
 }
-
 
 func (h *HandlerUser) UploadAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -320,15 +313,6 @@ func RandStringRunes(n uint8) string {
 
 // -----------------users-----------------
 
-func IsExistingEMail(h *HandlerUser, email string) bool {
-	for _, value := range h.ProfileBase {
-		if value.Email == email {
-			return true
-		}
-	}
-	return false
-}
-
 func GetUser(h *HandlerUser, uid uint64) *models.User {
 	for _, value := range h.UserBase {
 		if value.Id == uid {
@@ -336,15 +320,6 @@ func GetUser(h *HandlerUser, uid uint64) *models.User {
 		}
 	}
 	return &models.User{}
-}
-
-func isCorrectUser(h *HandlerUser, user *models.User) (bool, uint64) {
-	for _, value := range h.UserBase {
-		if value.Login == (*user).Login && value.Password == (*user).Password {
-			return true, value.Id
-		}
-	}
-	return false, 0
 }
 
 func IsExistingUser(h *HandlerUser, user *models.User) bool {
@@ -356,7 +331,16 @@ func IsExistingUser(h *HandlerUser, user *models.User) bool {
 	return false
 }
 
-func CreateCookie(h *HandlerUser, n uint8, id uint64) *http.Cookie {
+func IsCorrectUser(h *HandlerUser, user *models.User) (bool, uint64) {
+	for _, value := range h.UserBase {
+		if value.Login == (*user).Login && value.Password == (*user).Password {
+			return true, value.Id
+		}
+	}
+	return false, 0
+}
+
+func CreateCookie(h *HandlerUser, n uint8, uid uint64) *http.Cookie {
 	key := RandStringRunes(n)
 
 	newCookie := &http.Cookie{
@@ -366,7 +350,7 @@ func CreateCookie(h *HandlerUser, n uint8, id uint64) *http.Cookie {
 		HttpOnly: true,
 	}
 
-	h.Store[key] = id
+	h.Store[key] = uid
 	return newCookie
 }
 
@@ -444,4 +428,13 @@ func getUserEvents(h *HandlerUser, uid uint64) []uint64 {
 	}
 
 	return events
+}
+
+func IsExistingEMail(h *HandlerUser, email string) bool {
+	for _, value := range h.ProfileBase {
+		if value.Email == email {
+			return true
+		}
+	}
+	return false
 }
