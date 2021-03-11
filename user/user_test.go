@@ -29,7 +29,7 @@ func TestHandlerUser_CreateUserProfileTrue(t *testing.T) {
 }
 
 func TestHandlerUser_CreateUserProfileFalse(t *testing.T) {
-	newData := &models.RegData{Login: "morozik_jr", Password: "123456", Name: "Morozik Jr."}
+	newData := &models.RegData{Login: h.UserBase[0].Login, Password: "123456", Name: "Morozik Jr."}
 	uid, err := h.CreateUserProfile(newData)
 	require.Equal(t, uint64(0), uid, "got id for new user with incorrect reg data")
 	require.NotEqual(t, nil, err, "did not get error with incorrect reg data")
@@ -47,21 +47,19 @@ func TestDifferentKeys(t *testing.T) {
 // -----------------users-----------------
 
 func TestGetUserTrue(t *testing.T) {
-	user := GetUser(h, 1)
-	expUser := &models.User{Id: 1, Login: "moroz", Password: "123456"}
+	user := GetUser(h, h.UserBase[0].Id)
 
-	require.Equal(t, expUser, user, "users are not equal")
+	require.Equal(t, h.UserBase[0], user, "users are not equal")
 }
 
 func TestGetUserFalse(t *testing.T) {
-	user := GetUser(h, 6)
-	expUser := &models.User{}
+	user := GetUser(h, h.UserBase[len(h.UserBase) - 1].Id + 1)
 
-	require.Equal(t, expUser, user, "got user that does not exist")
+	require.Equal(t, &models.User{}, user, "got user that does not exist")
 }
 
 func TestIsExistingUserTrue(t *testing.T) {
-	user := &models.User{Id: 1, Login: "moroz", Password: "123456"}
+	user := h.UserBase[0]
 
 	require.Equal(t, true, IsExistingUser(h, user), "existing user does not exist")
 }
@@ -73,7 +71,7 @@ func TestIsExistingUserFalse(t *testing.T) {
 }
 
 func TestIsCorrectUserTrue(t *testing.T) {
-	user := &models.User{Id: 1, Login: "moroz", Password: "123456"}
+	user := h.UserBase[0]
 
 	flag, uid := IsCorrectUser(h, user)
 	require.Equal(t, true, flag, "correct user is not correct")
@@ -107,33 +105,32 @@ func TestCreateCookie(t *testing.T) {
 // -----------------profiles-----------------
 
 func TestGetProfileTrue(t *testing.T) {
-	profile := &models.UserOwnProfile{Uid: 1, Name: "Анастасия", Birthday: "6 февраля 2001 г.", City: "Москва", Email: "moroz@mail.ru",
-		Visited: 12, Planning: 2, Followers: 36, About: "люблю котиков", Avatar: "1default.png"}
+	profile := h.ProfileBase[0]
 
 	require.Equal(t, profile, GetProfile(h, profile.Uid), "existing mail does not exist")
 }
 
 func TestGetProfileFalse(t *testing.T) {
-	require.Equal(t, &models.UserOwnProfile{}, GetProfile(h, 6), "returns not existing profile")
+	require.Equal(t, &models.UserOwnProfile{}, GetProfile(h, h.ProfileBase[len(h.ProfileBase) - 1].Uid + 1), "returns not existing profile")
 }
 
 func TestChangesProfileDataTrue(t *testing.T) {
 	profile := &models.UserData{Name: "Матрос", Birthday: "6 марта 1999 г.", City: "Санкт-Петербург", Email: "matrosik@mail.ru",
 		About: "люблю котиков", Avatar: "1default.png"}
 
-	require.Equal(t, nil, changeProfileData(h, profile, 2), "returns error on correct data")
+	require.Equal(t, nil, changeProfileData(h, profile, h.UserBase[0].Id), "returns error on correct data")
 }
 
 func TestChangesProfileDataFalse(t *testing.T) {
-	profile := &models.UserData{Email: "moroz@mail.ru"}
+	profile := &models.UserData{Email: h.ProfileBase[0].Email}
 
 	require.NotEqual(t, nil, changeProfileData(h, profile, 2), "does not catch changed repeated mail")
 }
 
 func TestGetOtherUserProfileTrue(t *testing.T) {
-	profile := &models.UserProfile{Uid: 1, Name: "Анастасия", Age: 20, City: "Москва", Followers: 36, About: "люблю котиков", Avatar: "1default.png"}
+	profile := &models.UserProfile{Uid: 2, Name: "Матрос Матросович Матросов", Age: 20, City: "Санкт-Петербург", Followers: 1000, About: "главный матрос на корабле", Avatar: "1.png"}
 
-	require.Equal(t, profile, GetOtherUserProfile(h, 1), "gets incorrect profile")
+	require.Equal(t, profile, GetOtherUserProfile(h, 2), "gets incorrect profile")
 }
 
 func TestGetOtherUserProfileFalse(t *testing.T) {
@@ -145,8 +142,7 @@ func TestGetUserEvents(t *testing.T) {
 }
 
 func TestIsExistingMailTrue(t *testing.T) {
-	profile := &models.UserOwnProfile{Uid: 1, Name: "Анастасия", Birthday: "6 февраля 2001 г.", City: "Москва", Email: "moroz@mail.ru",
-		Visited: 12, Planning: 2, Followers: 36, About: "люблю котиков", Avatar: "1default.png"}
+	profile := h.ProfileBase[0]
 
 	require.Equal(t, true, IsExistingEMail(h, profile.Email), "existing mail does not exist")
 }
