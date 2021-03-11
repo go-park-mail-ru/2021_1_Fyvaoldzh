@@ -1,8 +1,12 @@
 package user
 
 import (
+	"bytes"
+	"github.com/labstack/echo"
 	"github.com/stretchr/testify/require"
 	"kudago/models"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 )
@@ -152,4 +156,82 @@ func TestIsExistingMailFalse(t *testing.T) {
 		Visited: 12, Planning: 2, Followers: 36, About: "люблю котиков", Avatar: "1default.png"}
 
 	require.Equal(t, false, IsExistingEMail(h, profile.Email), "not existing mail does exist")
+}
+
+// -----------------network-----------------
+
+func setupEcho(t *testing.T, url, method string) (echo.Context,
+	HandlerUser) {
+	user := models.User{Login: "moroz", Password: "123456"}
+	e := echo.New()
+	var req *http.Request
+	switch method {
+	case http.MethodPost:
+		f, _ := user.MarshalJSON()
+		req = httptest.NewRequest(http.MethodGet, url, bytes.NewBuffer(f))
+	case http.MethodGet:
+		req = httptest.NewRequest(http.MethodGet, url, nil)
+	}
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath(url)
+
+	uh := HandlerUser{
+		UserBase:    UserBase,
+		ProfileBase: ProfileBase,
+		UserEvent:   EventUserBase,
+		Store:       make(map[string]uint64),
+		Mu:          &sync.Mutex{},
+	}
+	return c, uh
+}
+
+func TestHandlerUser_Logout(t *testing.T) {
+	c, uh := setupEcho(t, "/api/v1/profile/logout", http.MethodGet)
+
+	err := uh.Logout(c)
+	require.NotEqual(t, nil, err)
+}
+
+func TestHandlerUser_GetProfileTrue(t *testing.T) {
+	c, uh := setupEcho(t, "/api/v1/profile/:id", http.MethodGet)
+	c.SetParamNames("id")
+	c.SetParamValues("1")
+
+	err := uh.GetUserProfile(c)
+	require.Equal(t, nil, err)
+}
+
+func TestHandlerUser_GetProfileFalse(t *testing.T) {
+	c, uh := setupEcho(t, "/api/v1/profile/:id", http.MethodGet)
+	c.SetParamNames("id")
+	c.SetParamValues("aaa")
+
+	err := uh.GetUserProfile(c)
+	require.NotEqual(t, nil, err)
+}
+
+func TestHandlerUser_GetAvatarTrue(t *testing.T) {
+	c, uh := setupEcho(t, "/api/v1/avatar/:id", http.MethodGet)
+	c.SetParamNames("id")
+	c.SetParamValues("1")
+
+	err := uh.GetAvatar(c)
+	require.Equal(t, nil, err)
+}
+
+func TestHandlerUser_GetAvatarFalse(t *testing.T) {
+	c, uh := setupEcho(t, "/api/v1/avatar/:id", http.MethodGet)
+	c.SetParamNames("id")
+	c.SetParamValues("u")
+
+	err := uh.GetUserProfile(c)
+	require.NotEqual(t, nil, err)
+}
+
+func TestHandlerUser_LoginTrue(t *testing.T) {
+	c, uh := setupEcho(t, "/api/v1/login", http.MethodPost)
+
+	err := uh.Login(c)
+	require.Equal(t, nil, err)
 }
