@@ -3,10 +3,13 @@ package user
 import "kudago/models"
 
 type Repository interface {
-	Add(user *models.RegData) (err error)
-	Update(id uint, upUser *models.User) error
-	GetByIdOther(id uint) (user *models.User, err error)
-	GetByIdOwn(id uint) (user *models.User, err error)
-	GetByName(login string) (user *models.User, err error)
+	Add(user *models.RegData) (uint64, error)
+	Update(id uint64, upUser *models.UserData) error
+	GetByIdOther(id uint64) (*models.User, error)
+	GetByIdOwn(id uint64) (*models.UserData, error)
+	GetByName(login string) (*models.User, error)
+	IsExisting(login string) (bool, error)
+	IsExistingEmail(login string) (bool, error)
+	IsCorrect(user *models.User) (uint64, error)
 
 }

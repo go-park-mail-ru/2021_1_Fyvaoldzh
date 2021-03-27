@@ -5,29 +5,31 @@ import (
 	"github.com/mailru/easyjson"
 	"kudago/application/user"
 	"kudago/models"
+	"kudago/pkg/constants"
+	"kudago/pkg/generator"
 	"log"
 	"net/http"
+	"time"
 )
 
 type UserHandler struct {
 	UseCase user.UseCase
+	Store       map[string]uint64
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase){
 
-	userHandler := UserHandler{UseCase: uc}
+	userHandler := UserHandler{UseCase: uc, Store: map[string]uint64{}}
 
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout", userHandler.Logout)
 	e.POST("/api/v1/register", userHandler.Register)
 	e.PUT("/api/v1/profile", userHandler.Update)
 	e.PUT("/api/v1/upload_avatar", userHandler.UploadAvatar)
-
 }
 
 
 func (h *UserHandler) Login(c echo.Context) error {
-	/*
 	defer c.Request().Body.Close()
 	u := &models.User{}
 
@@ -41,27 +43,20 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	hash := sha256.New()
-	hash.Write([]byte(u.Password))
-	u.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
+	uid, err := h.UseCase.Login(u)
 
-	isCorrect, uid := IsCorrectUser(h, u)
-	if !isCorrect {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	if err != nil {
+		return err
 	}
 
 	c.SetCookie(h.CreateCookie(constants.CookieLength, uid))
-	*/
-
-
 	return nil
 }
 
 func (h *UserHandler) Logout(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	/*
-	cookie, err := c.Cookie("SID")
+	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
@@ -76,47 +71,32 @@ func (h *UserHandler) Logout(c echo.Context) error {
 	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
 
-	 */
-
 	return nil
 }
 
 func (h *UserHandler) Register(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	newData := &models.RegData{}
-
-	err := easyjson.UnmarshalFromReader(c.Request().Body, newData)
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	h.UseCase.Add(newData)
-	/*
-	cookie, err := c.Cookie("SID")
+	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err == nil && h.Store[cookie.Value] != 0 {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
 	}
 
-
 	newData := &models.RegData{}
 
-	log.Println(c.Request().Body)
 	err = easyjson.UnmarshalFromReader(c.Request().Body, newData)
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := h.CreateUserProfile(newData)
-	if err != nil {
+	uid, err := h.UseCase.Add(newData)
+
+	if err != nil{
 		return err
 	}
 
 	c.SetCookie(h.CreateCookie(constants.CookieLength, uid))
-
-	 */
 
 	return nil
 }
@@ -124,9 +104,8 @@ func (h *UserHandler) Register(c echo.Context) error {
 func (h *UserHandler) Update(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	/*
 
-	cookie, err := c.Cookie("SID")
+	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
@@ -141,17 +120,17 @@ func (h *UserHandler) Update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	httperr := changeProfileData(h, ud, h.Store[cookie.Value])
-	if httperr != nil {
-		return httperr
+	err = h.UseCase.Update(h.Store[cookie.Value], ud)
+
+	if err != nil {
+		return err
 	}
 
-	 */
 
 	return nil
 }
 
-/*
+
 func (h *UserHandler) CreateCookie(n uint8, uid uint64) *http.Cookie {
 
 	key := generator.RandStringRunes(n)
@@ -167,41 +146,8 @@ func (h *UserHandler) CreateCookie(n uint8, uid uint64) *http.Cookie {
 	return newCookie
 }
 
-func CreateProfileHandler(e *echo.Echo, uc profile.UseCase) error {
-
-	profileHandler := ProfileHandler{useCase: uc}
-
-	e.PUT("/api/v1/upload_avatar", profileHandler.UploadAvatar)
-	return nil
-}
-
-func (h *UserHandler) CreateProfile(data *models.RegData) (uint64, error) {
-	newUser := &models.User{}
-	newUser.Login = data.Login
-
-	hash := sha256.New()
-	hash.Write([]byte(data.Password))
-	newUser.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
-
-	if IsExistingUser(h, newUser) {
-		return 0, echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
-	}
 
 
-	h.Mu.Lock()
-	newUser.Id = id
-	id++
-
-	newProfile := &models.UserOwnProfile{}
-	newProfile.Uid = newUser.Id
-	newProfile.Name = data.Name
-	h.UserBase = append(h.UserBase, newUser)
-	h.ProfileBase = append(h.ProfileBase, newProfile)
-	h.Mu.Unlock()
-	return newUser.Id, nil
-}
-
- */
 
 func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 	defer c.Request().Body.Close()

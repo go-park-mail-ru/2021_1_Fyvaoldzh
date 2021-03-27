@@ -2,7 +2,7 @@ package server
 
 import (
 	"database/sql"
-	_ "github.com/jackc/pgx/v4"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
@@ -33,6 +33,12 @@ func NewServer() *echo.Echo {
 		AllowOrigins:     []string{"*"},
 		AllowCredentials: true,
 	}))
+
+	userRep := repository.NewUserDatabase(getPostgres())
+	userUC := usecase.NewUser(userRep)
+
+	http.CreateUserHandler(e, userUC)
+
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: "header:X-XSRF-TOKEN",
 	//}))
@@ -61,10 +67,5 @@ func NewServer() *echo.Echo {
 }
 
 func ListenAndServe(e *echo.Echo) {
-
-	userRep := repository.NewUserDatabase(getPostgres())
-	userUC := usecase.NewUser(userRep)
-
-	http.CreateUserHandler(e, userUC)
 	e.Logger.Fatal(e.Start(":1323"))
 }
