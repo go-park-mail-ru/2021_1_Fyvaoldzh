@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-var h = &HandlerUser{
+var h = &UserHandler{
 	UserBase:    UserBase,
 	ProfileBase: ProfileBase,
 	UserEvent:   EventUserBase,
@@ -128,13 +128,13 @@ func TestChangesProfileDataFalse(t *testing.T) {
 }
 
 func TestGetOtherUserProfileTrue(t *testing.T) {
-	profile := &models.UserProfile{Uid: 2, Name: "Матрос Матросович Матросов", Age: 20, City: "Санкт-Петербург", Followers: 1000, About: "главный матрос на корабле", Avatar: "1.png"}
+	profile := &models.OtherUserProfile{Uid: 2, Name: "Матрос Матросович Матросов", Age: 20, City: "Санкт-Петербург", Followers: 1000, About: "главный матрос на корабле", Avatar: "1.png"}
 
 	require.Equal(t, profile, GetOtherUserProfile(h, 2), "gets incorrect profile")
 }
 
 func TestGetOtherUserProfileFalse(t *testing.T) {
-	require.Equal(t, &models.UserProfile{}, GetOtherUserProfile(h, 6), "does not catch changed repeated mail")
+	require.Equal(t, &models.OtherUserProfile{}, GetOtherUserProfile(h, 6), "does not catch changed repeated mail")
 }
 
 func TestGetUserEvents(t *testing.T) {
@@ -157,7 +157,7 @@ func TestIsExistingMailFalse(t *testing.T) {
 // -----------------network-----------------
 
 func setupEcho(t *testing.T, url, method string) (echo.Context,
-	HandlerUser) {
+	UserHandler) {
 	user := models.User{Login: "moroz", Password: "123456"}
 	e := echo.New()
 	var req *http.Request
@@ -172,7 +172,7 @@ func setupEcho(t *testing.T, url, method string) (echo.Context,
 	c := e.NewContext(req, rec)
 	c.SetPath(url)
 
-	uh := HandlerUser{
+	uh := UserHandler{
 		UserBase:    UserBase,
 		ProfileBase: ProfileBase,
 		UserEvent:   EventUserBase,
@@ -194,7 +194,7 @@ func TestHandlerUser_GetProfileTrue(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("1")
 
-	err := uh.GetUserProfile(c)
+	err := uh.GetOtherUserProfile(c)
 	require.Equal(t, nil, err)
 }
 
@@ -203,7 +203,7 @@ func TestHandlerUser_GetProfileFalse(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("aaa")
 
-	err := uh.GetUserProfile(c)
+	err := uh.GetOtherUserProfile(c)
 	require.NotEqual(t, nil, err)
 }
 
@@ -221,7 +221,7 @@ func TestHandlerUser_GetAvatarFalse(t *testing.T) {
 	c.SetParamNames("id")
 	c.SetParamValues("u")
 
-	err := uh.GetUserProfile(c)
+	err := uh.GetOtherUserProfile(c)
 	require.NotEqual(t, nil, err)
 }
 

@@ -6,14 +6,7 @@ type User struct {
 	Password string `json:"password"`
 }
 
-type RegData struct {
-	Id       uint64
-	Name     string `json:"name"`
-	Login    string `json:"login"`
-	Password string `json:"password"`
-}
-
-type UserProfile struct {
+type OtherUserProfile struct {
 	Uid       uint64
 	Name      string   `json:"name"`
 	Age       uint8    `json:"age"`
@@ -53,8 +46,8 @@ type UserEvents struct {
 	Eid uint64
 }
 
-func ConvertOwnOther(own UserOwnProfile) *UserProfile {
-	otherProfile := &UserProfile{}
+func ConvertOwnOther(own UserOwnProfile) *OtherUserProfile {
+	otherProfile := &OtherUserProfile{}
 	otherProfile.Uid = own.Uid
 	otherProfile.Name = own.Name
 	otherProfile.City = own.City
@@ -66,4 +59,11 @@ func ConvertOwnOther(own UserOwnProfile) *UserProfile {
 	otherProfile.Age = 20
 
 	return otherProfile
+}
+
+type RegData struct {
+	Id       uint64
+	Name     string `json:"name"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
 }

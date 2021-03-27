@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjsonD2b7633eDecodeKudagoModels(in *jlexer.Lexer, out *UserProfile) {
+func easyjsonD2b7633eDecodeKudagoModels(in *jlexer.Lexer, out *OtherUserProfile) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -83,7 +83,7 @@ func easyjsonD2b7633eDecodeKudagoModels(in *jlexer.Lexer, out *UserProfile) {
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoModels(out *jwriter.Writer, in UserProfile) {
+func easyjsonD2b7633eEncodeKudagoModels(out *jwriter.Writer, in OtherUserProfile) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -142,26 +142,26 @@ func easyjsonD2b7633eEncodeKudagoModels(out *jwriter.Writer, in UserProfile) {
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v UserProfile) MarshalJSON() ([]byte, error) {
+func (v OtherUserProfile) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjsonD2b7633eEncodeKudagoModels(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v UserProfile) MarshalEasyJSON(w *jwriter.Writer) {
+func (v OtherUserProfile) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjsonD2b7633eEncodeKudagoModels(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *UserProfile) UnmarshalJSON(data []byte) error {
+func (v *OtherUserProfile) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjsonD2b7633eDecodeKudagoModels(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *UserProfile) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *OtherUserProfile) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoModels(l, v)
 }
 func easyjsonD2b7633eDecodeKudagoModels1(in *jlexer.Lexer, out *UserOwnProfile) {
