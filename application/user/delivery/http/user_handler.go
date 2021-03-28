@@ -9,6 +9,7 @@ import (
 	"kudago/pkg/generator"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -24,6 +25,8 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase){
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout", userHandler.Logout)
 	e.POST("/api/v1/register", userHandler.Register)
+	e.GET("/api/v1/profile", userHandler.GetOwnProfile)
+	e.GET("/api/v1/profile/:id", userHandler.GetOtherUserProfile)
 	e.PUT("/api/v1/profile", userHandler.Update)
 	e.PUT("/api/v1/upload_avatar", userHandler.UploadAvatar)
 }
@@ -114,7 +117,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	ud := &models.UserData{}
+	ud := &models.UserOwnProfile{}
 	err = easyjson.UnmarshalFromReader(c.Request().Body, ud)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -148,10 +151,9 @@ func (h *UserHandler) CreateCookie(n uint8, uid uint64) *http.Cookie {
 
 
 
-
+// TODO: отправляется вместе с некорректным id
 func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
-	/*
 
 	cookie, err := c.Cookie("SID")
 	if err != nil {
@@ -162,43 +164,38 @@ func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	profile := GetProfile(h, h.Store[cookie.Value])
-	profile.Event = getUserEvents(h, profile.Uid)
+	usr, err := h.UseCase.GetOwnProfile(h.Store[cookie.Value])
+	if err != nil {
+		return err
+	}
 
-	if _, err = easyjson.MarshalToWriter(profile, c.Response().Writer); err != nil {
+	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-
-	 */
 	return nil
 }
 
 func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	/*
 	uid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	user := GetOtherUserProfile(h, uint64(uid))
+	usr, err := h.UseCase.GetOtherProfile(uint64(uid))
 
-	if user.Uid == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.New("user does not exist"))
+	if err != nil{
+		return err
 	}
 
-	user.Event = getUserEvents(h, user.Uid)
-
-	if _, err = easyjson.MarshalToWriter(user, c.Response().Writer); err != nil {
+	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-
-	 */
 	return nil
 }
 

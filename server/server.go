@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"database/sql"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
@@ -34,7 +36,18 @@ func NewServer() *echo.Echo {
 		AllowCredentials: true,
 	}))
 
-	userRep := repository.NewUserDatabase(getPostgres())
+	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = pool.Ping(context.Background()) // вот тут будет первое подключение к базе
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	userRep := repository.NewUserDatabase(pool)
+
 	userUC := usecase.NewUser(userRep)
 
 	http.CreateUserHandler(e, userUC)
