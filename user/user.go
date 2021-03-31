@@ -20,6 +20,7 @@ var UserBase = []*models.User{
 	{3, "mail", "123456"},
 }
 
+/*
 var ProfileBase = []*models.UserOwnProfile{
 	{1, "Анастасия", "6 февраля 2001 г.", "Москва", "moroz@mail.ru",
 		12, 2, 36, "люблю котиков", "1default.png", nil},
@@ -27,7 +28,7 @@ var ProfileBase = []*models.UserOwnProfile{
 		77, 15, 1000, "главный матрос на корабле", "1.png", nil},
 	{3, "Почтальон Печкин", "1 марта 1997 г.", "Москва", "pechkin@mail.ru",
 		1000, 99, 123, "ваш любимый почтальон", "2.png", nil},
-}
+}*/
 
 var EventUserBase = []*models.UserEvents{
 	{1, 125},

@@ -8,6 +8,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
+	"github.com/tarantool/go-tarantool"
 	"kudago/application/user/delivery/http"
 	"kudago/application/user/repository"
 	"kudago/application/user/usecase"
@@ -50,11 +51,28 @@ func NewServer() *echo.Echo {
 
 	userUC := usecase.NewUser(userRep)
 
+	conn, err := tarantool.Connect("127.0.0.1:3301", tarantool.Opts{
+		User: "admin",
+		Pass: "fyvaoldzh",
+	})
+
+	if err != nil {
+		log.Fatalf("Connection refused")
+	}
+
+	defer conn.Close()
+
 	http.CreateUserHandler(e, userUC)
 
-	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-	//	TokenLookup: "header:X-XSRF-TOKEN",
-	//}))
+
+
+
+	//subRep :=
+
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		TokenLookup: "header:X-XSRF-TOKEN",
+		CookieHTTPOnly: true,
+	}))
 
 
 

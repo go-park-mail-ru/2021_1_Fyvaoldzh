@@ -20,27 +20,30 @@ type OtherUserProfile struct {
 	City      string   `json:"city"`
 	About     string   `json:"about"`
 	Avatar    string   `json:"avatar"`
-	Visited   []uint64   `json:"visited"`
-	Planning  []uint64   `json:"planning"`
-	Followers []uint64   `json:"followers"`
+	Visited   []uint64 `json:"visited"`
+	Planning  []uint64 `json:"planning"`
+	Followers []uint64 `json:"followers"`
 }
 
 type UserOwnProfile struct {
 	Uid       uint64
 	Name      string   `json:"name"`
+	Login     string   `json:"login"`
 	Birthday  string   `json:"birthday"`
 	City      string   `json:"city"`
 	Email     string   `json:"email"`
-	Visited   []uint64   `json:"visited"`
-	Planning  []uint64   `json:"planning"`
-	Followers []uint64   `json:"followers"`
+	Visited   []uint64 `json:"visited"`
+	Planning  []uint64 `json:"planning"`
+	Followers []uint64 `json:"followers"`
 	About     string   `json:"about"`
 	Avatar    string   `json:"avatar"`
 	Password  string   `json:"password"`
 }
 
 type UserData struct {
+	Id		uint64
 	Name     sql.NullString
+	Login    string
 	Birthday sql.NullTime
 	City     sql.NullString
 	Email    sql.NullString
@@ -56,24 +59,28 @@ type UserEvents struct {
 
 func ConvertToOwn(own UserData) *UserOwnProfile {
 	var usr UserOwnProfile
+	usr.Uid = own.Id
 	usr.About = own.About.String
 	usr.Email = own.Email.String
 	//usr.Password = own.Password.String
 	usr.Name = own.Name.String
+	usr.Login = own.Login
 	usr.Birthday = own.Birthday.Time.Format(constants.TimeFormat)
 	usr.Avatar = own.Avatar.String
 	usr.City = own.City.String
 	return &usr
 }
 
-// TODO: возраст считается неправильно
 func ConvertToOther(own UserData) *OtherUserProfile {
 	var usr OtherUserProfile
+	usr.Uid = own.Id
 	usr.About = own.About.String
 	//usr.Password = own.Password.String
 	usr.Name = own.Name.String
 	if own.Birthday.Valid {
-		usr.Age = uint8(math.Round(own.Birthday.Time.Sub(time.Now()).Seconds() / 31207680))
+		dif := own.Birthday.Time.Sub(time.Now())
+		secdif := math.Abs(dif.Seconds())
+		usr.Age = uint8(secdif / 31536000)
 	}
 	usr.Avatar = own.Avatar.String
 	usr.City = own.City.String
@@ -86,5 +93,3 @@ type RegData struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
-
-

@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
+	"github.com/tarantool/go-tarantool"
 	"kudago/application/user"
 	"kudago/models"
 	"kudago/pkg/constants"
@@ -15,6 +16,7 @@ import (
 
 type UserHandler struct {
 	UseCase user.UseCase
+	Conn *tarantool.Connection
 	Store       map[string]uint64
 }
 
@@ -28,7 +30,9 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase){
 	e.GET("/api/v1/profile", userHandler.GetOwnProfile)
 	e.GET("/api/v1/profile/:id", userHandler.GetOtherUserProfile)
 	e.PUT("/api/v1/profile", userHandler.Update)
-	e.PUT("/api/v1/upload_avatar", userHandler.UploadAvatar)
+	e.POST("/api/v1/check_user", userHandler.CheckUser)
+	e.POST("/api/v1/upload_avatar", userHandler.UploadAvatar)
+	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 }
 
 
@@ -46,7 +50,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := h.UseCase.Login(u)
+	uid, err := h.UseCase.CheckUser(u)
 
 	if err != nil {
 		return err
@@ -149,9 +153,6 @@ func (h *UserHandler) CreateCookie(n uint8, uid uint64) *http.Cookie {
 	return newCookie
 }
 
-
-
-// TODO: отправляется вместе с некорректным id
 func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -187,7 +188,7 @@ func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 
 	usr, err := h.UseCase.GetOtherProfile(uint64(uid))
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -203,7 +204,6 @@ func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 func (h *UserHandler) UploadAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	/*
 	cookie, err := c.Cookie("SID")
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
@@ -213,8 +213,6 @@ func (h *UserHandler) UploadAvatar(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	user := GetUser(h, h.Store[cookie.Value])
-	profile := GetProfile(h, user.Id)
 
 	img, err := c.FormFile("avatar")
 	if err != nil {
@@ -225,52 +223,51 @@ func (h *UserHandler) UploadAvatar(c echo.Context) error {
 		return nil
 	}
 
-	src, err := img.Open()
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	defer src.Close()
+	err = h.UseCase.UploadAvatar(h.Store[cookie.Value], img)
 
-	fileName := fmt.Sprint(user.Id) + img.Filename
-	dst, err := os.Create(fileName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	defer dst.Close()
-
-	if _, err = io.Copy(dst, src); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	profile.Avatar = fileName
-
-	 */
 	return nil
 }
 
 func (h *UserHandler) GetAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	/*
 	uid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	profile := GetOtherUserProfile(h, uint64(uid))
+	file, err := h.UseCase.GetAvatar(uint64(uid))
 
-	if profile.Uid == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, errors.New("user does not exist"))
-	}
-
-	file, err := ioutil.ReadFile(profile.Avatar)
 	if err != nil {
-		log.Println("Cannot open file: " + profile.Avatar)
-	} else {
-		c.Response().Write(file)
+		return err
+	}
+	c.Response().Write(file)
+
+	return nil
+}
+
+func (h *UserHandler) CheckUser(c echo.Context) error {
+	cookie, err := c.Cookie("SID")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	 */
+	if h.Store[cookie.Value] == 0 {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	u := &models.User{}
+
+	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	_, err = h.UseCase.CheckUser(u)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

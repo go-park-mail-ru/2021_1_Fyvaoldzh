@@ -13,5 +13,6 @@ require (
 	github.com/mailru/easyjson v0.7.7
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/tarantool/go-tarantool v0.0.0-20210330210617-56fe55c5fa5c // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 )

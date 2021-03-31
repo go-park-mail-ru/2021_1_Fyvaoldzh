@@ -3,11 +3,17 @@ package usecase
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"github.com/labstack/echo"
+	"io"
+	"io/ioutil"
 	"kudago/application/user"
 	"kudago/models"
 	"kudago/pkg/constants"
+	"kudago/pkg/generator"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -19,7 +25,7 @@ func NewUser(u user.Repository) user.UseCase {
 	return &User{repo: u}
 }
 
-func (uc User) Login(u *models.User) (uint64, error) {
+func (uc User) CheckUser(u *models.User) (uint64, error) {
 	hash := sha256.New()
 	hash.Write([]byte(u.Password))
 	u.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
@@ -157,4 +163,49 @@ func (uc User) Update(uid uint64, ud *models.UserOwnProfile) error {
 	}
 
 	return nil
+}
+
+func (uc User) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
+	src, err := img.Open()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer src.Close()
+
+	fileName := "public/" + fmt.Sprint(uid) + generator.RandStringRunes(6) + img.Filename
+	dst, err := os.Create(fileName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = uc.repo.ChangeAvatar(uid, fileName)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (uc User) GetAvatar(uid uint64) ([]byte, error) {
+	usr, err := uc.repo.GetByIdOwn(uid)
+
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if usr.Avatar.Valid {
+		file, err := ioutil.ReadFile(usr.Avatar.String)
+		if err != nil {
+			return []byte{}, echo.NewHTTPError(http.StatusInternalServerError, "Cannot open file")
+		}
+		return file, nil
+	}
+
+	return []byte{}, err
 }

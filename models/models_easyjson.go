@@ -41,6 +41,8 @@ func easyjsonD2b7633eDecodeKudagoModels(in *jlexer.Lexer, out *UserOwnProfile) {
 			out.Uid = uint64(in.Uint64())
 		case "name":
 			out.Name = string(in.String())
+		case "login":
+			out.Login = string(in.String())
 		case "birthday":
 			out.Birthday = string(in.String())
 		case "city":
@@ -145,6 +147,11 @@ func easyjsonD2b7633eEncodeKudagoModels(out *jwriter.Writer, in UserOwnProfile) 
 		const prefix string = ",\"name\":"
 		out.RawString(prefix)
 		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"login\":"
+		out.RawString(prefix)
+		out.String(string(in.Login))
 	}
 	{
 		const prefix string = ",\"birthday\":"
