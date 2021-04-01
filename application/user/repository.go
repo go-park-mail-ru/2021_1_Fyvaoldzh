@@ -10,7 +10,9 @@ type Repository interface {
 	IsExisting(login string) (bool, error)
 	IsExistingEmail(login string) (bool, error)
 	IsCorrect(user *models.User) (uint64, error)
+	// TODO: можно вынести в подписки и тыкать на уровне usecase в подписки?
 	GetPlanningEvents(id uint64) ([]uint64, error)
 	GetVisitedEvents(id uint64) ([]uint64, error)
 	GetFollowers(id uint64) ([]uint64, error)
 }
+

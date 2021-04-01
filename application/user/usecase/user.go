@@ -64,11 +64,11 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 	}
 
 	other := models.ConvertToOther(*usr)
-	other.Visited, err = uc.repo.GetVisitedEvents(id)
+	other.Planning, err = uc.repo.GetPlanningEvents(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
-	other.Planning, err = uc.repo.GetPlanningEvents(id)
+	other.Visited, err = uc.repo.GetVisitedEvents(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
@@ -90,18 +90,23 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 
 	own := models.ConvertToOwn(*usr)
 
-	own.Visited, err = uc.repo.GetVisitedEvents(id)
-	if err != nil {
-		return &models.UserOwnProfile{}, err
-	}
 	own.Planning, err = uc.repo.GetPlanningEvents(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
+
+	own.Visited, err = uc.repo.GetVisitedEvents(id)
+	if err != nil {
+		return &models.UserOwnProfile{}, err
+	}
+
+
 	own.Followers, err = uc.repo.GetFollowers(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
+
+
 
 	return own, nil
 }

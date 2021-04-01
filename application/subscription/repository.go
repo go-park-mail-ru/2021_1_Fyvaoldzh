@@ -1,4 +1,4 @@
-package subscriptions
+package subscription
 
 type Repository interface {
 	SubscribeUser(uid1 uint64, uid2 uint64) error

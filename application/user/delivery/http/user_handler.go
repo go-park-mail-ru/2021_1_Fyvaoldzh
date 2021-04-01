@@ -3,11 +3,11 @@ package http
 import (
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
-	"github.com/tarantool/go-tarantool"
 	"kudago/application/user"
 	"kudago/models"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
+	"kudago/pkg/infrastructure"
 	"log"
 	"net/http"
 	"strconv"
@@ -16,13 +16,12 @@ import (
 
 type UserHandler struct {
 	UseCase user.UseCase
-	Conn *tarantool.Connection
-	Store       map[string]uint64
+	Sm      *infrastructure.SessionManager
 }
 
-func CreateUserHandler(e *echo.Echo, uc user.UseCase){
+func CreateUserHandler(e *echo.Echo, uc user.UseCase, sm *infrastructure.SessionManager) {
 
-	userHandler := UserHandler{UseCase: uc, Store: map[string]uint64{}}
+	userHandler := UserHandler{UseCase: uc, Sm: sm}
 
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout", userHandler.Logout)
@@ -35,14 +34,14 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase){
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 }
 
-
 func (h *UserHandler) Login(c echo.Context) error {
 	defer c.Request().Body.Close()
 	u := &models.User{}
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err == nil && h.Store[cookie.Value] != 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+
+	if err != nil && cookie != nil {
+		return err
 	}
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
@@ -56,7 +55,26 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return err
 	}
 
-	c.SetCookie(h.CreateCookie(constants.CookieLength, uid))
+	if cookie != nil {
+		exists, id, err := h.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			return err
+		}
+
+		if exists && id == uid {
+			return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+		}
+	}
+
+	cookie = h.CreateCookie(constants.CookieLength)
+	err = h.Sm.InsertSession(uid, cookie.Value)
+
+	if err != nil {
+		return err
+	}
+
+	c.SetCookie(cookie)
+
 	return nil
 }
 
@@ -64,16 +82,25 @@ func (h *UserHandler) Logout(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
+	if err != nil && cookie != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
+	}
+
+	if cookie == nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	flag, _, err := h.Sm.CheckSession(cookie.Value)
+
 	if err != nil {
+		return err
+	}
+
+	if !flag {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	uid := h.Store[cookie.Value]
-	if uid == 0 {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	delete(h.Store, cookie.Value)
+	err = h.Sm.DeleteSession(cookie.Value)
 
 	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
@@ -85,40 +112,65 @@ func (h *UserHandler) Register(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err == nil && h.Store[cookie.Value] != 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+	if err != nil && cookie != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
+	}
+
+	// вынести эту штуку
+	if cookie != nil {
+		exists, _, err := h.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+		}
 	}
 
 	newData := &models.RegData{}
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, newData)
 	if err != nil {
-		log.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	uid, err := h.UseCase.Add(newData)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
-	c.SetCookie(h.CreateCookie(constants.CookieLength, uid))
+	cookie = h.CreateCookie(constants.CookieLength)
+	err = h.Sm.InsertSession(uid, cookie.Value)
 
+	if err != nil {
+		return err
+	}
+
+	c.SetCookie(cookie)
 	return nil
 }
 
 func (h *UserHandler) Update(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-
 	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
+	if err != nil && cookie != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	if h.Store[cookie.Value] == 0 {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	var uid uint64
+	var exists bool
+	if cookie != nil {
+		exists, uid, err = h.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+		}
 	}
 
 	ud := &models.UserOwnProfile{}
@@ -127,18 +179,16 @@ func (h *UserHandler) Update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	err = h.UseCase.Update(h.Store[cookie.Value], ud)
+	err = h.UseCase.Update(uid, ud)
 
 	if err != nil {
 		return err
 	}
 
-
 	return nil
 }
 
-
-func (h *UserHandler) CreateCookie(n uint8, uid uint64) *http.Cookie {
+func (h *UserHandler) CreateCookie(n uint8) *http.Cookie {
 
 	key := generator.RandStringRunes(n)
 
@@ -149,7 +199,6 @@ func (h *UserHandler) CreateCookie(n uint8, uid uint64) *http.Cookie {
 		HttpOnly: true,
 	}
 
-	h.Store[key] = uid
 	return newCookie
 }
 
@@ -161,11 +210,19 @@ func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	if h.Store[cookie.Value] == 0 {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	var uid uint64
+	var exists bool
+
+	exists, uid, err = h.Sm.CheckSession(cookie.Value)
+	if err != nil {
+		return err
 	}
 
-	usr, err := h.UseCase.GetOwnProfile(h.Store[cookie.Value])
+	if !exists {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+	}
+
+	usr, err := h.UseCase.GetOwnProfile(uid)
 	if err != nil {
 		return err
 	}
@@ -200,7 +257,6 @@ func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	return nil
 }
 
-
 func (h *UserHandler) UploadAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -209,10 +265,18 @@ func (h *UserHandler) UploadAvatar(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	if h.Store[cookie.Value] == 0 {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
+	var uid uint64
+	var exists bool
+	if cookie != nil {
+		exists, uid, err = h.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			return err
+		}
 
+		if !exists {
+			return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+		}
+	}
 
 	img, err := c.FormFile("avatar")
 	if err != nil {
@@ -223,7 +287,7 @@ func (h *UserHandler) UploadAvatar(c echo.Context) error {
 		return nil
 	}
 
-	err = h.UseCase.UploadAvatar(h.Store[cookie.Value], img)
+	err = h.UseCase.UploadAvatar(uid, img)
 
 	return nil
 }
@@ -247,13 +311,21 @@ func (h *UserHandler) GetAvatar(c echo.Context) error {
 }
 
 func (h *UserHandler) CheckUser(c echo.Context) error {
-	cookie, err := c.Cookie("SID")
+	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	if h.Store[cookie.Value] == 0 {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	var exists bool
+	if cookie != nil {
+		exists, _, err = h.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+		}
 	}
 
 	u := &models.User{}
@@ -271,4 +343,3 @@ func (h *UserHandler) CheckUser(c echo.Context) error {
 
 	return nil
 }
-

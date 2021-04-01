@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx"
@@ -10,10 +11,15 @@ import (
 	"kudago/application/user"
 	"kudago/models"
 	"net/http"
+	"time"
 )
 
 type UserDatabase struct {
 	pool *pgxpool.Pool
+}
+
+func NewUserDatabase(conn *pgxpool.Pool) user.Repository {
+	return &UserDatabase{pool: conn}
 }
 
 func (ud UserDatabase) ChangeAvatar(uid uint64, path string) error {
@@ -39,8 +45,39 @@ func (ud UserDatabase) GetPlanningEvents(id uint64) ([]uint64, error) {
 	if err != nil {
 		return nil, err
 	}
-	return events, nil
+
+	// TODO: запихнуть горутины
+	var newEvents []uint64
+	for _, elem := range events {
+		var date sql.NullTime
+		err = ud.pool.QueryRow(context.Background(),
+			`SELECT date FROM events WHERE id = $1`,
+			elem).Scan(&date)
+		if err != nil {
+			return []uint64{}, err
+		}
+		if date.Valid && date.Time.Before(time.Now()) {
+			// TODO: здесь надо красиво дергать другую репу, но увы
+			// TODO: а еще обработать ошибки, офк
+
+			_, _ = ud.pool.Exec(context.Background(),
+				`DELETE FROM user_event WHERE uid = $1 AND eid = $2 AND is_p = $3`,
+				id, elem, true)
+
+			_, _ = ud.pool.Exec(context.Background(),
+				`INSERT INTO user_event (uid, eid, is_p) VALUES ($1, $2, $3)`,
+				id, elem, false)
+		} else {
+			newEvents = append(newEvents, elem)
+		}
+	}
+
+	if len(newEvents) == 0 {
+		return []uint64{}, nil
+	}
+	return newEvents, nil
 }
+
 
 func (ud UserDatabase) GetVisitedEvents(id uint64) ([]uint64, error) {
 	var events []uint64
@@ -59,10 +96,9 @@ func (ud UserDatabase) GetVisitedEvents(id uint64) ([]uint64, error) {
 
 func (ud UserDatabase) GetFollowers(id uint64) ([]uint64, error) {
 	var users []uint64
-	err := pgxscan.Select(context.Background(), ud.pool, &users, `SELECT eid
-		FROM followers WHERE uid2 = $1`, id)
-
-	if errors.As(err, &pgx.ErrNoRows) || len(users) == 0 {
+	err := pgxscan.Select(context.Background(), ud.pool, &users, `SELECT uid1
+		FROM subscriptions WHERE uid2 = $1`, id)
+	if errors.As(err, &pgx.ErrNoRows) {
 		return []uint64{}, nil
 	}
 
@@ -72,9 +108,7 @@ func (ud UserDatabase) GetFollowers(id uint64) ([]uint64, error) {
 	return users, nil
 }
 
-func NewUserDatabase(conn *pgxpool.Pool) user.Repository {
-	return &UserDatabase{pool: conn}
-}
+
 
 func (ud UserDatabase) Add(user *models.RegData) (id uint64, err error) {
 	err = ud.pool.QueryRow(context.Background(),
@@ -92,12 +126,15 @@ func (ud UserDatabase) IsExisting(login string) (bool, error) {
 	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE login = $1`, login).Scan(&id)
-	switch {
-	case errors.As(err, &pgx.ErrNoRows):
+
+	if errors.As(err, &pgx.ErrNoRows) {
 		return false, nil
-	case err != nil:
+	}
+
+	if err != nil {
 		return false, err
 	}
+
 	return true, nil
 }
 
@@ -107,10 +144,12 @@ func (ud UserDatabase) IsCorrect(user *models.User) (uint64, error) {
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE login = $1 AND password = $2`,
 			user.Login, user.Password).Scan(&id)
-	switch {
-	case errors.As(err, &pgx.ErrNoRows):
+	if  errors.As(err, &pgx.ErrNoRows) {
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	case err != nil:
+	}
+
+
+	if err != nil{
 		return 0, err
 	}
 	return id, nil
@@ -150,11 +189,13 @@ func (ud UserDatabase) IsExistingEmail(email string) (bool, error) {
 	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE email = $1`, email).Scan(&id)
-	switch {
-	case errors.As(err, &pgx.ErrNoRows):
+
+	if errors.As(err, &pgx.ErrNoRows){
 		return false, nil
-	case err != nil:
+	}
+	if err != nil {
 		return false, err
 	}
+
 	return true, nil
 }

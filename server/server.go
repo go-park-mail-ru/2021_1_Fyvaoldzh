@@ -9,10 +9,14 @@ import (
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
 	"github.com/tarantool/go-tarantool"
+	shttp "kudago/application/subscription/delivery/http"
+	srepository "kudago/application/subscription/repository"
+	susecase "kudago/application/subscription/usecase"
 	"kudago/application/user/delivery/http"
 	"kudago/application/user/repository"
 	"kudago/application/user/usecase"
 	"kudago/pkg/constants"
+	"kudago/pkg/infrastructure"
 	"log"
 )
 
@@ -48,8 +52,10 @@ func NewServer() *echo.Echo {
 	}
 
 	userRep := repository.NewUserDatabase(pool)
+	subRep := srepository.NewSubscriptionDatabase(pool)
 
 	userUC := usecase.NewUser(userRep)
+	subUC := susecase.NewSubscription(subRep)
 
 	conn, err := tarantool.Connect("127.0.0.1:3301", tarantool.Opts{
 		User: "admin",
@@ -57,43 +63,25 @@ func NewServer() *echo.Echo {
 	})
 
 	if err != nil {
-		log.Fatalf("Connection refused")
+		log.Fatalln(err)
 	}
 
-	defer conn.Close()
+	_, err = conn.Ping()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-	http.CreateUserHandler(e, userUC)
+	sm := infrastructure.SessionManager{}
+	sm.Conn = conn
 
-
-
-
-	//subRep :=
+	http.CreateUserHandler(e, userUC, &sm)
+	shttp.CreateSubscriptionsHandler(e, subUC, &sm)
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup: "header:X-XSRF-TOKEN",
 		CookieHTTPOnly: true,
 	}))
 
-
-
-
-
-	/*handlers := events.Handlers{
-		Events: models.BaseEvents,
-		Mu:     &sync.Mutex{},
-	}*/
-
-
-
-	/*
-	e.GET("/api/v1/", handlers.GetAllEvents)
-	e.GET("/api/v1/event/:id", handlers.GetOneEvent)
-	e.GET("/api/v1/event", handlers.GetEvents)
-	e.POST("/api/v1/create", handlers.Create)
-	e.DELETE("/api/v1/event/:id", handlers.Delete)
-	e.POST("/api/v1/save/:id", handlers.Save)
-	e.GET("api/v1/event/:id/image", handlers.GetImage)
-	 */
 	return e
 }
 
