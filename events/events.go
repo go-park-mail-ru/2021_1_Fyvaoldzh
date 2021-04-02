@@ -1,11 +1,13 @@
 package events
 
+// оставлено для связи
+
 import (
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"kudago/models"
+	"kudago/application/models"
 	"log"
 	"mime/multipart"
 	"net/http"

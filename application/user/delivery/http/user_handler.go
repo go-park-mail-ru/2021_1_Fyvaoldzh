@@ -3,8 +3,8 @@ package http
 import (
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
+	"kudago/application/models"
 	"kudago/application/user"
-	"kudago/models"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
 	"kudago/pkg/infrastructure"

@@ -1,6 +1,6 @@
 package user
 
-import "kudago/models"
+import "kudago/application/models"
 
 type Repository interface {
 	Add(user *models.RegData) (uint64, error)
@@ -15,4 +15,3 @@ type Repository interface {
 	GetVisitedEvents(id uint64) ([]uint64, error)
 	GetFollowers(id uint64) ([]uint64, error)
 }
-

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"kudago/models"
+	"kudago/application/models"
 	"sync"
 )
 

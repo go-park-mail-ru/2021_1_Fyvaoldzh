@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"github.com/labstack/echo"
 	"github.com/tarantool/go-tarantool"
+	"kudago/pkg/constants"
 	"net/http"
 )
 
@@ -10,14 +11,12 @@ type SessionManager struct {
 	Conn *tarantool.Connection
 }
 
-
 func (sm SessionManager) CheckSession(value string) (bool, uint64, error) {
-	resp, err := sm.Conn.Select("qdago",
+	resp, err := sm.Conn.Select(constants.TarantoolSpaceName,
 		"primary", 0, 1, tarantool.IterEq, []interface{}{value})
 	if err != nil {
 		return false, 0, err
 	}
-
 
 	if len(resp.Data) != 0 {
 		data := resp.Data[0]
@@ -38,7 +37,7 @@ func (sm SessionManager) CheckSession(value string) (bool, uint64, error) {
 }
 
 func (sm SessionManager) InsertSession(uid uint64, value string) error {
-	_, err := sm.Conn.Insert("qdago", []interface{}{value, uid})
+	_, err := sm.Conn.Insert(constants.TarantoolSpaceName, []interface{}{value, uid})
 
 	if err != nil {
 		return err
@@ -48,7 +47,7 @@ func (sm SessionManager) InsertSession(uid uint64, value string) error {
 }
 
 func (sm SessionManager) DeleteSession(value string) error {
-	_, err := sm.Conn.Delete("qdago", "primary", []interface{}{value})
+	_, err := sm.Conn.Delete(constants.TarantoolSpaceName, "primary", []interface{}{value})
 
 	if err != nil {
 		return err

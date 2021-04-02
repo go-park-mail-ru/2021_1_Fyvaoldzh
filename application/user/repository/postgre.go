@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
+	"kudago/application/models"
 	"kudago/application/user"
-	"kudago/models"
 	"net/http"
 	"time"
 )
@@ -78,7 +78,6 @@ func (ud UserDatabase) GetPlanningEvents(id uint64) ([]uint64, error) {
 	return newEvents, nil
 }
 
-
 func (ud UserDatabase) GetVisitedEvents(id uint64) ([]uint64, error) {
 	var events []uint64
 	err := pgxscan.Select(context.Background(), ud.pool, &events, `SELECT eid
@@ -107,8 +106,6 @@ func (ud UserDatabase) GetFollowers(id uint64) ([]uint64, error) {
 	}
 	return users, nil
 }
-
-
 
 func (ud UserDatabase) Add(user *models.RegData) (id uint64, err error) {
 	err = ud.pool.QueryRow(context.Background(),
@@ -144,12 +141,11 @@ func (ud UserDatabase) IsCorrect(user *models.User) (uint64, error) {
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE login = $1 AND password = $2`,
 			user.Login, user.Password).Scan(&id)
-	if  errors.As(err, &pgx.ErrNoRows) {
+	if errors.As(err, &pgx.ErrNoRows) {
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
-
-	if err != nil{
+	if err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -190,7 +186,7 @@ func (ud UserDatabase) IsExistingEmail(email string) (bool, error) {
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE email = $1`, email).Scan(&id)
 
-	if errors.As(err, &pgx.ErrNoRows){
+	if errors.As(err, &pgx.ErrNoRows) {
 		return false, nil
 	}
 	if err != nil {

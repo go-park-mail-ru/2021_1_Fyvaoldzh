@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"database/sql"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
@@ -20,20 +19,6 @@ import (
 	"log"
 )
 
-func getPostgres() *sql.DB {
-	dsn := constants.DBConnect
-	db, err := sql.Open("pgx", dsn)
-	if err != nil {
-		log.Fatalln("cant parse config", err)
-	}
-	err = db.Ping() // вот тут будет первое подключение к базе
-	if err != nil {
-		log.Fatalln(err)
-	}
-	db.SetMaxOpenConns(10)
-	return db
-}
-
 func NewServer() *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -46,7 +31,7 @@ func NewServer() *echo.Echo {
 		log.Fatalln(err)
 	}
 
-	err = pool.Ping(context.Background()) // вот тут будет первое подключение к базе
+	err = pool.Ping(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -57,9 +42,9 @@ func NewServer() *echo.Echo {
 	userUC := usecase.NewUser(userRep)
 	subUC := susecase.NewSubscription(subRep)
 
-	conn, err := tarantool.Connect("127.0.0.1:3301", tarantool.Opts{
-		User: "admin",
-		Pass: "fyvaoldzh",
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
 	})
 
 	if err != nil {
@@ -78,7 +63,7 @@ func NewServer() *echo.Echo {
 	shttp.CreateSubscriptionsHandler(e, subUC, &sm)
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup: "header:X-XSRF-TOKEN",
+		TokenLookup:    constants.CSRFHeader,
 		CookieHTTPOnly: true,
 	}))
 

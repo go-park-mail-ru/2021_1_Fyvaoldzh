@@ -7,8 +7,8 @@ import (
 	"github.com/labstack/echo"
 	"io"
 	"io/ioutil"
+	"kudago/application/models"
 	"kudago/application/user"
-	"kudago/models"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
 	"mime/multipart"
@@ -100,13 +100,10 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 		return &models.UserOwnProfile{}, err
 	}
 
-
 	own.Followers, err = uc.repo.GetFollowers(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
-
-
 
 	return own, nil
 }
@@ -177,7 +174,7 @@ func (uc User) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
 	}
 	defer src.Close()
 
-	fileName := "public/" + fmt.Sprint(uid) + generator.RandStringRunes(6) + img.Filename
+	fileName := constants.UserPicDir + fmt.Sprint(uid) + generator.RandStringRunes(6) + img.Filename
 	dst, err := os.Create(fileName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

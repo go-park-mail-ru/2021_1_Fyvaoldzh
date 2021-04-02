@@ -3,7 +3,7 @@ package events
 import (
 	"bytes"
 	"fmt"
-	"kudago/models"
+	"kudago/application/models"
 	"net/http"
 	"net/http/httptest"
 	"os"

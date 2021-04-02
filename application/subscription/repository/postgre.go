@@ -20,7 +20,7 @@ func NewSubscriptionDatabase(conn *pgxpool.Pool) subscription.Repository {
 
 func (ud SubscriptionDatabase) SubscribeUser(uid1 uint64, uid2 uint64) error {
 	var ui1, ui2 uint64
-	// TODO: херня запрос, исправить по аналогии с тем, что ниже
+	// TODO: исправить по аналогии с тем, что ниже
 	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT uid1, uid2 FROM subscriptions WHERE uid1 = $1 AND uid2 = $2`,
@@ -180,4 +180,3 @@ func (ud SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
 
 	return nil
 }
-

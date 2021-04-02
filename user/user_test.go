@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/require"
-	"kudago/models"
+	"kudago/application/models"
 	"net/http"
 	"net/http/httptest"
 	"sync"

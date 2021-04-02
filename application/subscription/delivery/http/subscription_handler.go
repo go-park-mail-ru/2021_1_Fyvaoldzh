@@ -47,7 +47,6 @@ func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-
 	uid2, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -195,4 +194,3 @@ func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
 
 	return h.UseCase.RemoveVisited(uid, uint64(eid))
 }
-
