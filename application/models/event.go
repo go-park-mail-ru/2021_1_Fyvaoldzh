@@ -1,23 +1,85 @@
 package models
 
+import (
+	"database/sql"
+)
+
 type Event struct {
+	ID          uint64       `json:"id"`
+	Title       string       `json:"title"`
+	Place       string       `json:"place"`
+	Description string       `json:"description"`
+	Date        string       `json:"date"`
+	Subway      string       `json:"subway"`
+	Street      string       `json:"street"`
+	TypeEvent   CategoryTags `json:"typeEvent"`
+	Image       string       `json:"image"`
+}
+
+type EventSQL struct {
+	ID          uint64
+	Title       string
+	Place       string
+	Description string
+	Date        sql.NullTime
+	Subway      sql.NullString
+	Street      sql.NullString
+	Image       sql.NullString
+}
+
+type EventCard struct {
 	ID          uint64 `json:"id"`
 	Title       string `json:"title"`
-	Place       string `json:"place"`
 	Description string `json:"description"`
-	Date        string `json:"date"`
-	Subway      string `json:"subway"`
-	Street      string `json:"street"`
-	TypeEvent   string `json:"typeEvent"`
 	Image       string `json:"image"`
+}
+
+type EventCardSQL struct {
+	ID          uint64         `json:"id"`
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	Image       sql.NullString `json:"image"`
+}
+
+type CategoryTag struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+}
+
+type CategoryTagDescription struct {
+	CategoryID   uint64
+	CategoryName string
+	TagID        uint64
+	TagName      string
+}
+
+func ConvertCard(old EventCardSQL) EventCard {
+	var newCard EventCard
+	newCard.ID = old.ID
+	newCard.Title = old.Title
+	newCard.Description = old.Description
+	newCard.Image = old.Image.String
+	return newCard
+}
+
+func ConvertEvent(old EventSQL) Event {
+	var newEvent Event
+	newEvent.ID = old.ID
+	newEvent.Title = old.Title
+	newEvent.Place = old.Place
+	newEvent.Description = old.Description
+	newEvent.Date = old.Date.Time.String()
+	newEvent.Subway = old.Subway.String
+	newEvent.Street = old.Street.String
+	newEvent.Image = old.Image.String
+	return newEvent
 }
 
 //easyjson:json
 type Events []Event
 
-var BaseEvents = Events{
-	{125, "Стендап-шоу", "Бар TRUE BAR", "На шоу зрителей знакомят с разной комедией — приглашают известных комиков (участников проектов «StandUp на ТНТ», «Вечерний Ургант», «Прожарка», Stand-up club #1, «22 комика» и других) и тех, кого не встретишь на ТВ, но чьи шутки взрывают зал. В команде более 50 комиков, некоторые из выступающих оттачивают своё мастерство на родине стендап-искусства — в США, чтобы привезти свою лучшую программу. Каждый день команда отсматривает новый материал у стендаперов со всей России и из ближнего зарубежья. Stand-Up Import — возможность увидеть настоящую комедию вживую, заплатив 0 рублей за билеты на большинство мероприятий, и дополнить всё это отличным ужином.", "10 марта 20:00", "Парк Культуры", "ул. Льва Толстого 23к7с3", "Стендап", "2913aa38efbe34ebdb5a1d642dfa29d8.jpg"},
-	{126, "Музей Эмоций", "Музей Эмоций", "Музей Эмоций — авторский проект художника Алексея Сергиенко, который раскрывает его взгляд на мир эмоций и переживаний. В пространстве Музея соседствуют несколько тематических зон, которые соединены между собой специальными коридорами. Каждая зона посвящена определённой эмоции, а коридор символизирует переход от одной эмоции к другой. Погружаться в разные эмоциональные состояния помогают запахи, звуки и тактильные ощущения. Миссия Музея — помочь людям обратить более пристальное внимание на собственные эмоции и их разнообразие, дать толчок к развитию эмоциональной грамотности и эмоционального интеллекта.", "ежедневно 11:00–21:00", "Курская", "пер. Нижний Сусальный, БК «Арма», д. 5, стр. 18", "Музей", "945e08955c7685816acaf8a7cf99ac5b.png"},
-	{127, "Проект VR Gallery", "Центр современного искусства «МАРС»", "Студия «АртДинамикс» представляет проект VR Gallery («Виртуальная галерея»), который станет вашим порталом в мир классического и современного искусства. Новейшие технологии переносят в иное пространство и обеспечивают полное погружение в мир творцов и их идей. Посетителям предлагаются четыре VR-путешествия на выбор. В рамках первого — Deep Immersive («Глубокое погружение») — вы взглянете на «Крик» Эдварда Мунка глазами Сандры Погам и Шарля Аятса, переосмыслите творчество Сальвадора Дали и полюбуетесь нежными кувшинками Клода Моне. Второй вариант — виртуально посетить Galactic Gallery («Галактическая галерея») и выставку Rone («Рон») и открыть для себя творчество талантливых мастеров стрит-арта и диджитал-художников. Третий вариант Beyond the Glass («За стеклом») даёт возможность узнать тайны картины «Мона Лиза» и прогуляться по собору Парижской Богоматери, увидеть храм изнутри в оригинальном интерьере XVIII века. Четвертая возможность — заглянуть в VR-музей Кремера, где собраны шедевры датского и фламандского искусства XVII века. Данный VR-проект проходит по сеансам — смотрите расписание на сайте и заранее приобретайте электронные билеты.", "1 октября 2020 – 4 апреля 2021	12:00–22:00", "Сухаревская", "пер. Пушкарёв, д. 5", "Галлерея", "fc7a55e3897601089ddc88bd3f13d2ac.jpg"},
-	{128, "Пример", "Место", "Пример без картинки", "12:00", "Примерное метро", "Примерная улица", "Музей", ""},
-}
+//easyjson:json
+type EventCards []EventCard
+
+//easyjson:json
+type CategoryTags []CategoryTag

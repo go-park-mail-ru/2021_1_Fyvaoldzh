@@ -5,13 +5,9 @@ package events
 import (
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"kudago/application/models"
 	"log"
-	"mime/multipart"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 
@@ -48,14 +44,6 @@ func (h *Handlers) Delete(c echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
 }
 
-func (h *Handlers) GetAllEvents(c echo.Context) error {
-	if _, err := easyjson.MarshalToWriter(h.Events, c.Response().Writer); err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	return nil
-}
 
 func (h *Handlers) CreateNewEvent(newEvent *models.Event) {
 	h.Mu.Lock()
@@ -109,7 +97,7 @@ func (h *Handlers) GetOneEvent(c echo.Context) error {
 	return nil
 
 }
-
+/*
 func (h *Handlers) GetEventsByType(typeEvent string) models.Events {
 	var showEvents models.Events
 	for _, event := range h.Events {
@@ -198,3 +186,5 @@ func (h *Handlers) GetImage(c echo.Context) error {
 
 	return nil
 }
+
+ */

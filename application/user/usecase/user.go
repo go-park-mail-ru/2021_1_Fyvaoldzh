@@ -21,6 +21,10 @@ type User struct {
 	repo user.Repository
 }
 
+func (uc User) Login(user *models.User) (uint64, error) {
+	return uc.CheckUser(user)
+}
+
 func NewUser(u user.Repository) user.UseCase {
 	return &User{repo: u}
 }

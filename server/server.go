@@ -8,6 +8,9 @@ import (
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
 	"github.com/tarantool/go-tarantool"
+	ehttp "kudago/application/event/delivery/http"
+	erepository "kudago/application/event/repository"
+	eusecase "kudago/application/event/usecase"
 	shttp "kudago/application/subscription/delivery/http"
 	srepository "kudago/application/subscription/repository"
 	susecase "kudago/application/subscription/usecase"
@@ -37,9 +40,11 @@ func NewServer() *echo.Echo {
 	}
 
 	userRep := repository.NewUserDatabase(pool)
+	eventRep := erepository.NewEventDatabase(pool)
 	subRep := srepository.NewSubscriptionDatabase(pool)
 
 	userUC := usecase.NewUser(userRep)
+	eventUC := eusecase.NewEvent(eventRep)
 	subUC := susecase.NewSubscription(subRep)
 
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
@@ -61,6 +66,7 @@ func NewServer() *echo.Echo {
 
 	http.CreateUserHandler(e, userUC, &sm)
 	shttp.CreateSubscriptionsHandler(e, subUC, &sm)
+	ehttp.CreateEventHandler(e, eventUC, &sm)
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup:    constants.CSRFHeader,
