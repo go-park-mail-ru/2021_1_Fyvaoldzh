@@ -24,7 +24,7 @@ func NewUserDatabase(conn *pgxpool.Pool) user.Repository {
 
 func (ud UserDatabase) ChangeAvatar(uid uint64, path string) error {
 	_, err := ud.pool.Exec(context.Background(),
-		`UPDATE users SET "avatar" = $1 WHERE id = $2`, path, uid)
+		`UPDATE users SET avatar = $1 WHERE id = $2`, path, uid)
 
 	if err != nil {
 		return err

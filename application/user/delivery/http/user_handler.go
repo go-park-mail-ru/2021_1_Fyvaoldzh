@@ -204,6 +204,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 	return nil
 }
 
+// TODO: унести в session manager
 func (h *UserHandler) CreateCookie(n uint8) *http.Cookie {
 
 	key := generator.RandStringRunes(n)

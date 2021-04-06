@@ -1,8 +1,18 @@
 package usecase
 
 import (
+	"fmt"
+	"github.com/labstack/echo"
+	"io"
+	"io/ioutil"
 	"kudago/application/event"
 	"kudago/application/models"
+	"kudago/pkg/constants"
+	"kudago/pkg/generator"
+	"log"
+	"mime/multipart"
+	"net/http"
+	"os"
 )
 
 type Event struct {
@@ -55,3 +65,73 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	return jsonEvent, nil
 }
 
+func (e Event) Delete(eventId uint64) error {
+	return e.repo.DeleteById(eventId)
+}
+
+func (e Event) CreateNewEvent(newEvent *models.Event) error {
+	// TODO где-то здесь должна быть проверка на поля
+	return e.repo.AddEvent(newEvent)
+}
+
+func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
+	src, err := img.Open()
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer src.Close()
+
+	fileName := constants.EventsPicDir + fmt.Sprint(eventId) + generator.RandStringRunes(6) + img.Filename
+
+	dst, err := os.Create(fileName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return e.repo.UpdateEventAvatar(eventId, fileName)
+}
+
+func (e Event) GetEventsByType(typeEvent string) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetEventsByType(typeEvent)
+	if err != nil {
+		return models.EventCards{}, err
+	}
+
+	if len(sqlEvents) == 0 {
+		return models.EventCards{}, err
+	}
+
+	var events models.EventCards
+	for _, elem := range sqlEvents {
+		events = append(events, models.ConvertCard(elem))
+	}
+
+	return events, nil
+}
+
+func (e Event) GetImage(eventId uint64) ([]byte, error) {
+	ev, err := e.repo.GetOneEventByID(eventId)
+	if err != nil {
+		return []byte{}, err
+	}
+
+
+	if !ev.Image.Valid || len(ev.Image.String) == 0 {
+		return []byte{}, echo.NewHTTPError(http.StatusNotFound, "Event has no picture")
+	}
+
+	file, err := ioutil.ReadFile(ev.Image.String)
+	if err != nil {
+		// TODO ???
+		log.Println("Cannot open file: " + ev.Image.String)
+		return []byte{}, err
+	}
+
+	return file, nil
+}

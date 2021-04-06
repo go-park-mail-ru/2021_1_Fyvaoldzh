@@ -1,11 +1,11 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
 	"kudago/application/event"
+	"kudago/application/models"
 	"kudago/pkg/infrastructure"
 	"log"
 	"net/http"
@@ -49,6 +49,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 
 func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println(err)
@@ -57,7 +58,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(id)+" not found"))
+		return err
 	}
 
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
@@ -69,32 +70,104 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 }
 
 func (eh EventHandler) GetEvents(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	typeEvent := c.QueryParam("typeEvent")
+	events, err := eh.UseCase.GetEventsByType(typeEvent)
+
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
 	return nil
-
 }
 
 func (eh EventHandler) Create(c echo.Context) error {
+	defer c.Request().Body.Close()
 
-	return nil
+	newEvent := &models.Event{}
 
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, newEvent); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if err := eh.UseCase.CreateNewEvent(newEvent); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return c.JSON(http.StatusOK, *newEvent)
 }
 
 func (eh EventHandler) Delete(c echo.Context) error {
+	defer c.Request().Body.Close()
 
-	return nil
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 
+	err = eh.UseCase.Delete(uint64(id))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" succesfully deleted \n")
 }
 
 func (eh EventHandler) Save(c echo.Context) error {
+	defer c.Request().Body.Close()
 
-	return nil
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
+	img, err := c.FormFile("image")
+	if err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	err = eh.UseCase.SaveImage(uint64(id), img)
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return c.JSON(http.StatusOK, "Picture changed successfully")
 }
 
 func (eh EventHandler) GetImage(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	file, err := eh.UseCase.GetImage(uint64(id))
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	_, err = c.Response().Write(file)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 
 	return nil
-
 }
 
