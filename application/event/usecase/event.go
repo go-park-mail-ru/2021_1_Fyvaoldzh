@@ -13,6 +13,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Event struct {
@@ -121,7 +122,6 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 		return []byte{}, err
 	}
 
-
 	if !ev.Image.Valid || len(ev.Image.String) == 0 {
 		return []byte{}, echo.NewHTTPError(http.StatusNotFound, "Event has no picture")
 	}
@@ -134,4 +134,24 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 	}
 
 	return file, nil
+}
+
+func (e Event) FindEvents(str string) (models.EventCards, error) {
+	str = strings.ToLower(str)
+
+	sqlEvents, err := e.repo.FindEvents(str)
+	if err != nil {
+		return models.EventCards{}, err
+	}
+
+	if len(sqlEvents) == 0 {
+		return models.EventCards{}, err
+	}
+
+	var events models.EventCards
+	for _, elem := range sqlEvents {
+		events = append(events, models.ConvertCard(elem))
+	}
+
+	return events, nil
 }

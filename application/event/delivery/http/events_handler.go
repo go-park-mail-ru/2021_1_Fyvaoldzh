@@ -24,6 +24,7 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
 	e.GET("/api/v1/event", eventHandler.GetEvents)
+	e.GET("/api/v1/search", eventHandler.FindEvents)
 	e.POST("/api/v1/create", eventHandler.Create)
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
 	e.POST("/api/v1/save/:id", eventHandler.Save)
@@ -121,7 +122,7 @@ func (eh EventHandler) Delete(c echo.Context) error {
 		return err
 	}
 
-	return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" succesfully deleted \n")
+	return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" successfully deleted \n")
 }
 
 func (eh EventHandler) Save(c echo.Context) error {
@@ -153,6 +154,7 @@ func (eh EventHandler) GetImage(c echo.Context) error {
 
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
+		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -166,6 +168,25 @@ func (eh EventHandler) GetImage(c echo.Context) error {
 	if err != nil {
 		log.Println(err)
 		return err
+	}
+
+	return nil
+}
+
+func (eh EventHandler) FindEvents(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	str := c.QueryParam("find")
+	events, err := eh.UseCase.FindEvents(str)
+
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+		log.Println(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return nil

@@ -10,4 +10,5 @@ type Repository interface {
 	GetCategoryTags(eventId uint64) ([]models.CategoryTagDescription, error)
 	UpdateEventAvatar(eventId uint64, path string) error
 	GetEventsByType(typeEvent string) ([]models.EventCardSQL, error)
+	FindEvents(str string) ([]models.EventCardSQL, error)
 }

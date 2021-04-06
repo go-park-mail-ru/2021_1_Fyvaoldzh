@@ -129,3 +129,21 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 
 	return nil
 }
+
+func (ed EventDatabase) FindEvents(str string) ([]models.EventCardSQL, error) {
+	var events []models.EventCardSQL
+	err := pgxscan.Select(context.Background(), ed.pool, &events,
+		`SELECT DISTINCT id, title, description, image FROM events 
+		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%';`, str)
+
+
+	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		return []models.EventCardSQL{}, nil
+	}
+
+	if err != nil {
+		return []models.EventCardSQL{}, err
+	}
+
+	return events, nil
+}

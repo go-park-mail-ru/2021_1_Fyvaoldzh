@@ -13,4 +13,5 @@ type UseCase interface {
 	SaveImage(eventId uint64, img *multipart.FileHeader) error
 	GetEventsByType(typeEvent string) (models.EventCards, error)
 	GetImage(eventId uint64) ([]byte, error)
+	FindEvents(str string) (models.EventCards, error)
 }
