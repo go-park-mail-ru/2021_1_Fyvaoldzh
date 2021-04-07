@@ -20,8 +20,8 @@ type OtherUserProfile struct {
 	City      string   `json:"city"`
 	About     string   `json:"about"`
 	Avatar    string   `json:"avatar"`
-	Visited   []uint64 `json:"visited"`
-	Planning  []uint64 `json:"planning"`
+	Visited   EventCards `json:"visited"`
+	Planning  EventCards`json:"planning"`
 	Followers []uint64 `json:"followers"`
 }
 
@@ -32,8 +32,8 @@ type UserOwnProfile struct {
 	Birthday  string   `json:"birthday"`
 	City      string   `json:"city"`
 	Email     string   `json:"email"`
-	Visited   []uint64 `json:"visited"`
-	Planning  []uint64 `json:"planning"`
+	Visited   EventCards `json:"visited"`
+	Planning  EventCards `json:"planning"`
 	Followers []uint64 `json:"followers"`
 	About     string   `json:"about"`
 	Avatar    string   `json:"avatar"`

@@ -11,7 +11,9 @@ type Repository interface {
 	IsExistingEmail(login string) (bool, error)
 	IsCorrect(user *models.User) (uint64, error)
 	// TODO: можно вынести в подписки и тыкать на уровне usecase в подписки?
-	GetPlanningEvents(id uint64) ([]uint64, error)
-	GetVisitedEvents(id uint64) ([]uint64, error)
+	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
+	GetVisitedEvents(id uint64) ([]models.EventCardSQL, error)
 	GetFollowers(id uint64) ([]uint64, error)
+	DeletePlanningEvent(userId uint64, eventId uint64) error
+	AddVisitedEvent(userId uint64, eventId uint64) error
 }

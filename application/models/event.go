@@ -2,6 +2,7 @@ package models
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Event struct {
@@ -41,6 +42,14 @@ type EventCardSQL struct {
 	Image       sql.NullString `json:"image"`
 }
 
+type EventCardWithDateSQL struct {
+	ID          uint64
+	Title       string
+	Description string
+	Image       sql.NullString
+	Date		time.Time
+}
+
 type CategoryTag struct {
 	ID   uint64 `json:"id"`
 	Name string `json:"name"`
@@ -54,6 +63,15 @@ type CategoryTagDescription struct {
 }
 
 func ConvertCard(old EventCardSQL) EventCard {
+	var newCard EventCard
+	newCard.ID = old.ID
+	newCard.Title = old.Title
+	newCard.Description = old.Description
+	newCard.Image = old.Image.String
+	return newCard
+}
+
+func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	var newCard EventCard
 	newCard.ID = old.ID
 	newCard.Title = old.Title

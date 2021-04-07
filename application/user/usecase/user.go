@@ -35,7 +35,6 @@ func (uc User) CheckUser(u *models.User) (uint64, error) {
 	u.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
 	uid, err := uc.repo.IsCorrect(u)
-
 	if err != nil {
 		return 0, err
 	}
@@ -68,14 +67,38 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 	}
 
 	other := models.ConvertToOther(*usr)
-	other.Planning, err = uc.repo.GetPlanningEvents(id)
+	var newEvents []models.EventCard
+
+	oldEvents, err := uc.repo.GetPlanningEvents(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
-	other.Visited, err = uc.repo.GetVisitedEvents(id)
+
+	for _, elem := range oldEvents {
+		if elem.Date.Before(time.Now()) {
+			err := uc.repo.DeletePlanningEvent(id, elem.ID)
+			if err != nil {
+				return &models.OtherUserProfile{}, err
+			}
+
+			err = uc.repo.AddVisitedEvent(id, elem.ID)
+			if err != nil {
+				return &models.OtherUserProfile{}, err
+			}
+		} else {
+			newEvents = append(newEvents, models.ConvertDateCard(elem))
+		}
+	}
+	other.Planning = newEvents
+
+	visitedEventsSQL, err := uc.repo.GetVisitedEvents(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
+	for _, elem := range visitedEventsSQL {
+		other.Visited = append(other.Visited, models.ConvertCard(elem))
+	}
+
 	other.Followers, err = uc.repo.GetFollowers(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
@@ -93,15 +116,36 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	}
 
 	own := models.ConvertToOwn(*usr)
+	var newEvents []models.EventCard
 
-	own.Planning, err = uc.repo.GetPlanningEvents(id)
+	oldEvents, err := uc.repo.GetPlanningEvents(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
 
-	own.Visited, err = uc.repo.GetVisitedEvents(id)
+	for _, elem := range oldEvents {
+		if elem.Date.Before(time.Now()) {
+			err := uc.repo.DeletePlanningEvent(id, elem.ID)
+			if err != nil {
+				return &models.UserOwnProfile{}, err
+			}
+
+			err = uc.repo.AddVisitedEvent(id, elem.ID)
+			if err != nil {
+				return &models.UserOwnProfile{}, err
+			}
+		} else {
+			newEvents = append(newEvents, models.ConvertDateCard(elem))
+		}
+	}
+	own.Planning = newEvents
+
+	visitedEventsSQL, err := uc.repo.GetVisitedEvents(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
+	}
+	for _, elem := range visitedEventsSQL {
+		own.Visited = append(own.Visited, models.ConvertCard(elem))
 	}
 
 	own.Followers, err = uc.repo.GetFollowers(id)
@@ -114,7 +158,6 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 
 func (uc User) Update(uid uint64, ud *models.UserOwnProfile) error {
 	changeUser, err := uc.repo.GetByIdOwn(uid)
-
 	if err != nil {
 		return err
 	}
