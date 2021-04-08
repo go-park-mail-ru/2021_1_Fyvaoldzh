@@ -147,7 +147,9 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, elem)
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
 	}
 
 	return events, nil

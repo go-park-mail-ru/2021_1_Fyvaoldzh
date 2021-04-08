@@ -129,18 +129,21 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 	return nil
 }
 
-func (ed EventDatabase) FindEvents(str string) ([]models.EventCard, error) {
-	var events []models.EventCard
+func (ed EventDatabase) FindEvents(str string) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT id, title, description, image FROM events 
-		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%';`, str)
+		`SELECT DISTINCT e.id as id, e.title as title, e.description as description, e.image as image, e.start_date as start_date FROM
+        events e JOIN event_tag et on e.id = et.event_id
+        JOIN tags t on et.tag_id = t.id
+		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
+		OR LOWER(category) LIKE '%' || $1 || '%' OR LOWER(t.name) LIKE '%' || $1 || '%'`, str)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		return []models.EventCard{}, nil
+		return []models.EventCardWithDateSQL{}, nil
 	}
 
 	if err != nil {
-		return []models.EventCard{}, err
+		return []models.EventCardWithDateSQL{}, err
 	}
 
 	return events, nil
