@@ -7,7 +7,7 @@ import (
 
 type UseCase interface {
 	GetAllEvents() (models.EventCards, error)
-	//GetOneEvent(eventId uint64) (models.Event, error)
+	GetOneEvent(eventId uint64) (models.Event, error)
 	Delete(eventId uint64) error
 	CreateNewEvent(newEvent *models.Event) error
 	SaveImage(eventId uint64, img *multipart.FileHeader) error

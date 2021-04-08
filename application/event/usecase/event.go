@@ -39,7 +39,7 @@ func (e Event) GetAllEvents() (models.EventCards, error) {
 	return events, nil
 }
 
-/*func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
+func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	ev, err := e.repo.GetOneEventByID(eventId)
 	if err != nil {
 		return models.Event{}, err
@@ -47,25 +47,16 @@ func (e Event) GetAllEvents() (models.EventCards, error) {
 
 	jsonEvent := models.ConvertEvent(ev)
 
-	massiv, err := e.repo.GetCategoryTags(eventId)
+	tags, err := e.repo.GetTags(eventId)
+
 	if err != nil {
 		return models.Event{}, err
 	}
 
-	var desc models.CategoryTag
-	desc.ID = massiv[0].CategoryID
-	desc.Name = massiv[0].CategoryName
-
-	jsonEvent.TypeEvent = append(jsonEvent.TypeEvent, desc)
-
-	for _, elem := range massiv {
-		desc.ID = elem.TagID
-		desc.Name = elem.TagName
-		jsonEvent.TypeEvent = append(jsonEvent.TypeEvent, desc)
-	}
+	jsonEvent.Tags = tags
 
 	return jsonEvent, nil
-}*/
+}
 
 func (e Event) Delete(eventId uint64) error {
 	return e.repo.DeleteById(eventId)

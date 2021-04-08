@@ -74,22 +74,24 @@ func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error)
 	return ev[0], nil
 }
 
-/*func (ed EventDatabase) GetCategoryTags(eventId uint64) ([]models.CategoryTagDescription, error) {
-	var parameters []models.CategoryTagDescription
+func (ed EventDatabase) GetTags(eventId uint64) (models.Tags, error) {
+	var parameters models.Tags
 	err := pgxscan.Select(context.Background(), ed.pool, &parameters,
-		`SELECT c.id AS category_id, c.name AS category_name,
-		t.id AS tag_id, t.name AS tag_name
-		FROM categories c, tags t
-		JOIN ev_cat_tag on eid = $1
-		WHERE c.id = cid AND t.id = tid`, eventId)
+		`SELECT t.id AS id, t.name AS name
+		FROM tags t
+		JOIN event_tag e on e.tag_id = t.id
+        WHERE e.event_id = $1`, eventId)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(parameters) == 0 {
+		return models.Tags{}, nil
+	}
 
 	if err != nil {
-		log.Println(err)
-		return []models.CategoryTagDescription{}, err
+		return models.Tags{}, err
 	}
 
 	return parameters, err
-}*/
+}
 
 func (ed EventDatabase) AddEvent(newEvent *models.Event) error {
 	// TODO: добавить промежуточный sql, который будет в базу null пихать
