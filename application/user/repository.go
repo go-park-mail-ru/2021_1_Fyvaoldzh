@@ -9,7 +9,7 @@ type Repository interface {
 	GetByIdOwn(id uint64) (*models.UserData, error)
 	IsExisting(login string) (bool, error)
 	IsExistingEmail(login string) (bool, error)
-	IsCorrect(user *models.User) (uint64, error)
+	IsCorrect(user *models.User) (*models.User, error)
 	// TODO: можно вынести в подписки и тыкать на уровне usecase в подписки?
 	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
 	GetVisitedEvents(id uint64) ([]models.EventCardSQL, error)

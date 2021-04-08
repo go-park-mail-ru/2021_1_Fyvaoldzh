@@ -11,6 +11,7 @@ import (
 	"kudago/application/user"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -30,22 +31,31 @@ func NewUser(u user.Repository) user.UseCase {
 }
 
 func (uc User) CheckUser(u *models.User) (uint64, error) {
-	hash := sha256.New()
-	hash.Write([]byte(u.Password))
-	u.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
-
-	uid, err := uc.repo.IsCorrect(u)
+	gotUser, err := uc.repo.IsCorrect(u)
 	if err != nil {
 		return 0, err
 	}
 
-	return uid, nil
+	salt := gotUser.Password[:8]
+	hash := sha256.New()
+	hash.Write([]byte(salt + u.Password))
+	u.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
+
+	if u.Password != gotUser.Password[8:] {
+		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	return gotUser.Id, nil
 }
 
 func (uc User) Add(usr *models.RegData) (uint64, error) {
 	hash := sha256.New()
-	hash.Write([]byte(usr.Password))
+	salt := generator.RandStringRunes(constants.SaltLength)
+	log.Println(salt)
+	hash.Write([]byte(salt+usr.Password))
 	usr.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
+	usr.Password = salt + usr.Password
+	log.Println(usr.Password)
 
 	flag, err := uc.repo.IsExisting(usr.Login)
 	if err != nil {

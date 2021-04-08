@@ -132,20 +132,20 @@ func (ud UserDatabase) IsExisting(login string) (bool, error) {
 	return true, nil
 }
 
-func (ud UserDatabase) IsCorrect(user *models.User) (uint64, error) {
-	var id uint64
+func (ud UserDatabase) IsCorrect(user *models.User) (*models.User, error) {
+	var gotUser models.User
 	err := ud.pool.
 		QueryRow(context.Background(),
-			`SELECT id FROM users WHERE login = $1 AND password = $2`,
-			user.Login, user.Password).Scan(&id)
+			`SELECT id, password FROM users WHERE login = $1`,
+			user.Login).Scan(&gotUser.Id, &gotUser.Password)
 	if errors.As(err, &pgx.ErrNoRows) {
-		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+		return &gotUser, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 	if err != nil {
-		return 0, err
+		return &gotUser, err
 	}
 
-	return id, nil
+	return &gotUser, nil
 }
 
 func (ud UserDatabase) Update(id uint64, us *models.UserData) error {

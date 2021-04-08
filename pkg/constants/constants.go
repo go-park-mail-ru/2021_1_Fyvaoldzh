@@ -13,6 +13,7 @@ const (
 	TarantoolSpaceName = "qdago"
 	UserPicDir         = "public/"
 	EventsPicDir       = "public/events/"
+	SaltLength         = 8
 )
 
 var LetterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
