@@ -9,6 +9,6 @@ type Repository interface {
 	DeleteById(eventId uint64) error
 	GetTags(eventId uint64) (models.Tags, error)
 	UpdateEventAvatar(eventId uint64, path string) error
-	GetEventsByType(typeEvent string) ([]models.EventCard, error)
+	GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error)
 	FindEvents(str string) ([]models.EventCard, error)
 }

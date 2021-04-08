@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -33,7 +34,9 @@ func (e Event) GetAllEvents() (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertDateCard(elem))
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
 	}
 
 	return events, nil
@@ -90,8 +93,8 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 	return e.repo.UpdateEventAvatar(eventId, fileName)
 }
 
-func (e Event) GetEventsByType(typeEvent string) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetEventsByType(typeEvent)
+func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent)
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -102,7 +105,9 @@ func (e Event) GetEventsByType(typeEvent string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, elem)
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
 	}
 
 	return events, nil

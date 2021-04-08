@@ -74,8 +74,8 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	typeEvent := c.QueryParam("typeEvent")
-	events, err := eh.UseCase.GetEventsByType(typeEvent)
+	category := c.QueryParam("category")
+	events, err := eh.UseCase.GetEventsByCategory(category)
 
 	if err != nil {
 		log.Println(err)

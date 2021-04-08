@@ -38,21 +38,18 @@ func (ed EventDatabase) GetAllEvents() ([]models.EventCardWithDateSQL, error) {
 	return events, nil
 }
 
-func (ed EventDatabase) GetEventsByType(typeEvent string) ([]models.EventCard, error) {
-	var events []models.EventCard
+func (ed EventDatabase) GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT e.id, e.title, e.description, e.image FROM events e
-		JOIN ev_cat_tag ect ON ect.eid = e.id
-		JOIN categories c ON c.id = ect.cid
-		JOIN tags t on t.id = ect.tid
-		WHERE t.name = $1 OR c.name = $1;`, typeEvent)
+		`SELECT id, title, description, image, start_date FROM events
+		WHERE category = $1`, typeEvent)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		return []models.EventCard{}, nil
+		return []models.EventCardWithDateSQL{}, nil
 	}
 
 	if err != nil {
-		return []models.EventCard{}, err
+		return []models.EventCardWithDateSQL{}, err
 	}
 
 	return events, nil
