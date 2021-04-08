@@ -15,33 +15,33 @@ type User struct {
 
 type OtherUserProfile struct {
 	Uid       uint64
-	Name      string   `json:"name"`
-	Age       uint8    `json:"age"`
-	City      string   `json:"city"`
-	About     string   `json:"about"`
-	Avatar    string   `json:"avatar"`
+	Name      string     `json:"name"`
+	Age       uint8      `json:"age"`
+	City      string     `json:"city"`
+	About     string     `json:"about"`
+	Avatar    string     `json:"avatar"`
 	Visited   EventCards `json:"visited"`
-	Planning  EventCards`json:"planning"`
-	Followers []uint64 `json:"followers"`
+	Planning  EventCards `json:"planning"`
+	Followers []uint64   `json:"followers"`
 }
 
 type UserOwnProfile struct {
 	Uid       uint64
-	Name      string   `json:"name"`
-	Login     string   `json:"login"`
-	Birthday  string   `json:"birthday"`
-	City      string   `json:"city"`
-	Email     string   `json:"email"`
+	Name      string     `json:"name"`
+	Login     string     `json:"login"`
+	Birthday  string     `json:"birthday"`
+	City      string     `json:"city"`
+	Email     string     `json:"email"`
 	Visited   EventCards `json:"visited"`
 	Planning  EventCards `json:"planning"`
-	Followers []uint64 `json:"followers"`
-	About     string   `json:"about"`
-	Avatar    string   `json:"avatar"`
-	Password  string   `json:"password"`
+	Followers []uint64   `json:"followers"`
+	About     string     `json:"about"`
+	Avatar    string     `json:"avatar"`
+	Password  string     `json:"password"`
 }
 
 type UserData struct {
-	Id		uint64
+	Id       uint64
 	Name     sql.NullString
 	Login    string
 	Birthday sql.NullTime

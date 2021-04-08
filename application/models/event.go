@@ -47,7 +47,7 @@ type EventCardWithDateSQL struct {
 	Title       string
 	Description string
 	Image       sql.NullString
-	Date		time.Time
+	Date        time.Time
 }
 
 type CategoryTag struct {

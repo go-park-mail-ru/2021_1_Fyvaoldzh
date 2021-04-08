@@ -136,7 +136,6 @@ func (ed EventDatabase) FindEvents(str string) ([]models.EventCardSQL, error) {
 		`SELECT DISTINCT id, title, description, image FROM events 
 		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%';`, str)
 
-
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardSQL{}, nil
 	}

@@ -191,4 +191,3 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 
 	return nil
 }
-
