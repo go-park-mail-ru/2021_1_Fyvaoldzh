@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
 	"io"
 	"io/ioutil"
 	"kudago/application/event"
@@ -14,6 +13,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/labstack/echo"
 )
 
 type Event struct {
@@ -32,13 +33,13 @@ func (e Event) GetAllEvents() (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertCard(elem))
+		events = append(events, models.ConvertDateCard(elem))
 	}
 
 	return events, nil
 }
 
-func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
+/*func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	ev, err := e.repo.GetOneEventByID(eventId)
 	if err != nil {
 		return models.Event{}, err
@@ -64,7 +65,7 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	}
 
 	return jsonEvent, nil
-}
+}*/
 
 func (e Event) Delete(eventId uint64) error {
 	return e.repo.DeleteById(eventId)
@@ -110,7 +111,7 @@ func (e Event) GetEventsByType(typeEvent string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertCard(elem))
+		events = append(events, elem)
 	}
 
 	return events, nil
@@ -150,7 +151,7 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertCard(elem))
+		events = append(events, elem)
 	}
 
 	return events, nil

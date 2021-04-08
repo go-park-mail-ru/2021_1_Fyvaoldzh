@@ -3,13 +3,14 @@ package repository
 import (
 	"context"
 	"errors"
+	"kudago/application/models"
+	"kudago/application/user"
+	"net/http"
+
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
-	"kudago/application/models"
-	"kudago/application/user"
-	"net/http"
 )
 
 type UserDatabase struct {
@@ -74,18 +75,18 @@ func (ud UserDatabase) AddVisitedEvent(userId uint64, eventId uint64) error {
 	return nil
 }
 
-func (ud UserDatabase) GetVisitedEvents(id uint64) ([]models.EventCardSQL, error) {
-	var events []models.EventCardSQL
+func (ud UserDatabase) GetVisitedEvents(id uint64) ([]models.EventCard, error) {
+	var events []models.EventCard
 	err := pgxscan.Select(context.Background(), ud.pool, &events,
 		`SELECT ue.eid AS id, e.title, e.description, e.image
 		FROM user_event ue
 		JOIN events e ON ue.eid = e.id
 		WHERE ue.uid = $1 AND ue.is_p = $2`, id, false)
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		return []models.EventCardSQL{}, nil
+		return []models.EventCard{}, nil
 	}
 	if err != nil {
-		return []models.EventCardSQL{}, err
+		return []models.EventCard{}, err
 	}
 
 	return events, nil

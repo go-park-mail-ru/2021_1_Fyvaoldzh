@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/labstack/echo"
 	"io"
 	"io/ioutil"
 	"kudago/application/models"
@@ -15,6 +14,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/labstack/echo"
 )
 
 type User struct {
@@ -75,7 +76,7 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 	}
 
 	for _, elem := range oldEvents {
-		if elem.Date.Before(time.Now()) {
+		if elem.StartDate.Before(time.Now()) {
 			err := uc.repo.DeletePlanningEvent(id, elem.ID)
 			if err != nil {
 				return &models.OtherUserProfile{}, err
@@ -96,7 +97,7 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 		return &models.OtherUserProfile{}, err
 	}
 	for _, elem := range visitedEventsSQL {
-		other.Visited = append(other.Visited, models.ConvertCard(elem))
+		other.Visited = append(other.Visited, elem)
 	}
 
 	other.Followers, err = uc.repo.GetFollowers(id)
@@ -124,7 +125,7 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	}
 
 	for _, elem := range oldEvents {
-		if elem.Date.Before(time.Now()) {
+		if elem.StartDate.Before(time.Now()) {
 			err := uc.repo.DeletePlanningEvent(id, elem.ID)
 			if err != nil {
 				return &models.UserOwnProfile{}, err
@@ -145,7 +146,7 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 		return &models.UserOwnProfile{}, err
 	}
 	for _, elem := range visitedEventsSQL {
-		own.Visited = append(own.Visited, models.ConvertCard(elem))
+		own.Visited = append(own.Visited, elem)
 	}
 
 	own.Followers, err = uc.repo.GetFollowers(id)

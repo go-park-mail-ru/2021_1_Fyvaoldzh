@@ -2,14 +2,15 @@ package http
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
-	"github.com/mailru/easyjson"
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/pkg/infrastructure"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo"
+	"github.com/mailru/easyjson"
 )
 
 type EventHandler struct {
@@ -22,7 +23,7 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	eventHandler := EventHandler{UseCase: uc, Sm: sm}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
-	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
+	//e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
 	e.GET("/api/v1/event", eventHandler.GetEvents)
 	e.GET("/api/v1/search", eventHandler.FindEvents)
 	e.POST("/api/v1/create", eventHandler.Create)
@@ -48,7 +49,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	return nil
 }
 
-func (eh EventHandler) GetOneEvent(c echo.Context) error {
+/*func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	id, err := strconv.Atoi(c.Param("id"))
@@ -68,7 +69,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	}
 
 	return nil
-}
+}*/
 
 func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
