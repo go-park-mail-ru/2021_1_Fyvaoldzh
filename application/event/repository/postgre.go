@@ -25,7 +25,7 @@ func NewEventDatabase(conn *pgxpool.Pool) event.Repository {
 func (ed EventDatabase) GetAllEvents() ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, description, image, start_date FROM events`)
+		`SELECT id, title, description, image, start_date, end_date FROM events`)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
@@ -41,7 +41,7 @@ func (ed EventDatabase) GetAllEvents() ([]models.EventCardWithDateSQL, error) {
 func (ed EventDatabase) GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, description, image, start_date FROM events
+		`SELECT id, title, description, image, start_date, end_date FROM events
 		WHERE category = $1`, typeEvent)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
@@ -93,9 +93,10 @@ func (ed EventDatabase) GetTags(eventId uint64) (models.Tags, error) {
 func (ed EventDatabase) AddEvent(newEvent *models.Event) error {
 	// TODO: добавить промежуточный sql, который будет в базу null пихать
 	_, err := ed.pool.Exec(context.Background(),
-		`INSERT INTO events (title, place, subway, street, description, date, image) 
+		`INSERT INTO events (title, place, subway, street, description, category, start_date, end_date, image) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		newEvent.Title, newEvent.Place, newEvent.Subway, newEvent.Street, newEvent.Description, newEvent.StartDate, newEvent.Image)
+		newEvent.Title, newEvent.Place, newEvent.Subway, newEvent.Street, newEvent.Description,
+		newEvent.Category, newEvent.StartDate, newEvent.EndDate, newEvent.Image)
 	if err != nil {
 		return err
 	}
@@ -132,7 +133,8 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 func (ed EventDatabase) FindEvents(str string) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT e.id as id, e.title as title, e.description as description, e.image as image, e.start_date as start_date FROM
+		`SELECT DISTINCT e.id as id, e.title as title, e.description as description,
+		e.image as image, e.start_date as start_date, e.end_date as end_date FROM
         events e JOIN event_tag et on e.id = et.event_id
         JOIN tags t on et.tag_id = t.id
 		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
