@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 )
 
 type Event struct {
@@ -26,20 +27,26 @@ func NewEvent(e event.Repository) event.UseCase {
 	return &Event{repo: e}
 }
 
-func (e Event) GetAllEvents() (models.EventCards, error) {
+func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetAllEvents()
 	if err != nil {
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
+	var events, pageEvents models.EventCards
 	for _, elem := range sqlEvents {
 		if elem.StartDate.After(time.Now()) {
 			events = append(events, models.ConvertDateCard(elem))
 		}
 	}
+	for i := (page - 1) * 6; i < len(events); i++ {
+		pageEvents = append(pageEvents, events[i])
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
+	}
 
-	return events, nil
+	return pageEvents, nil
 }
 
 func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
@@ -119,10 +126,6 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	/*if !ev.Image.Valid || len(ev.Image.String) == 0 {
-		return []byte{}, echo.NewHTTPError(http.StatusNotFound, "Event has no picture")
-	}*/
-
 	file, err := ioutil.ReadFile(ev.Image.String)
 	if err != nil {
 		log.Println("Cannot open file: " + ev.Image.String)
@@ -152,4 +155,14 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 	}
 
 	return events, nil
+}
+
+func (e Event) RecomendSystem(uid uint64, category string) error {
+	if err := e.repo.RecomendSystem(uid, category); err != nil {
+		time.Sleep(1 * time.Second)
+		if err := e.repo.RecomendSystem(uid, category); err != nil {
+			return errors.New("cannot add record in user_prefer")
+		}
+	}
+	return nil
 }

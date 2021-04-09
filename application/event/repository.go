@@ -11,4 +11,5 @@ type Repository interface {
 	UpdateEventAvatar(eventId uint64, path string) error
 	GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error)
 	FindEvents(str string) ([]models.EventCardWithDateSQL, error)
+	RecomendSystem(uid uint64, category string) error
 }

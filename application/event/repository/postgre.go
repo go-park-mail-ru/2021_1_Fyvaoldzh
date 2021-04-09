@@ -25,7 +25,8 @@ func NewEventDatabase(conn *pgxpool.Pool) event.Repository {
 func (ed EventDatabase) GetAllEvents() ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, description, image, start_date, end_date FROM events`)
+		`SELECT id, title, description, image, start_date, end_date FROM events
+		ORDER BY id DESC`)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
@@ -42,7 +43,7 @@ func (ed EventDatabase) GetEventsByCategory(typeEvent string) ([]models.EventCar
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
 		`SELECT id, title, description, image, start_date, end_date FROM events
-		WHERE category = $1`, typeEvent)
+		WHERE category = $1 ORDER BY id DESC`, typeEvent)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
@@ -133,8 +134,8 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 func (ed EventDatabase) FindEvents(str string) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT e.id as id, e.title as title, e.description as description,
-		e.image as image, e.start_date as start_date, e.end_date as end_date FROM
+		`SELECT DISTINCT ON(e.id) e.id, e.title, e.description,
+		e.image, e.start_date, e.end_date FROM
         events e JOIN event_tag et on e.id = et.event_id
         JOIN tags t on et.tag_id = t.id
 		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
@@ -149,4 +150,35 @@ func (ed EventDatabase) FindEvents(str string) ([]models.EventCardWithDateSQL, e
 	}
 
 	return events, nil
+}
+
+func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
+	if category == "Музей" {
+		_, err := ed.pool.Exec(context.Background(),
+			`UPDATE user_preference SET concert = concert + 1 WHERE user_id = $1`, uid)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if category == "Выставка" {
+		_, err := ed.pool.Exec(context.Background(),
+			`UPDATE user_preference SET show = show + 1 WHERE user_id = $1`, uid)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if category == "Кино" {
+		_, err := ed.pool.Exec(context.Background(),
+			`UPDATE user_preference SET movie = movie + 1 WHERE user_id = $1`, uid)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

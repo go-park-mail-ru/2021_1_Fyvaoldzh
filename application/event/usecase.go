@@ -6,7 +6,7 @@ import (
 )
 
 type UseCase interface {
-	GetAllEvents() (models.EventCards, error)
+	GetAllEvents(page int) (models.EventCards, error)
 	GetOneEvent(eventId uint64) (models.Event, error)
 	Delete(eventId uint64) error
 	CreateNewEvent(newEvent *models.Event) error
@@ -14,4 +14,5 @@ type UseCase interface {
 	GetEventsByCategory(typeEvent string) (models.EventCards, error)
 	GetImage(eventId uint64) ([]byte, error)
 	FindEvents(str string) (models.EventCards, error)
+	RecomendSystem(uid uint64, category string) error
 }

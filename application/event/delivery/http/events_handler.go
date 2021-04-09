@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"kudago/application/event"
 	"kudago/application/models"
@@ -23,22 +24,33 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	eventHandler := EventHandler{UseCase: uc, Sm: sm}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
-	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent) //Есть проверка на id
+	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
 	e.GET("/api/v1/event", eventHandler.GetEvents)
 	e.GET("/api/v1/search", eventHandler.FindEvents)
-	//create & delete вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
+	//create & delete & save вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
 	e.POST("/api/v1/create", eventHandler.Create)
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
-	//Возможно есть смысл проверять, кидает ли нам этот запрос пользователь именно с таким u_id, чтобы другие люди не могли поменять аватарку
-	//Сейчас, как я понимаю, проверяется только csrf
-	e.POST("/api/v1/save/:id", eventHandler.Save)          //TODO Нет проверки на id
-	e.GET("api/v1/event/:id/image", eventHandler.GetImage) //Есть проверка на id
+	e.POST("/api/v1/save/:id", eventHandler.Save)
+	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
 }
 
 func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	events, err := eh.UseCase.GetAllEvents()
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+
+	events, err := eh.UseCase.GetAllEvents(page)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -50,6 +62,28 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	}
 
 	return nil
+}
+
+func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
+	cookie, err := c.Cookie("SID")
+	if err != nil {
+		log.Println(err)
+		return 0, errors.New("user is not authorized")
+	}
+
+	var uid uint64
+	var exists bool
+
+	exists, uid, err = eh.Sm.CheckSession(cookie.Value)
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+
+	if !exists {
+		return 0, errors.New("user is not authorized")
+	}
+	return uid, nil
 }
 
 func (eh EventHandler) GetOneEvent(c echo.Context) error {
@@ -64,6 +98,12 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
 		return err
+	}
+
+	if uid, err := eh.GetUserID(c); err == nil {
+		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
+			log.Println(err)
+		}
 	}
 
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
@@ -100,7 +140,7 @@ func (eh EventHandler) Create(c echo.Context) error {
 
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, newEvent); err != nil {
 		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	if err := eh.UseCase.CreateNewEvent(newEvent); err != nil {
@@ -135,13 +175,13 @@ func (eh EventHandler) Save(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	img, err := c.FormFile("image")
 	if err != nil {
 		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	err = eh.UseCase.SaveImage(uint64(id), img)
