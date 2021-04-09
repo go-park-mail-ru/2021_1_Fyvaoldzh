@@ -2,14 +2,15 @@ package http
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
-	"github.com/mailru/easyjson"
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/pkg/infrastructure"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/labstack/echo"
+	"github.com/mailru/easyjson"
 )
 
 type EventHandler struct {
@@ -25,8 +26,11 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
 	e.GET("/api/v1/event", eventHandler.GetEvents)
 	e.GET("/api/v1/search", eventHandler.FindEvents)
+	//create & delete вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
 	e.POST("/api/v1/create", eventHandler.Create)
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
+	//Возможно есть смысл проверять, кидает ли нам этот запрос пользователь именно с таким u_id, чтобы другие люди не могли поменять аватарку
+	//Сейчас, как я понимаю, проверяется только csrf
 	e.POST("/api/v1/save/:id", eventHandler.Save)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
 }
@@ -73,8 +77,8 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	typeEvent := c.QueryParam("typeEvent")
-	events, err := eh.UseCase.GetEventsByType(typeEvent)
+	category := c.QueryParam("category")
+	events, err := eh.UseCase.GetEventsByCategory(category)
 
 	if err != nil {
 		log.Println(err)

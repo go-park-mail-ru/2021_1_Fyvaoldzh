@@ -12,7 +12,7 @@ type Repository interface {
 	IsCorrect(user *models.User) (*models.User, error)
 	// TODO: можно вынести в подписки и тыкать на уровне usecase в подписки?
 	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
-	GetVisitedEvents(id uint64) ([]models.EventCardSQL, error)
+	GetVisitedEvents(id uint64) ([]models.EventCard, error)
 	GetFollowers(id uint64) ([]uint64, error)
 	DeletePlanningEvent(userId uint64, eventId uint64) error
 	AddVisitedEvent(userId uint64, eventId uint64) error

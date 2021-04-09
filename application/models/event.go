@@ -6,15 +6,17 @@ import (
 )
 
 type Event struct {
-	ID          uint64       `json:"id"`
-	Title       string       `json:"title"`
-	Place       string       `json:"place"`
-	Description string       `json:"description"`
-	Date        string       `json:"date"`
-	Subway      string       `json:"subway"`
-	Street      string       `json:"street"`
-	TypeEvent   CategoryTags `json:"typeEvent"`
-	Image       string       `json:"image"`
+	ID          uint64 `json:"id"`
+	Title       string `json:"title"`
+	Place       string `json:"place"`
+	Description string `json:"description"`
+	StartDate   string `json:"startDate"`
+	EndDate     string `json:"endDate"`
+	Subway      string `json:"subway"`
+	Street      string `json:"street"`
+	Tags        Tags   `json:"tags"`
+	Category    string `json:"category"`
+	Image       string `json:"image"`
 }
 
 type EventSQL struct {
@@ -22,9 +24,11 @@ type EventSQL struct {
 	Title       string
 	Place       string
 	Description string
-	Date        sql.NullTime
+	StartDate   sql.NullTime
+	EndDate     sql.NullTime
 	Subway      sql.NullString
 	Street      sql.NullString
+	Category    string
 	Image       sql.NullString
 }
 
@@ -33,13 +37,7 @@ type EventCard struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Image       string `json:"image"`
-}
-
-type EventCardSQL struct {
-	ID          uint64         `json:"id"`
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	Image       sql.NullString `json:"image"`
+	StartDate   string `json:"startDate"`
 }
 
 type EventCardWithDateSQL struct {
@@ -47,28 +45,12 @@ type EventCardWithDateSQL struct {
 	Title       string
 	Description string
 	Image       sql.NullString
-	Date        time.Time
+	StartDate   time.Time
 }
 
-type CategoryTag struct {
+type Tag struct {
 	ID   uint64 `json:"id"`
 	Name string `json:"name"`
-}
-
-type CategoryTagDescription struct {
-	CategoryID   uint64
-	CategoryName string
-	TagID        uint64
-	TagName      string
-}
-
-func ConvertCard(old EventCardSQL) EventCard {
-	var newCard EventCard
-	newCard.ID = old.ID
-	newCard.Title = old.Title
-	newCard.Description = old.Description
-	newCard.Image = old.Image.String
-	return newCard
 }
 
 func ConvertDateCard(old EventCardWithDateSQL) EventCard {
@@ -77,6 +59,7 @@ func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	newCard.Title = old.Title
 	newCard.Description = old.Description
 	newCard.Image = old.Image.String
+	newCard.StartDate = old.StartDate.String()
 	return newCard
 }
 
@@ -86,9 +69,11 @@ func ConvertEvent(old EventSQL) Event {
 	newEvent.Title = old.Title
 	newEvent.Place = old.Place
 	newEvent.Description = old.Description
-	newEvent.Date = old.Date.Time.String()
+	newEvent.StartDate = old.StartDate.Time.String()
+	newEvent.EndDate = old.EndDate.Time.String()
 	newEvent.Subway = old.Subway.String
 	newEvent.Street = old.Street.String
+	newEvent.Category = old.Category
 	newEvent.Image = old.Image.String
 	return newEvent
 }
@@ -100,4 +85,4 @@ type Events []Event
 type EventCards []EventCard
 
 //easyjson:json
-type CategoryTags []CategoryTag
+type Tags []Tag

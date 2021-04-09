@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"github.com/labstack/echo"
 	"io"
 	"io/ioutil"
 	"kudago/application/event"
@@ -14,6 +13,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/labstack/echo"
 )
 
 type Event struct {
@@ -32,7 +34,9 @@ func (e Event) GetAllEvents() (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertCard(elem))
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
 	}
 
 	return events, nil
@@ -46,22 +50,13 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 
 	jsonEvent := models.ConvertEvent(ev)
 
-	massiv, err := e.repo.GetCategoryTags(eventId)
+	tags, err := e.repo.GetTags(eventId)
+
 	if err != nil {
 		return models.Event{}, err
 	}
 
-	var desc models.CategoryTag
-	desc.ID = massiv[0].CategoryID
-	desc.Name = massiv[0].CategoryName
-
-	jsonEvent.TypeEvent = append(jsonEvent.TypeEvent, desc)
-
-	for _, elem := range massiv {
-		desc.ID = elem.TagID
-		desc.Name = elem.TagName
-		jsonEvent.TypeEvent = append(jsonEvent.TypeEvent, desc)
-	}
+	jsonEvent.Tags = tags
 
 	return jsonEvent, nil
 }
@@ -98,8 +93,8 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 	return e.repo.UpdateEventAvatar(eventId, fileName)
 }
 
-func (e Event) GetEventsByType(typeEvent string) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetEventsByType(typeEvent)
+func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent)
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -110,7 +105,9 @@ func (e Event) GetEventsByType(typeEvent string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertCard(elem))
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
 	}
 
 	return events, nil
@@ -122,13 +119,12 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	if !ev.Image.Valid || len(ev.Image.String) == 0 {
+	/*if !ev.Image.Valid || len(ev.Image.String) == 0 {
 		return []byte{}, echo.NewHTTPError(http.StatusNotFound, "Event has no picture")
-	}
+	}*/
 
 	file, err := ioutil.ReadFile(ev.Image.String)
 	if err != nil {
-		// TODO ???
 		log.Println("Cannot open file: " + ev.Image.String)
 		return []byte{}, err
 	}
@@ -150,7 +146,9 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		events = append(events, models.ConvertCard(elem))
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
 	}
 
 	return events, nil

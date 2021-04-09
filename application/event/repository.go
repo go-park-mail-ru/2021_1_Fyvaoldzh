@@ -4,11 +4,11 @@ import "kudago/application/models"
 
 type Repository interface {
 	AddEvent(newEvent *models.Event) error
-	GetAllEvents() ([]models.EventCardSQL, error)
+	GetAllEvents() ([]models.EventCardWithDateSQL, error)
 	GetOneEventByID(eventId uint64) (models.EventSQL, error)
 	DeleteById(eventId uint64) error
-	GetCategoryTags(eventId uint64) ([]models.CategoryTagDescription, error)
+	GetTags(eventId uint64) (models.Tags, error)
 	UpdateEventAvatar(eventId uint64, path string) error
-	GetEventsByType(typeEvent string) ([]models.EventCardSQL, error)
-	FindEvents(str string) ([]models.EventCardSQL, error)
+	GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error)
+	FindEvents(str string) ([]models.EventCardWithDateSQL, error)
 }

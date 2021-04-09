@@ -11,8 +11,7 @@ require (
 	github.com/labstack/gommon v0.3.0 // indirect
 	github.com/lib/pq v1.4.0
 	github.com/mailru/easyjson v0.7.7
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tarantool/go-tarantool v0.0.0-20210330210617-56fe55c5fa5c
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 )
