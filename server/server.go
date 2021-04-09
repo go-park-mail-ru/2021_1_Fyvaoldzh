@@ -39,14 +39,6 @@ func NewServer() *echo.Echo {
 		log.Fatalln(err)
 	}
 
-	userRep := repository.NewUserDatabase(pool)
-	eventRep := erepository.NewEventDatabase(pool)
-	subRep := srepository.NewSubscriptionDatabase(pool)
-
-	userUC := usecase.NewUser(userRep)
-	eventUC := eusecase.NewEvent(eventRep)
-	subUC := susecase.NewSubscription(subRep)
-
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
 		User: constants.TarantoolUser,
 		Pass: constants.TarantoolPassword,
@@ -60,6 +52,14 @@ func NewServer() *echo.Echo {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	userRep := repository.NewUserDatabase(pool)
+	eventRep := erepository.NewEventDatabase(pool)
+	subRep := srepository.NewSubscriptionDatabase(pool)
+
+	userUC := usecase.NewUser(userRep)
+	eventUC := eusecase.NewEvent(eventRep)
+	subUC := susecase.NewSubscription(subRep)
 
 	sm := infrastructure.SessionManager{}
 	sm.Conn = conn

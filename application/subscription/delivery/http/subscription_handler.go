@@ -16,17 +16,15 @@ type SubscriptionHandler struct {
 
 func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm *infrastructure.SessionManager) {
 
-	subscriptionsHandler := SubscriptionHandler{UseCase: uc, Sm: sm}
+	subscriptionHandler := SubscriptionHandler{UseCase: uc, Sm: sm}
 
-	e.POST("/api/v1/subscribe/user/:id", subscriptionsHandler.Subscribe)
-	e.DELETE("/api/v1/unsubscribe/user/:id", subscriptionsHandler.Unsubscribe)
-	e.POST("/api/v1/add/planning/:id", subscriptionsHandler.AddPlanningEvent)
-	e.DELETE("/api/v1/remove/planning/:id", subscriptionsHandler.RemovePlanningEvent)
-	e.POST("/api/v1/add/visited/:id", subscriptionsHandler.AddVisitedEvent)
-	e.DELETE("/api/v1/remove/visited/:id", subscriptionsHandler.RemoveVisitedEvent)
+	e.POST("/api/v1/subscribe/user/:id", subscriptionHandler.Subscribe)
+	e.DELETE("/api/v1/unsubscribe/user/:id", subscriptionHandler.Unsubscribe)
+	e.POST("/api/v1/add/planning/:id", subscriptionHandler.AddPlanningEvent)
+	e.DELETE("/api/v1/remove/planning/:id", subscriptionHandler.RemovePlanningEvent)
+	e.POST("/api/v1/add/visited/:id", subscriptionHandler.AddVisitedEvent)
+	e.DELETE("/api/v1/remove/visited/:id", subscriptionHandler.RemoveVisitedEvent)
 }
-
-// TODO: общую часть с кукой и проверкой вынести в общий метод
 
 func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -36,28 +34,25 @@ func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	var uid1 uint64
+	var subscriberId uint64
 	var exists bool
-	exists, uid1, err = h.Sm.CheckSession(cookie.Value)
+	exists, subscriberId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	uid2, err := strconv.Atoi(c.Param("id"))
+	subscribedToId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-
-	err = h.UseCase.SubscribeUser(uid1, uint64(uid2))
-
-	if err != nil {
-		return err
+	if subscribedToId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
-	return nil
+
+	return h.UseCase.SubscribeUser(subscriberId, uint64(subscribedToId))
 }
 
 func (h SubscriptionHandler) Unsubscribe(c echo.Context) error {
@@ -68,9 +63,9 @@ func (h SubscriptionHandler) Unsubscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	var uid1 uint64
+	var subscriberId uint64
 	var exists bool
-	exists, uid1, err = h.Sm.CheckSession(cookie.Value)
+	exists, subscriberId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -79,12 +74,15 @@ func (h SubscriptionHandler) Unsubscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	uid2, err := strconv.Atoi(c.Param("id"))
+	subscribedToId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	if subscribedToId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
 
-	return h.UseCase.UnsubscribeUser(uid1, uint64(uid2))
+	return h.UseCase.UnsubscribeUser(subscriberId, uint64(subscribedToId))
 }
 
 func (h SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
@@ -95,23 +93,25 @@ func (h SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	var uid uint64
+	var userId uint64
 	var exists bool
-	exists, uid, err = h.Sm.CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	eid, err := strconv.Atoi(c.Param("id"))
+	eventId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
 
-	return h.UseCase.AddPlanning(uid, uint64(eid))
+	return h.UseCase.AddPlanning(userId, uint64(eventId))
 }
 
 func (h SubscriptionHandler) RemovePlanningEvent(c echo.Context) error {
@@ -122,23 +122,25 @@ func (h SubscriptionHandler) RemovePlanningEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	var uid uint64
+	var userId uint64
 	var exists bool
-	exists, uid, err = h.Sm.CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	eid, err := strconv.Atoi(c.Param("id"))
+	eventId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
 
-	return h.UseCase.RemovePlanning(uid, uint64(eid))
+	return h.UseCase.RemovePlanning(userId, uint64(eventId))
 }
 
 func (h SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
@@ -149,23 +151,25 @@ func (h SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	var uid uint64
+	var userId uint64
 	var exists bool
-	exists, uid, err = h.Sm.CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	eid, err := strconv.Atoi(c.Param("id"))
+	eventId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
 
-	return h.UseCase.AddVisited(uid, uint64(eid))
+	return h.UseCase.AddVisited(userId, uint64(eventId))
 }
 
 func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
@@ -176,21 +180,23 @@ func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	var uid uint64
+	var userId uint64
 	var exists bool
-	exists, uid, err = h.Sm.CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
-
 	if !exists {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	eid, err := strconv.Atoi(c.Param("id"))
+	eventId, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
 
-	return h.UseCase.RemoveVisited(uid, uint64(eid))
+	return h.UseCase.RemoveVisited(userId, uint64(eventId))
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"kudago/application/models"
+	"kudago/application/subscription"
 	"kudago/application/user"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
@@ -19,19 +20,20 @@ import (
 	"github.com/labstack/echo"
 )
 
-type User struct {
+type UserUseCase struct {
 	repo user.Repository
+	repoSub subscription.Repository
 }
 
-func (uc User) Login(user *models.User) (uint64, error) {
+func NewUser(u user.Repository, repoSubscription subscription.Repository) user.UseCase {
+	return &UserUseCase{repo: u, repoSub: repoSubscription}
+}
+
+func (uc UserUseCase) Login(user *models.User) (uint64, error) {
 	return uc.CheckUser(user)
 }
 
-func NewUser(u user.Repository) user.UseCase {
-	return &User{repo: u}
-}
-
-func (uc User) CheckUser(u *models.User) (uint64, error) {
+func (uc UserUseCase) CheckUser(u *models.User) (uint64, error) {
 	gotUser, err := uc.repo.IsCorrect(u)
 	if err != nil {
 		return 0, err
@@ -49,7 +51,7 @@ func (uc User) CheckUser(u *models.User) (uint64, error) {
 	return gotUser.Id, nil
 }
 
-func (uc User) Add(usr *models.RegData) (uint64, error) {
+func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 	hash := sha256.New()
 	salt := generator.RandStringRunes(constants.SaltLength)
 	log.Println(salt)
@@ -70,7 +72,7 @@ func (uc User) Add(usr *models.RegData) (uint64, error) {
 	return id, nil
 }
 
-func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
+func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 	usr, err := uc.repo.GetByIdOwn(id)
 
 	if err != nil {
@@ -80,19 +82,14 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 	other := models.ConvertToOther(*usr)
 	var newEvents []models.EventCard
 
-	oldEvents, err := uc.repo.GetPlanningEvents(id)
+	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
 
 	for _, elem := range oldEvents {
-		if elem.StartDate.Before(time.Now()) {
-			err := uc.repo.DeletePlanningEvent(id, elem.ID)
-			if err != nil {
-				return &models.OtherUserProfile{}, err
-			}
-
-			err = uc.repo.AddVisitedEvent(id, elem.ID)
+		if elem.EndDate.Before(time.Now()) {
+			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
 			if err != nil {
 				return &models.OtherUserProfile{}, err
 			}
@@ -102,15 +99,15 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 	}
 	other.Planning = newEvents
 
-	visitedEventsSQL, err := uc.repo.GetVisitedEvents(id)
+	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
 	for _, elem := range visitedEventsSQL {
-		other.Visited = append(other.Visited, elem)
+		other.Visited = append(other.Visited, models.ConvertDateCard(elem))
 	}
 
-	other.Followers, err = uc.repo.GetFollowers(id)
+	other.Followers, err = uc.repoSub.GetFollowers(id)
 	if err != nil {
 		return &models.OtherUserProfile{}, err
 	}
@@ -119,7 +116,7 @@ func (uc User) GetOtherProfile(id uint64) (*models.OtherUserProfile, error) {
 
 }
 
-func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
+func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	usr, err := uc.repo.GetByIdOwn(id)
 
 	if err != nil {
@@ -129,19 +126,14 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	own := models.ConvertToOwn(*usr)
 	var newEvents []models.EventCard
 
-	oldEvents, err := uc.repo.GetPlanningEvents(id)
+	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
 
 	for _, elem := range oldEvents {
-		if elem.StartDate.Before(time.Now()) {
-			err := uc.repo.DeletePlanningEvent(id, elem.ID)
-			if err != nil {
-				return &models.UserOwnProfile{}, err
-			}
-
-			err = uc.repo.AddVisitedEvent(id, elem.ID)
+		if elem.EndDate.Before(time.Now()) {
+			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
 			if err != nil {
 				return &models.UserOwnProfile{}, err
 			}
@@ -151,15 +143,15 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	}
 	own.Planning = newEvents
 
-	visitedEventsSQL, err := uc.repo.GetVisitedEvents(id)
+	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
 	for _, elem := range visitedEventsSQL {
-		own.Visited = append(own.Visited, elem)
+		own.Visited = append(own.Visited, models.ConvertDateCard(elem))
 	}
 
-	own.Followers, err = uc.repo.GetFollowers(id)
+	own.Followers, err = uc.repoSub.GetFollowers(id)
 	if err != nil {
 		return &models.UserOwnProfile{}, err
 	}
@@ -167,7 +159,7 @@ func (uc User) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	return own, nil
 }
 
-func (uc User) Update(uid uint64, ud *models.UserOwnProfile) error {
+func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	changeUser, err := uc.repo.GetByIdOwn(uid)
 	if err != nil {
 		return err
@@ -225,7 +217,7 @@ func (uc User) Update(uid uint64, ud *models.UserOwnProfile) error {
 	return nil
 }
 
-func (uc User) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
+func (uc UserUseCase) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
 	src, err := img.Open()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -252,7 +244,7 @@ func (uc User) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
 	return nil
 }
 
-func (uc User) GetAvatar(uid uint64) ([]byte, error) {
+func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 	usr, err := uc.repo.GetByIdOwn(uid)
 
 	if err != nil {

@@ -2,10 +2,11 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"github.com/jackc/pgx/v4"
+	"database/sql"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
+	"kudago/application/models"
 	"kudago/application/subscription"
 	"net/http"
 )
@@ -14,53 +15,28 @@ type SubscriptionDatabase struct {
 	pool *pgxpool.Pool
 }
 
+
 func NewSubscriptionDatabase(conn *pgxpool.Pool) subscription.Repository {
 	return &SubscriptionDatabase{pool: conn}
 }
 
-func (ud SubscriptionDatabase) SubscribeUser(uid1 uint64, uid2 uint64) error {
-	var ui1, ui2 uint64
-	// TODO: исправить по аналогии с тем, что ниже
-	err := ud.pool.
-		QueryRow(context.Background(),
-			`SELECT uid1, uid2 FROM subscriptions WHERE uid1 = $1 AND uid2 = $2`,
-			uid1, uid2).Scan(&ui1, &ui2)
-	if !errors.As(err, &pgx.ErrNoRows) || err == nil {
-		if err != nil {
-			return err
-		}
-		return echo.NewHTTPError(http.StatusBadRequest, "the subscription exists")
-	}
-
-	err = ud.pool.
-		QueryRow(context.Background(),
-			`SELECT id FROM users WHERE id = $1`,
-			uid2).Scan(&ui2)
-	if errors.As(err, &pgx.ErrNoRows) {
-		return echo.NewHTTPError(http.StatusBadRequest, "user with this id does not exist")
-	}
-
+func (sd SubscriptionDatabase) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO subscriptions (subscriber_id, subscribed_to_id) VALUES ($1, $2)`,
+		subscriberId, subscribedToId)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	_, err = ud.pool.Exec(context.Background(),
-		`INSERT INTO subscriptions (uid1, uid2) VALUES ($1, $2)`,
-		uid1, uid2)
-
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
-func (ud SubscriptionDatabase) UnsubscribeUser(uid1 uint64, uid2 uint64) error {
-	resp, err := ud.pool.Exec(context.Background(),
-		`DELETE FROM subscriptions WHERE uid1 = $1 AND uid2 = $2`,
-		uid1, uid2)
-
+func (sd SubscriptionDatabase) UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error {
+	resp, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM subscriptions WHERE subscriber_id = $1 AND subscribed_to_id = $2`,
+		subscriberId, subscribedToId)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if resp.RowsAffected() == 0 {
@@ -71,112 +47,118 @@ func (ud SubscriptionDatabase) UnsubscribeUser(uid1 uint64, uid2 uint64) error {
 	return nil
 }
 
-func (ud SubscriptionDatabase) AddPlanning(uid uint64, eid uint64) error {
-	resp, err := ud.pool.Exec(context.Background(),
-		`SELECT * FROM user_event WHERE uid = $1 AND eid = $2 AND is_p = $3`,
-		uid, eid, true)
-
+func (sd SubscriptionDatabase) AddPlanning(userId uint64, eventId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO user_event (user_id, event_id, is_planning) VALUES ($1, $2, $3)`,
+		userId, eventId, true)
 	if err != nil {
-		return err
-	}
-
-	if resp.RowsAffected() > 0 {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event is already added")
-	}
-
-	resp, err = ud.pool.Exec(context.Background(),
-		`SELECT id FROM events WHERE id = $1`,
-		eid)
-
-	if err != nil {
-		return err
-	}
-
-	if resp.RowsAffected() == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event does not exist")
-	}
-
-	_, err = ud.pool.Exec(context.Background(),
-		`INSERT INTO user_event (uid, eid, is_p) VALUES ($1, $2, $3)`,
-		uid, eid, true)
-
-	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil
 }
 
-func (ud SubscriptionDatabase) RemovePlanning(uid uint64, eid uint64) error {
-	resp, err := ud.pool.Exec(context.Background(),
-		`DELETE FROM user_event WHERE uid = $1 AND eid = $2 AND is_p = $3`,
-		uid, eid, true)
-
+func (sd SubscriptionDatabase) RemovePlanning(userId uint64, eventId uint64) error {
+	resp, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM user_event WHERE user_id = $1 AND event_id = $2 AND is_planning = $3`,
+		userId, eventId, true)
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-
 	if resp.RowsAffected() == 0 {
 		return echo.NewHTTPError(http.StatusBadRequest,
-			"do not have this event in list")
+			"event does not exist in list")
 	}
 
 	return nil
 }
 
-func (ud SubscriptionDatabase) AddVisited(uid uint64, eid uint64) error {
-	resp, err := ud.pool.Exec(context.Background(),
-		`SELECT FROM user_event WHERE uid = $1 AND eid = $2 AND is_p = $3`,
-		uid, eid, false)
-
+func (sd SubscriptionDatabase) AddVisited(userId uint64, eventId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO user_event (user_id, event_id, is_planning) VALUES ($1, $2, $3)`,
+		userId, eventId, false)
 	if err != nil {
-		return err
-	}
-
-	if resp.RowsAffected() > 0 {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event is already added")
-	}
-
-	resp, err = ud.pool.Exec(context.Background(),
-		`SELECT id FROM events WHERE id = $1`,
-		eid)
-
-	if err != nil {
-		return err
-	}
-
-	if resp.RowsAffected() == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event does not exist")
-	}
-
-	_, err = ud.pool.Exec(context.Background(),
-		`INSERT INTO user_event (uid, eid, is_p) VALUES ($1, $2, $3)`,
-		uid, eid, false)
-
-	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return nil
 }
 
-func (ud SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
-	resp, err := ud.pool.Exec(context.Background(),
-		`DELETE FROM user_event WHERE uid = $1 AND eid = $2 AND is_p = $3`,
+func (sd SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
+	resp, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM user_event WHERE user_id = $1 AND event_id = $2 AND is_planning = $3`,
 		uid, eid, false)
-
 	if err != nil {
-		return err
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-
 	if resp.RowsAffected() == 0 {
 		return echo.NewHTTPError(http.StatusBadRequest,
-			"do not have this event in list")
+			"event does not exist in list")
 	}
 
 	return nil
+}
+
+
+func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
+	resp, err := sd.pool.Exec(context.Background(),
+		`UPDATE user_event SET is_planning = $1 WHERE user_id = $2 AND event_id = $3`,
+		false, userId, eventId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if resp.RowsAffected() == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest,
+			"event does not exist in list")
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
+	var users []uint64
+	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
+		FROM subscriptions WHERE subscribed_to_id = $1`, id)
+	if err == sql.ErrNoRows {
+		return []uint64{}, nil
+	}
+	if err != nil {
+		return []uint64{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return users, nil
+}
+
+func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &events,
+		`SELECT e.id, e.title, e.description, e.image, e.start_date  
+		FROM events
+		JOIN user_event ON user_id = $1
+		WHERE event_id = e.id AND is_planning = $2`, id, true)
+	if err == sql.ErrNoRows {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	if err != nil {
+		return []models.EventCardWithDateSQL{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return events, nil
+}
+
+func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &events,
+		`SELECT e.id, e.title, e.description, e.image, e.start_date  
+		FROM events
+		JOIN user_event ON user_id = $1
+		WHERE event_id = e.id AND is_planning = $2`, id, false)
+	if err == sql.ErrNoRows {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	if err != nil {
+		return []models.EventCardWithDateSQL{}, err
+	}
+
+	return events, nil
 }

@@ -1240,6 +1240,10 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels11(in *jlexer.Lexer, out *Even
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.StartDate).UnmarshalJSON(data))
 			}
+		case "EndDate":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.EndDate).UnmarshalJSON(data))
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -1278,6 +1282,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels11(out *jwriter.Writer, in Eve
 		const prefix string = ",\"StartDate\":"
 		out.RawString(prefix)
 		out.Raw((in.StartDate).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"EndDate\":"
+		out.RawString(prefix)
+		out.Raw((in.EndDate).MarshalJSON())
 	}
 	out.RawByte('}')
 }
@@ -1334,6 +1343,8 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels12(in *jlexer.Lexer, out *Even
 			out.Image = string(in.String())
 		case "startDate":
 			out.StartDate = string(in.String())
+		case "endDate":
+			out.EndDate = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -1372,6 +1383,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels12(out *jwriter.Writer, in Eve
 		const prefix string = ",\"startDate\":"
 		out.RawString(prefix)
 		out.String(string(in.StartDate))
+	}
+	{
+		const prefix string = ",\"endDate\":"
+		out.RawString(prefix)
+		out.String(string(in.EndDate))
 	}
 	out.RawByte('}')
 }

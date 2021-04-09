@@ -1,10 +1,16 @@
 package subscription
 
+import "kudago/application/models"
+
 type Repository interface {
-	SubscribeUser(uid1 uint64, uid2 uint64) error
-	UnsubscribeUser(uid1 uint64, uid2 uint64) error
-	AddPlanning(uid uint64, eid uint64) error
-	RemovePlanning(uid uint64, eid uint64) error
-	AddVisited(uid uint64, eid uint64) error
-	RemoveVisited(uid uint64, eid uint64) error
+	SubscribeUser(subscriberId uint64, subscribedToId uint64) error
+	UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error
+	AddPlanning(userId uint64, eventId uint64) error
+	RemovePlanning(userId uint64, eventId uint64) error
+	AddVisited(userId uint64, eventId uint64) error
+	RemoveVisited(userId uint64, eventId uint64) error
+	UpdateEventStatus(userId uint64, eventId uint64) error
+	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
+	GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error)
+	GetFollowers(id uint64) ([]uint64, error)
 }
