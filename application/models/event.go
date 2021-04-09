@@ -38,6 +38,7 @@ type EventCard struct {
 	Description string `json:"description"`
 	Image       string `json:"image"`
 	StartDate   string `json:"startDate"`
+	EndDate     string `json:"endDate"`
 }
 
 type EventCardWithDateSQL struct {
@@ -46,6 +47,7 @@ type EventCardWithDateSQL struct {
 	Description string
 	Image       sql.NullString
 	StartDate   time.Time
+	EndDate     time.Time
 }
 
 type Tag struct {
@@ -60,6 +62,7 @@ func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	newCard.Description = old.Description
 	newCard.Image = old.Image.String
 	newCard.StartDate = old.StartDate.String()
+	newCard.EndDate = old.EndDate.String()
 	return newCard
 }
 

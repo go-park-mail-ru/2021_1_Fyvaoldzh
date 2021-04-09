@@ -23,7 +23,7 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	eventHandler := EventHandler{UseCase: uc, Sm: sm}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
-	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
+	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent) //Есть проверка на id
 	e.GET("/api/v1/event", eventHandler.GetEvents)
 	e.GET("/api/v1/search", eventHandler.FindEvents)
 	//create & delete вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
@@ -31,8 +31,8 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
 	//Возможно есть смысл проверять, кидает ли нам этот запрос пользователь именно с таким u_id, чтобы другие люди не могли поменять аватарку
 	//Сейчас, как я понимаю, проверяется только csrf
-	e.POST("/api/v1/save/:id", eventHandler.Save)
-	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
+	e.POST("/api/v1/save/:id", eventHandler.Save)          //TODO Нет проверки на id
+	e.GET("api/v1/event/:id/image", eventHandler.GetImage) //Есть проверка на id
 }
 
 func (eh EventHandler) GetAllEvents(c echo.Context) error {
