@@ -12,4 +12,6 @@ type Repository interface {
 	GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error)
 	FindEvents(str string) ([]models.EventCardWithDateSQL, error)
 	RecomendSystem(uid uint64, category string) error
+	GetPreference(uid uint64) (models.Recomend, error)
+	GetRecomended(uid uint64) ([]models.EventCardWithDateSQL, error)
 }

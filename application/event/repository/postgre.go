@@ -182,3 +182,114 @@ func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
 
 	return nil
 }
+
+func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
+	var recomend models.Recomend
+	err := pgxscan.Select(context.Background(), ed.pool, &recomend,
+		`SELECT show, movie, concert
+		FROM user_preference
+		WHERE user_id = $1`, uid)
+
+	if err != nil {
+		return models.Recomend{}, err
+	}
+	return recomend, nil
+}
+
+//TODO сделать нормальный обсчет
+func (ed EventDatabase) GetRecomended(uid uint64) ([]models.EventCardWithDateSQL, error) {
+	recomend, err := ed.GetPreference(uid)
+	if err == nil {
+		var events []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+		ORDER BY id DESC`)
+
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		return events, nil
+	}
+	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
+		var events []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Музей'
+			ORDER BY id DESC`)
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != 'Музей'
+			ORDER BY id DESC`)
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		return events, nil
+	}
+	if recomend.Movie >= recomend.Concert && recomend.Movie >= recomend.Show {
+		var events []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Кино'
+			ORDER BY id DESC`)
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != 'Кино'
+			ORDER BY id DESC`)
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		return events, nil
+	} else {
+		var events []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Выставка'
+			ORDER BY id DESC`)
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &events,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != 'Выставка'
+			ORDER BY id DESC`)
+		if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+
+		if err != nil {
+			return nil, err
+		}
+		return events, nil
+	}
+}

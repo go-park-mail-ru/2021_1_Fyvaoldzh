@@ -166,3 +166,22 @@ func (e Event) RecomendSystem(uid uint64, category string) error {
 	}
 	return nil
 }
+
+func (e Event) GetRecomended(uid uint64) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetRecomended(uid)
+	if err != nil {
+		return models.EventCards{}, err
+	}
+
+	var events models.EventCards
+	for _, elem := range sqlEvents {
+		if elem.StartDate.After(time.Now()) {
+			events = append(events, models.ConvertDateCard(elem))
+		}
+	}
+	if len(events) == 0 {
+		return models.EventCards{}, nil
+	}
+
+	return events, nil
+}

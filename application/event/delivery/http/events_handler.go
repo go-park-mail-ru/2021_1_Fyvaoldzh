@@ -33,6 +33,28 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
 	e.POST("/api/v1/save/:id", eventHandler.Save)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
+	e.GET("/api/v1/recomend", eventHandler.Recomend)
+}
+
+func (eh EventHandler) Recomend(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	if uid, err := eh.GetUserID(c); err == nil {
+		events, err := eh.UseCase.GetRecomended(uid)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		return nil
+	} else {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 }
 
 func (eh EventHandler) GetAllEvents(c echo.Context) error {
