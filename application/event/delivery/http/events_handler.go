@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"kudago/application/event"
 	"kudago/application/models"
+	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
 	"log"
 	"net/http"
@@ -65,8 +66,8 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 }
 
 func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
-	cookie, err := c.Cookie("SID")
-	if err != nil {
+	cookie, err := c.Cookie(constants.SessionCookieName)
+	if err != nil && cookie != nil {
 		log.Println(err)
 		return 0, errors.New("user is not authorized")
 	}
@@ -74,16 +75,21 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	var uid uint64
 	var exists bool
 
-	exists, uid, err = eh.Sm.CheckSession(cookie.Value)
-	if err != nil {
-		log.Println(err)
-		return 0, err
-	}
+	if cookie != nil {
+		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			log.Println(err)
+			return 0, err
+		}
 
-	if !exists {
-		return 0, errors.New("user is not authorized")
+		if !exists {
+			log.Println("cookie does not exist")
+			return 0, errors.New("user is not authorized")
+		}
+		return uid, nil
 	}
-	return uid, nil
+	log.Println("got no cookie")
+	return 0, errors.New("user is not authorized")
 }
 
 func (eh EventHandler) GetOneEvent(c echo.Context) error {
@@ -104,6 +110,8 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
 			log.Println(err)
 		}
+	} else {
+		log.Println("cannot get userID")
 	}
 
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
