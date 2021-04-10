@@ -72,8 +72,12 @@ func ConvertEvent(old EventSQL) Event {
 	newEvent.Title = old.Title
 	newEvent.Place = old.Place
 	newEvent.Description = old.Description
-	newEvent.StartDate = old.StartDate.Time.String()
-	newEvent.EndDate = old.EndDate.Time.String()
+	if old.StartDate.Valid {
+		newEvent.StartDate = old.StartDate.Time.String()
+	}
+	if old.EndDate.Valid {
+		newEvent.EndDate = old.EndDate.Time.String()
+	}
 	newEvent.Subway = old.Subway.String
 	newEvent.Street = old.Street.String
 	newEvent.Category = old.Category

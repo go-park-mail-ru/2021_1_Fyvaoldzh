@@ -4,6 +4,7 @@ import "kudago/application/models"
 
 type Repository interface {
 	Add(user *models.RegData) (uint64, error)
+	AddToPreferences(id uint64) error
 	Update(id uint64, upUser *models.UserData) error
 	ChangeAvatar(id uint64, path string) error
 	GetByIdOwn(id uint64) (*models.UserData, error)

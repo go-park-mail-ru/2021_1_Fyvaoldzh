@@ -57,7 +57,7 @@ func NewServer() *echo.Echo {
 	eventRep := erepository.NewEventDatabase(pool)
 	subRep := srepository.NewSubscriptionDatabase(pool)
 
-	userUC := usecase.NewUser(userRep)
+	userUC := usecase.NewUser(userRep, subRep)
 	eventUC := eusecase.NewEvent(eventRep)
 	subUC := susecase.NewSubscription(subRep)
 

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
@@ -132,11 +133,11 @@ func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
 func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
-		`SELECT e.id, e.title, e.description, e.image, e.start_date  
-		FROM events
+		`SELECT e.id, e.title, e.description, e.image, e.start_date, e.end_date
+		FROM events e
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, true)
-	if err == sql.ErrNoRows {
+	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
@@ -149,8 +150,8 @@ func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardW
 func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
-		`SELECT e.id, e.title, e.description, e.image, e.start_date  
-		FROM events
+		`SELECT e.id, e.title, e.description, e.image, e.start_date, e.end_date  
+		FROM events e
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, false)
 	if err == sql.ErrNoRows {

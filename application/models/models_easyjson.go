@@ -80,8 +80,10 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels(in *jlexer.Lexer, out *UserOw
 			out.About = string(in.String())
 		case "avatar":
 			out.Avatar = string(in.String())
-		case "password":
-			out.Password = string(in.String())
+		case "old_password":
+			out.OldPassword = string(in.String())
+		case "new_password":
+			out.NewPassword = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -163,9 +165,14 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels(out *jwriter.Writer, in UserO
 		out.String(string(in.Avatar))
 	}
 	{
-		const prefix string = ",\"password\":"
+		const prefix string = ",\"old_password\":"
 		out.RawString(prefix)
-		out.String(string(in.Password))
+		out.String(string(in.OldPassword))
+	}
+	{
+		const prefix string = ",\"new_password\":"
+		out.RawString(prefix)
+		out.String(string(in.NewPassword))
 	}
 	out.RawByte('}')
 }

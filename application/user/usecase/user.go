@@ -1,8 +1,6 @@
 package usecase
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,7 +9,6 @@ import (
 	"kudago/application/user"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -39,12 +36,7 @@ func (uc UserUseCase) CheckUser(u *models.User) (uint64, error) {
 		return 0, err
 	}
 
-	salt := gotUser.Password[:8]
-	hash := sha256.New()
-	hash.Write([]byte(salt + u.Password))
-	u.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
-
-	if u.Password != gotUser.Password[8:] {
+	if !generator.CheckHashedPassword(gotUser.Password, u.Password) {
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -52,13 +44,8 @@ func (uc UserUseCase) CheckUser(u *models.User) (uint64, error) {
 }
 
 func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
-	hash := sha256.New()
-	salt := generator.RandStringRunes(constants.SaltLength)
-	log.Println(salt)
-	hash.Write([]byte(salt+usr.Password))
-	usr.Password = base64.URLEncoding.EncodeToString(hash.Sum(nil))
-	usr.Password = salt + usr.Password
-	log.Println(usr.Password)
+	// TODO: добавить проверки
+	usr.Password = generator.HashPassword(usr.Password)
 
 	flag, err := uc.repo.IsExisting(usr.Login)
 	if err != nil {
@@ -69,6 +56,11 @@ func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 	}
 
 	id, err := uc.repo.Add(usr)
+	err = uc.repo.AddToPreferences(id)
+	if err != nil {
+		return 0, err
+	}
+
 	return id, nil
 }
 
@@ -170,10 +162,11 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 		changeUser.Name.Valid = true
 	}
 
-	if len(ud.Password) != 0 {
-		hash := sha256.New()
-		hash.Write([]byte(ud.Password))
-		changeUser.Password.String = base64.URLEncoding.EncodeToString(hash.Sum(nil))
+	if len(ud.OldPassword) != 0 {
+		if !generator.CheckHashedPassword(changeUser.Password.String, ud.OldPassword) {
+			return echo.NewHTTPError(http.StatusBadRequest, "passwords are not same")
+		}
+		changeUser.Password.String  = generator.HashPassword(ud.NewPassword)
 		changeUser.Password.Valid = true
 	}
 
@@ -246,10 +239,10 @@ func (uc UserUseCase) UploadAvatar(uid uint64, img *multipart.FileHeader) error 
 
 func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 	usr, err := uc.repo.GetByIdOwn(uid)
-
 	if err != nil {
 		return []byte{}, err
 	}
+
 
 	if usr.Avatar.Valid {
 		file, err := ioutil.ReadFile(usr.Avatar.String)
@@ -261,3 +254,6 @@ func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 
 	return []byte{}, err
 }
+
+
+

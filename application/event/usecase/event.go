@@ -34,7 +34,7 @@ func (e Event) GetAllEvents() (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		if elem.Date.After(time.Now()) {
+		if elem.StartDate.After(time.Now()) {
 			events = append(events, models.ConvertDateCard(elem))
 		}
 	}
@@ -105,7 +105,7 @@ func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) 
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		if elem.Date.After(time.Now()) {
+		if elem.StartDate.After(time.Now()) {
 			events = append(events, models.ConvertDateCard(elem))
 		}
 	}
@@ -146,7 +146,7 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 
 	var events models.EventCards
 	for _, elem := range sqlEvents {
-		if elem.Date.After(time.Now()) {
+		if elem.StartDate.After(time.Now()) {
 			events = append(events, models.ConvertDateCard(elem))
 		}
 	}

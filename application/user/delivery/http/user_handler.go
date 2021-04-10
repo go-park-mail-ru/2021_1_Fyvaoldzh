@@ -20,7 +20,6 @@ type UserHandler struct {
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase, sm *infrastructure.SessionManager) {
-
 	userHandler := UserHandler{UseCase: uc, Sm: sm}
 
 	e.POST("/api/v1/login", userHandler.Login)
@@ -29,7 +28,6 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase, sm *infrastructure.Session
 	e.GET("/api/v1/profile", userHandler.GetOwnProfile)
 	e.GET("/api/v1/profile/:id", userHandler.GetOtherUserProfile)
 	e.PUT("/api/v1/profile", userHandler.Update)
-	e.POST("/api/v1/check_user", userHandler.CheckUser)
 	e.POST("/api/v1/upload_avatar", userHandler.UploadAvatar)
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 }
@@ -124,7 +122,6 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
 	}
 
-	// вынести эту штуку
 	if cookie != nil {
 		exists, _, err := h.Sm.CheckSession(cookie.Value)
 		if err != nil {
@@ -168,7 +165,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil && cookie != nil {
+	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
@@ -262,6 +259,10 @@ func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	if err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	if uid <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
 	usr, err := h.UseCase.GetOtherProfile(uint64(uid))

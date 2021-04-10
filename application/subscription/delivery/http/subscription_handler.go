@@ -5,6 +5,7 @@ import (
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -28,11 +29,12 @@ func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm *infra
 
 func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
-
 	cookie, err := c.Cookie(constants.SessionCookieName)
+	log.Println(err)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
+	log.Println(cookie.Value)
 
 	var subscriberId uint64
 	var exists bool

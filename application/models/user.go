@@ -26,18 +26,19 @@ type OtherUserProfile struct {
 }
 
 type UserOwnProfile struct {
-	Uid       uint64
-	Name      string     `json:"name"`
-	Login     string     `json:"login"`
-	Birthday  string     `json:"birthday"`
-	City      string     `json:"city"`
-	Email     string     `json:"email"`
-	Visited   EventCards `json:"visited"`
-	Planning  EventCards `json:"planning"`
-	Followers []uint64   `json:"followers"`
-	About     string     `json:"about"`
-	Avatar    string     `json:"avatar"`
-	Password  string     `json:"password"`
+	Uid         uint64
+	Name        string     `json:"name"`
+	Login       string     `json:"login"`
+	Birthday    string     `json:"birthday"`
+	City        string     `json:"city"`
+	Email       string     `json:"email"`
+	Visited     EventCards `json:"visited"`
+	Planning    EventCards `json:"planning"`
+	Followers   []uint64   `json:"followers"`
+	About       string     `json:"about"`
+	Avatar      string     `json:"avatar"`
+	OldPassword string     `json:"old_password"`
+	NewPassword string     `json:"new_password"`
 }
 
 type UserData struct {
@@ -65,7 +66,9 @@ func ConvertToOwn(own UserData) *UserOwnProfile {
 	//usr.Password = own.Password.String
 	usr.Name = own.Name.String
 	usr.Login = own.Login
-	usr.Birthday = own.Birthday.Time.Format(constants.TimeFormat)
+	if own.Birthday.Valid {
+		usr.Birthday = own.Birthday.Time.Format(constants.TimeFormat)
+	}
 	usr.Avatar = own.Avatar.String
 	usr.City = own.City.String
 	return &usr
