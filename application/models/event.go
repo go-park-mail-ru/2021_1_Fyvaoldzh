@@ -55,6 +55,12 @@ type Tag struct {
 	Name string `json:"name"`
 }
 
+type Recomend struct {
+	Show    uint64 `json:"show"`
+	Movie   uint64 `json:"movie"`
+	Concert uint64 `json:"concert"`
+}
+
 func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	var newCard EventCard
 	newCard.ID = old.ID

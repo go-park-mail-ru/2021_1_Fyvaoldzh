@@ -16,4 +16,10 @@ const (
 	SaltLength         = 8
 )
 
+var Category = map[string]string{
+	"Музей":    "concert",
+	"Выставка": "show",
+	"Кино":     "movie",
+}
+
 var LetterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")

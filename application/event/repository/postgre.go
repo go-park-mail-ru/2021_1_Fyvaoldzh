@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"kudago/application/event"
 	"kudago/application/models"
+	"kudago/pkg/constants"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4"
@@ -22,10 +25,11 @@ func NewEventDatabase(conn *pgxpool.Pool) event.Repository {
 	return &EventDatabase{pool: conn}
 }
 
-func (ed EventDatabase) GetAllEvents() ([]models.EventCardWithDateSQL, error) {
+func (ed EventDatabase) GetAllEvents(now time.Time) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, description, image, start_date, end_date FROM events`)
+		`SELECT id, title, description, image, start_date, end_date FROM events
+		ORDER BY id DESC`)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
@@ -35,14 +39,22 @@ func (ed EventDatabase) GetAllEvents() ([]models.EventCardWithDateSQL, error) {
 		return nil, err
 	}
 
-	return events, nil
+	var validEvents []models.EventCardWithDateSQL
+
+	for _, elem := range events {
+		if elem.EndDate.After(now) {
+			validEvents = append(validEvents, elem)
+		}
+	}
+
+	return validEvents, nil
 }
 
-func (ed EventDatabase) GetEventsByCategory(typeEvent string) ([]models.EventCardWithDateSQL, error) {
+func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
 		`SELECT id, title, description, image, start_date, end_date FROM events
-		WHERE category = $1`, typeEvent)
+		WHERE category = $1 ORDER BY id DESC`, typeEvent)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
@@ -52,7 +64,15 @@ func (ed EventDatabase) GetEventsByCategory(typeEvent string) ([]models.EventCar
 		return []models.EventCardWithDateSQL{}, err
 	}
 
-	return events, nil
+	var validEvents []models.EventCardWithDateSQL
+
+	for _, elem := range events {
+		if elem.EndDate.After(now) {
+			validEvents = append(validEvents, elem)
+		}
+	}
+
+	return validEvents, nil
 }
 
 func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error) {
@@ -130,15 +150,16 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 	return nil
 }
 
-func (ed EventDatabase) FindEvents(str string) ([]models.EventCardWithDateSQL, error) {
+func (ed EventDatabase) FindEvents(str string, now time.Time) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT e.id as id, e.title as title, e.description as description,
-		e.image as image, e.start_date as start_date, e.end_date as end_date FROM
+		`SELECT DISTINCT ON(e.id) e.id, e.title, e.description,
+		e.image, e.start_date, e.end_date FROM
         events e JOIN event_tag et on e.id = et.event_id
         JOIN tags t on et.tag_id = t.id
 		WHERE LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
-		OR LOWER(category) LIKE '%' || $1 || '%' OR LOWER(t.name) LIKE '%' || $1 || '%'`, str)
+		OR LOWER(category) LIKE '%' || $1 || '%' OR LOWER(t.name) LIKE '%' || $1 || '%'
+		ORDER BY e.id DESC`, str)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
@@ -148,5 +169,172 @@ func (ed EventDatabase) FindEvents(str string) ([]models.EventCardWithDateSQL, e
 		return []models.EventCardWithDateSQL{}, err
 	}
 
-	return events, nil
+	var validEvents []models.EventCardWithDateSQL
+
+	for _, elem := range events {
+		if elem.EndDate.After(now) {
+			validEvents = append(validEvents, elem)
+		}
+	}
+
+	return validEvents, nil
+}
+
+func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
+
+	_, err := ed.pool.Exec(context.Background(),
+		`UPDATE user_preference SET `+constants.Category[category]+`=`+constants.Category[category]+`+1 `+`WHERE user_id = $1`, uid)
+
+	if err != nil {
+		log.Println("here")
+		return err
+	}
+
+	return nil
+}
+
+func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
+	var recomend []models.Recomend
+	err := pgxscan.Select(context.Background(), ed.pool, &recomend,
+		`SELECT show, movie, concert
+		FROM user_preference
+		WHERE user_id = $1`, uid)
+
+	if err != nil {
+		return models.Recomend{}, err
+	}
+	return recomend[0], nil
+}
+
+func (ed EventDatabase) CategorySearch(str string, category string, now time.Time) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), ed.pool, &events,
+		`SELECT DISTINCT ON(e.id) e.id, e.title, e.description,
+		e.image, e.start_date, e.end_date FROM
+        events e JOIN event_tag et on e.id = et.event_id
+        JOIN tags t on et.tag_id = t.id
+		WHERE (LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
+		OR LOWER(t.name) LIKE '%' || $1 || '%') AND e.category = $2
+		ORDER BY e.id DESC`, str, category)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+
+	if err != nil {
+		return []models.EventCardWithDateSQL{}, err
+	}
+
+	var validEvents []models.EventCardWithDateSQL
+
+	for _, elem := range events {
+		if elem.EndDate.After(now) {
+			validEvents = append(validEvents, elem)
+		}
+	}
+
+	return validEvents, nil
+}
+
+//TODO сделать нормальный обсчет
+func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error) {
+	recomend, err := ed.GetPreference(uid)
+	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
+		return ed.GetAllEvents(now)
+	}
+	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
+		var eventsPrefer, otherEvents []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Музей'
+			ORDER BY id DESC`)
+
+		if err != nil {
+			return nil, err
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != 'Музей'
+			ORDER BY id DESC`)
+
+		if err != nil {
+			return nil, err
+		}
+		eventsPrefer = append(eventsPrefer, otherEvents...)
+		if len(eventsPrefer) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+		var validEvents []models.EventCardWithDateSQL
+
+		for _, elem := range eventsPrefer {
+			if elem.EndDate.After(now) {
+				validEvents = append(validEvents, elem)
+			}
+		}
+
+		return validEvents, nil
+	}
+	if recomend.Movie >= recomend.Concert && recomend.Movie >= recomend.Show {
+		var eventsPrefer, otherEvents []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Кино'
+			ORDER BY id DESC`)
+
+		if err != nil {
+			return nil, err
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != 'Кино'
+			ORDER BY id DESC`)
+
+		if err != nil {
+			return nil, err
+		}
+		eventsPrefer = append(eventsPrefer, otherEvents...)
+		if len(eventsPrefer) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+		var validEvents []models.EventCardWithDateSQL
+
+		for _, elem := range eventsPrefer {
+			if elem.EndDate.After(now) {
+				validEvents = append(validEvents, elem)
+			}
+		}
+
+		return validEvents, nil
+	} else {
+		var eventsPrefer, otherEvents []models.EventCardWithDateSQL
+		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Выставка'
+			ORDER BY id DESC`)
+
+		if err != nil {
+			return nil, err
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
+			`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != 'Выставка'
+			ORDER BY id DESC`)
+
+		if err != nil {
+			return nil, err
+		}
+		eventsPrefer = append(eventsPrefer, otherEvents...)
+		if len(eventsPrefer) == 0 {
+			return []models.EventCardWithDateSQL{}, nil
+		}
+		var validEvents []models.EventCardWithDateSQL
+
+		for _, elem := range eventsPrefer {
+			if elem.EndDate.After(now) {
+				validEvents = append(validEvents, elem)
+			}
+		}
+
+		return validEvents, nil
+	}
 }

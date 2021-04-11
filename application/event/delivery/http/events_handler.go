@@ -1,9 +1,11 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"kudago/application/event"
 	"kudago/application/models"
+	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
 	"log"
 	"net/http"
@@ -23,22 +25,68 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	eventHandler := EventHandler{UseCase: uc, Sm: sm}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
-	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent) //Есть проверка на id
+	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
 	e.GET("/api/v1/event", eventHandler.GetEvents)
 	e.GET("/api/v1/search", eventHandler.FindEvents)
-	//create & delete вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
+	//create & delete & save вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
 	e.POST("/api/v1/create", eventHandler.Create)
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
-	//Возможно есть смысл проверять, кидает ли нам этот запрос пользователь именно с таким u_id, чтобы другие люди не могли поменять аватарку
-	//Сейчас, как я понимаю, проверяется только csrf
-	e.POST("/api/v1/save/:id", eventHandler.Save)          //TODO Нет проверки на id
-	e.GET("api/v1/event/:id/image", eventHandler.GetImage) //Есть проверка на id
+	e.POST("/api/v1/save/:id", eventHandler.Save)
+	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
+	e.GET("/api/v1/recomend", eventHandler.Recomend)
+}
+
+func (eh EventHandler) Recomend(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+
+	if uid, err := eh.GetUserID(c); err == nil {
+		events, err := eh.UseCase.GetRecomended(uid, page)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+
+		return nil
+	} else {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 }
 
 func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	events, err := eh.UseCase.GetAllEvents()
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+
+	events, err := eh.UseCase.GetAllEvents(page)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -50,6 +98,33 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	}
 
 	return nil
+}
+
+func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
+	cookie, err := c.Cookie(constants.SessionCookieName)
+	if err != nil && cookie != nil {
+		log.Println(err)
+		return 0, errors.New("user is not authorized")
+	}
+
+	var uid uint64
+	var exists bool
+
+	if cookie != nil {
+		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
+		if err != nil {
+			log.Println(err)
+			return 0, err
+		}
+
+		if !exists {
+			log.Println("cookie does not exist")
+			return 0, errors.New("user is not authorized")
+		}
+		return uid, nil
+	}
+	log.Println("got no cookie")
+	return 0, errors.New("user is not authorized")
 }
 
 func (eh EventHandler) GetOneEvent(c echo.Context) error {
@@ -66,6 +141,14 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 		return err
 	}
 
+	if uid, err := eh.GetUserID(c); err == nil {
+		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
+			log.Println(err)
+		}
+	} else {
+		log.Println("cannot get userID")
+	}
+
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -78,7 +161,19 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	category := c.QueryParam("category")
-	events, err := eh.UseCase.GetEventsByCategory(category)
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+	events, err := eh.UseCase.GetEventsByCategory(category, page)
 
 	if err != nil {
 		log.Println(err)
@@ -100,7 +195,7 @@ func (eh EventHandler) Create(c echo.Context) error {
 
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, newEvent); err != nil {
 		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	if err := eh.UseCase.CreateNewEvent(newEvent); err != nil {
@@ -135,13 +230,13 @@ func (eh EventHandler) Save(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	img, err := c.FormFile("image")
 	if err != nil {
 		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	err = eh.UseCase.SaveImage(uint64(id), img)
@@ -181,7 +276,21 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	str := c.QueryParam("find")
-	events, err := eh.UseCase.FindEvents(str)
+	category := c.QueryParam("category")
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+
+	events, err := eh.UseCase.FindEvents(str, category, page)
 
 	if err != nil {
 		log.Println(err)
