@@ -6,12 +6,14 @@ import (
 )
 
 type UseCase interface {
-	GetAllEvents() (models.EventCards, error)
+	GetAllEvents(page int) (models.EventCards, error)
 	GetOneEvent(eventId uint64) (models.Event, error)
 	Delete(eventId uint64) error
 	CreateNewEvent(newEvent *models.Event) error
 	SaveImage(eventId uint64, img *multipart.FileHeader) error
-	GetEventsByCategory(typeEvent string) (models.EventCards, error)
+	GetEventsByCategory(typeEvent string, page int) (models.EventCards, error)
 	GetImage(eventId uint64) ([]byte, error)
-	FindEvents(str string) (models.EventCards, error)
+	FindEvents(str string, category string, page int) (models.EventCards, error)
+	RecomendSystem(uid uint64, category string) error
+	GetRecomended(uid uint64, page int) (models.EventCards, error)
 }

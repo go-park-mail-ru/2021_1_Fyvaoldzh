@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 )
 
 type Event struct {
@@ -26,20 +27,25 @@ func NewEvent(e event.Repository) event.UseCase {
 	return &Event{repo: e}
 }
 
-func (e Event) GetAllEvents() (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetAllEvents()
+func (e Event) GetAllEvents(page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetAllEvents(time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
 		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
 	}
 
-	return events, nil
+	return pageEvents, nil
 }
 
 func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
@@ -93,8 +99,8 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 	return e.repo.UpdateEventAvatar(eventId, fileName)
 }
 
-func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent)
+func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent, time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -103,14 +109,19 @@ func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) 
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
 		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
 	}
 
-	return events, nil
+	return pageEvents, nil
 }
 
 func (e Event) GetImage(eventId uint64) ([]byte, error) {
@@ -118,10 +129,6 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-
-	/*if !ev.Image.Valid || len(ev.Image.String) == 0 {
-		return []byte{}, echo.NewHTTPError(http.StatusNotFound, "Event has no picture")
-	}*/
 
 	file, err := ioutil.ReadFile(ev.Image.String)
 	if err != nil {
@@ -132,10 +139,16 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 	return file, nil
 }
 
-func (e Event) FindEvents(str string) (models.EventCards, error) {
+func (e Event) FindEvents(str string, category string, page int) (models.EventCards, error) {
 	str = strings.ToLower(str)
 
-	sqlEvents, err := e.repo.FindEvents(str)
+	var sqlEvents []models.EventCardWithDateSQL
+	var err error
+	if category == "" {
+		sqlEvents, err = e.repo.FindEvents(str, time.Now())
+	} else {
+		sqlEvents, err = e.repo.CategorySearch(str, category, time.Now())
+	}
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -144,12 +157,52 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
 		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
 	}
 
-	return events, nil
+	return pageEvents, nil
+}
+
+func (e Event) RecomendSystem(uid uint64, category string) error {
+	if err := e.repo.RecomendSystem(uid, category); err != nil {
+		time.Sleep(1 * time.Second)
+		if err := e.repo.RecomendSystem(uid, category); err != nil {
+			return errors.New("cannot add record in user_prefer")
+		}
+	}
+	return nil
+}
+
+func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetRecomended(uid, time.Now())
+	if err != nil {
+		return models.EventCards{}, err
+	}
+
+	if len(sqlEvents) == 0 {
+		return models.EventCards{}, err
+	}
+
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
+		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
+	}
+
+	return pageEvents, nil
 }
