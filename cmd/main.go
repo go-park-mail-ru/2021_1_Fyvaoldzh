@@ -1,4 +1,8 @@
-package cmd
+package main
 
-// TODO: добавить сюда старт сервера
+import "kudago/server"
 
+func main() {
+	e := server.NewServer()
+	server.ListenAndServe(e)
+}
