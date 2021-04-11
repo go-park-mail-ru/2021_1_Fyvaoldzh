@@ -255,5 +255,8 @@ func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 	return []byte{}, err
 }
 
+func (uc UserUseCase) GetUsers(page int) (models.UsersOnEvent, error) {
+	return uc.repo.GetUsers(page)
+}
 
 

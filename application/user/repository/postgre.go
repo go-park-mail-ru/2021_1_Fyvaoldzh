@@ -144,5 +144,21 @@ func (ud UserDatabase) IsExistingUserId(userId uint64) error {
 	return nil
 }
 
+func (ud UserDatabase) GetUsers(page int) (models.UsersOnEvent, error) {
+	var users models.UsersOnEvent
+	err := pgxscan.Select(context.Background(), ud.pool, &users,
+		`SELECT id, name, avatar
+		FROM users
+		LIMIT 10 OFFSET $1`, (page-1)*10)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return models.UsersOnEvent{}, nil
+	}
+	if err != nil {
+		return models.UsersOnEvent{}, err
+	}
+
+	return users, nil
+}
+
 
 

@@ -30,6 +30,7 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase, sm *infrastructure.Session
 	e.PUT("/api/v1/profile", userHandler.Update)
 	e.POST("/api/v1/upload_avatar", userHandler.UploadAvatar)
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
+	e.GET("/api/v1/users", userHandler.GetUsers)
 }
 
 func (h *UserHandler) Login(c echo.Context) error {
@@ -367,6 +368,32 @@ func (h *UserHandler) CheckUser(c echo.Context) error {
 	_, err = h.UseCase.CheckUser(u)
 
 	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func (h *UserHandler) GetUsers(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	page := c.QueryParam("page")
+	pageNum, err := strconv.Atoi(page)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if pageNum < 1 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	users, err := h.UseCase.GetUsers(pageNum)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		log.Println(err)
 		return err
 	}

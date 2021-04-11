@@ -12,4 +12,5 @@ type Repository interface {
 	IsExistingEmail(login string) (bool, error)
 	IsCorrect(user *models.User) (*models.User, error)
 	IsExistingUserId(userId uint64) error
+	GetUsers(page int) (models.UsersOnEvent, error)
 }
