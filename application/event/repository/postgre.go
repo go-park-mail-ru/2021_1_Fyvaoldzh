@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"kudago/application/event"
 	"kudago/application/models"
+	"kudago/pkg/constants"
+	"log"
 	"net/http"
 	"time"
 
@@ -179,31 +181,13 @@ func (ed EventDatabase) FindEvents(str string, now time.Time) ([]models.EventCar
 }
 
 func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
-	if category == "Музей" {
-		_, err := ed.pool.Exec(context.Background(),
-			`UPDATE user_preference SET concert = concert + 1 WHERE user_id = $1`, uid)
 
-		if err != nil {
-			return err
-		}
-	}
+	_, err := ed.pool.Exec(context.Background(),
+		`UPDATE user_preference SET `+constants.Category[category]+`=`+constants.Category[category]+`+1 `+`WHERE user_id = $1`, uid)
 
-	if category == "Выставка" {
-		_, err := ed.pool.Exec(context.Background(),
-			`UPDATE user_preference SET show = show + 1 WHERE user_id = $1`, uid)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if category == "Кино" {
-		_, err := ed.pool.Exec(context.Background(),
-			`UPDATE user_preference SET movie = movie + 1 WHERE user_id = $1`, uid)
-
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		log.Println("here")
+		return err
 	}
 
 	return nil
@@ -255,7 +239,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 //TODO сделать нормальный обсчет
 func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
-	if err != nil {
+	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
 		return ed.GetAllEvents(now)
 	}
 	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
