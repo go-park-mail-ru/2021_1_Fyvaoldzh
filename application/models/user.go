@@ -13,6 +13,15 @@ type User struct {
 	Password string `json:"password"`
 }
 
+type UserOnEvent struct {
+	Id uint64 `json:"id"`
+	Name string `json:"name"`
+	Avatar string `json:"avatar"`
+}
+
+//easyjson:json
+type UsersOnEvent []UserOnEvent
+
 type OtherUserProfile struct {
 	Uid       uint64
 	Name      string     `json:"name"`

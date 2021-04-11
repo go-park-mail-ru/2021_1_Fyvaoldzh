@@ -16,7 +16,6 @@ type SubscriptionDatabase struct {
 	pool *pgxpool.Pool
 }
 
-
 func NewSubscriptionDatabase(conn *pgxpool.Pool) subscription.Repository {
 	return &SubscriptionDatabase{pool: conn}
 }
@@ -120,7 +119,7 @@ func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
 	var users []uint64
 	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
 		FROM subscriptions WHERE subscribed_to_id = $1`, id)
-	if err == sql.ErrNoRows {
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
 		return []uint64{}, nil
 	}
 	if err != nil {
@@ -154,7 +153,7 @@ func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWi
 		FROM events e
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, false)
-	if err == sql.ErrNoRows {
+	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
@@ -162,4 +161,21 @@ func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWi
 	}
 
 	return events, nil
+}
+
+func (sd SubscriptionDatabase) GetEventFollowers(eventId uint64) (models.UsersOnEvent, error) {
+	var users models.UsersOnEvent
+	err := pgxscan.Select(context.Background(), sd.pool, &users,
+		`SELECT u.id, u.name, u.avatar
+		FROM user_event
+		JOIN users u ON u.id = user_id
+		WHERE event_id = $1`, eventId)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return models.UsersOnEvent{}, nil
+	}
+	if err != nil {
+		return models.UsersOnEvent{}, err
+	}
+
+	return users, nil
 }

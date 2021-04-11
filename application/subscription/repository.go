@@ -13,4 +13,5 @@ type Repository interface {
 	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
 	GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error)
 	GetFollowers(id uint64) ([]uint64, error)
+	GetEventFollowers(eventId uint64) (models.UsersOnEvent, error)
 }
