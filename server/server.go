@@ -70,7 +70,6 @@ func NewServer() *echo.Echo {
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup:    constants.CSRFHeader,
-		CookieHTTPOnly: true,
 	}))
 
 	return e
