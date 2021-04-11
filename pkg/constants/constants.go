@@ -11,7 +11,7 @@ const (
 	TarantoolUser      = "admin"
 	TarantoolPassword  = "fyvaoldzh"
 	TarantoolSpaceName = "qdago"
-	UserPicDir         = "public/"
+	UserPicDir         = "public/users/"
 	EventsPicDir       = "public/events/"
 	SaltLength         = 8
 )
