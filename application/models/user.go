@@ -14,8 +14,8 @@ type User struct {
 }
 
 type UserOnEvent struct {
-	Id uint64 `json:"id"`
-	Name string `json:"name"`
+	Id     uint64 `json:"id"`
+	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
 }
 

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"kudago/application/event"
 	"kudago/application/models"
+	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
 	"log"
@@ -20,11 +21,12 @@ import (
 )
 
 type Event struct {
-	repo event.Repository
+	repo    event.Repository
+	repoSub subscription.Repository
 }
 
-func NewEvent(e event.Repository) event.UseCase {
-	return &Event{repo: e}
+func NewEvent(e event.Repository, repoSubscription subscription.Repository) event.UseCase {
+	return &Event{repo: e, repoSub: repoSubscription}
 }
 
 func (e Event) GetAllEvents(page int) (models.EventCards, error) {
@@ -57,12 +59,18 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	jsonEvent := models.ConvertEvent(ev)
 
 	tags, err := e.repo.GetTags(eventId)
-
 	if err != nil {
-		return models.Event{}, err
+		return jsonEvent, err
 	}
 
 	jsonEvent.Tags = tags
+
+	followers, err := e.repoSub.GetEventFollowers(eventId)
+	if err != nil {
+		return jsonEvent, err
+	}
+
+	jsonEvent.Followers = followers
 
 	return jsonEvent, nil
 }

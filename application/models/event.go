@@ -6,17 +6,18 @@ import (
 )
 
 type Event struct {
-	ID          uint64 `json:"id"`
-	Title       string `json:"title"`
-	Place       string `json:"place"`
-	Description string `json:"description"`
-	StartDate   string `json:"startDate"`
-	EndDate     string `json:"endDate"`
-	Subway      string `json:"subway"`
-	Street      string `json:"street"`
-	Tags        Tags   `json:"tags"`
-	Category    string `json:"category"`
-	Image       string `json:"image"`
+	ID          uint64       `json:"id"`
+	Title       string       `json:"title"`
+	Place       string       `json:"place"`
+	Description string       `json:"description"`
+	StartDate   string       `json:"startDate"`
+	EndDate     string       `json:"endDate"`
+	Subway      string       `json:"subway"`
+	Street      string       `json:"street"`
+	Tags        Tags         `json:"tags"`
+	Category    string       `json:"category"`
+	Image       string       `json:"image"`
+	Followers   UsersOnEvent `json:"followers"`
 }
 
 type EventSQL struct {
