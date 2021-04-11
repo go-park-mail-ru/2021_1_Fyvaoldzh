@@ -222,6 +222,36 @@ func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
 	return recomend[0], nil
 }
 
+func (ed EventDatabase) CategorySearch(str string, category string, now time.Time) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), ed.pool, &events,
+		`SELECT DISTINCT ON(e.id) e.id, e.title, e.description,
+		e.image, e.start_date, e.end_date FROM
+        events e JOIN event_tag et on e.id = et.event_id
+        JOIN tags t on et.tag_id = t.id
+		WHERE (LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
+		OR LOWER(t.name) LIKE '%' || $1 || '%') AND e.category = $2
+		ORDER BY e.id DESC`, str, category)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+
+	if err != nil {
+		return []models.EventCardWithDateSQL{}, err
+	}
+
+	var validEvents []models.EventCardWithDateSQL
+
+	for _, elem := range events {
+		if elem.EndDate.After(now) {
+			validEvents = append(validEvents, elem)
+		}
+	}
+
+	return validEvents, nil
+}
+
 //TODO сделать нормальный обсчет
 func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)

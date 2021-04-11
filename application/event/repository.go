@@ -17,4 +17,5 @@ type Repository interface {
 	RecomendSystem(uid uint64, category string) error
 	GetPreference(uid uint64) (models.Recomend, error)
 	GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error)
+	CategorySearch(str string, category string, now time.Time) ([]models.EventCardWithDateSQL, error)
 }

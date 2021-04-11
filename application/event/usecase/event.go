@@ -200,3 +200,30 @@ func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
 
 	return pageEvents, nil
 }
+
+func (e Event) CategorySearch(str string, category string, page int) (models.EventCards, error) {
+	str = strings.ToLower(str)
+
+	sqlEvents, err := e.repo.CategorySearch(str, category, time.Now())
+	if err != nil {
+		return models.EventCards{}, err
+	}
+
+	if len(sqlEvents) == 0 {
+		return models.EventCards{}, err
+	}
+
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
+		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
+	}
+
+	return pageEvents, nil
+}

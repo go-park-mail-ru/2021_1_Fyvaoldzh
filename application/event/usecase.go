@@ -16,4 +16,5 @@ type UseCase interface {
 	FindEvents(str string, page int) (models.EventCards, error)
 	RecomendSystem(uid uint64, category string) error
 	GetRecomended(uid uint64, page int) (models.EventCards, error)
+	CategorySearch(str string, category string, page int) (models.EventCards, error)
 }
