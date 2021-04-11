@@ -1689,6 +1689,8 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels16(in *jlexer.Lexer, out *Even
 			out.Category = string(in.String())
 		case "image":
 			out.Image = string(in.String())
+		case "followers":
+			(out.Followers).UnmarshalEasyJSON(in)
 		default:
 			in.SkipRecursive()
 		}
@@ -1757,6 +1759,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels16(out *jwriter.Writer, in Eve
 		const prefix string = ",\"image\":"
 		out.RawString(prefix)
 		out.String(string(in.Image))
+	}
+	{
+		const prefix string = ",\"followers\":"
+		out.RawString(prefix)
+		(in.Followers).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }

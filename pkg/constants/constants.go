@@ -7,7 +7,7 @@ const (
 	DBConnect          = "user=postgre dbname=qdago password=fyvaoldzh host=127.0.0.1 port=5432 sslmode=disable pool_max_conns=10"
 	TimeFormat         = "2006-01-02"
 	DefaultAvatar      = "public/default.png"
-	TarantoolAddress   = "127.0.0.1:3301"
+	TarantoolAddress   = "127.0.0.1:3302"
 	TarantoolUser      = "admin"
 	TarantoolPassword  = "fyvaoldzh"
 	TarantoolSpaceName = "qdago"

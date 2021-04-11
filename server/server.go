@@ -2,12 +2,6 @@ package server
 
 import (
 	"context"
-	_ "github.com/jackc/pgx/stdlib"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	_ "github.com/lib/pq"
-	"github.com/tarantool/go-tarantool"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -20,6 +14,13 @@ import (
 	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
 	"log"
+
+	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	_ "github.com/lib/pq"
+	"github.com/tarantool/go-tarantool"
 )
 
 func NewServer() *echo.Echo {
@@ -58,7 +59,7 @@ func NewServer() *echo.Echo {
 	subRep := srepository.NewSubscriptionDatabase(pool)
 
 	userUC := usecase.NewUser(userRep, subRep)
-	eventUC := eusecase.NewEvent(eventRep)
+	eventUC := eusecase.NewEvent(eventRep, subRep)
 	subUC := susecase.NewSubscription(subRep)
 
 	sm := infrastructure.SessionManager{}
