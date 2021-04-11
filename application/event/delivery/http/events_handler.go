@@ -34,7 +34,6 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.POST("/api/v1/save/:id", eventHandler.Save)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
 	e.GET("/api/v1/recomend", eventHandler.Recomend)
-	e.GET("/api/v1/catsearch", eventHandler.CategorySearch)
 }
 
 func (eh EventHandler) Recomend(c echo.Context) error {
@@ -277,38 +276,6 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	str := c.QueryParam("find")
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		if err != nil {
-			log.Println(err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-	}
-	if page == 0 {
-		page = 1
-	}
-
-	events, err := eh.UseCase.FindEvents(str, page)
-
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	return nil
-}
-
-func (eh EventHandler) CategorySearch(c echo.Context) error {
-	defer c.Request().Body.Close()
-
-	str := c.QueryParam("find")
 	category := c.QueryParam("category")
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
@@ -323,7 +290,7 @@ func (eh EventHandler) CategorySearch(c echo.Context) error {
 		page = 1
 	}
 
-	events, err := eh.UseCase.CategorySearch(str, category, page)
+	events, err := eh.UseCase.FindEvents(str, category, page)
 
 	if err != nil {
 		log.Println(err)

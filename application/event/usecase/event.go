@@ -139,10 +139,16 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 	return file, nil
 }
 
-func (e Event) FindEvents(str string, page int) (models.EventCards, error) {
+func (e Event) FindEvents(str string, category string, page int) (models.EventCards, error) {
 	str = strings.ToLower(str)
 
-	sqlEvents, err := e.repo.FindEvents(str, time.Now())
+	var sqlEvents []models.EventCardWithDateSQL
+	var err error
+	if category == "" {
+		sqlEvents, err = e.repo.FindEvents(str, time.Now())
+	} else {
+		sqlEvents, err = e.repo.CategorySearch(str, category, time.Now())
+	}
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -178,33 +184,6 @@ func (e Event) RecomendSystem(uid uint64, category string) error {
 
 func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetRecomended(uid, time.Now())
-	if err != nil {
-		return models.EventCards{}, err
-	}
-
-	if len(sqlEvents) == 0 {
-		return models.EventCards{}, err
-	}
-
-	var pageEvents models.EventCards
-
-	for i := (page - 1) * 6; i < page*6; i++ {
-		if i >= len(sqlEvents) {
-			break
-		}
-		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
-	}
-	if len(pageEvents) == 0 {
-		return models.EventCards{}, nil
-	}
-
-	return pageEvents, nil
-}
-
-func (e Event) CategorySearch(str string, category string, page int) (models.EventCards, error) {
-	str = strings.ToLower(str)
-
-	sqlEvents, err := e.repo.CategorySearch(str, category, time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}

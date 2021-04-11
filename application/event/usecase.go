@@ -13,8 +13,7 @@ type UseCase interface {
 	SaveImage(eventId uint64, img *multipart.FileHeader) error
 	GetEventsByCategory(typeEvent string, page int) (models.EventCards, error)
 	GetImage(eventId uint64) ([]byte, error)
-	FindEvents(str string, page int) (models.EventCards, error)
+	FindEvents(str string, category string, page int) (models.EventCards, error)
 	RecomendSystem(uid uint64, category string) error
 	GetRecomended(uid uint64, page int) (models.EventCards, error)
-	CategorySearch(str string, category string, page int) (models.EventCards, error)
 }
