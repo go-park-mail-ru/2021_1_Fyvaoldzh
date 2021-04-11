@@ -28,19 +28,18 @@ func NewEvent(e event.Repository) event.UseCase {
 }
 
 func (e Event) GetAllEvents(page int) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetAllEvents()
+	sqlEvents, err := e.repo.GetAllEvents(time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}
 
-	var events, pageEvents models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
 		}
-	}
-	for i := (page - 1) * 6; i < len(events); i++ {
-		pageEvents = append(pageEvents, events[i])
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
 		return models.EventCards{}, nil
@@ -100,8 +99,8 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 	return e.repo.UpdateEventAvatar(eventId, fileName)
 }
 
-func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent)
+func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent, time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -110,14 +109,19 @@ func (e Event) GetEventsByCategory(typeEvent string) (models.EventCards, error) 
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
 		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
 	}
 
-	return events, nil
+	return pageEvents, nil
 }
 
 func (e Event) GetImage(eventId uint64) ([]byte, error) {
@@ -135,10 +139,10 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 	return file, nil
 }
 
-func (e Event) FindEvents(str string) (models.EventCards, error) {
+func (e Event) FindEvents(str string, page int) (models.EventCards, error) {
 	str = strings.ToLower(str)
 
-	sqlEvents, err := e.repo.FindEvents(str)
+	sqlEvents, err := e.repo.FindEvents(str, time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}
@@ -147,14 +151,19 @@ func (e Event) FindEvents(str string) (models.EventCards, error) {
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
 		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		return models.EventCards{}, nil
 	}
 
-	return events, nil
+	return pageEvents, nil
 }
 
 func (e Event) RecomendSystem(uid uint64, category string) error {
@@ -167,21 +176,27 @@ func (e Event) RecomendSystem(uid uint64, category string) error {
 	return nil
 }
 
-func (e Event) GetRecomended(uid uint64) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetRecomended(uid)
+func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetRecomended(uid, time.Now())
 	if err != nil {
 		return models.EventCards{}, err
 	}
 
-	var events models.EventCards
-	for _, elem := range sqlEvents {
-		if elem.StartDate.After(time.Now()) {
-			events = append(events, models.ConvertDateCard(elem))
-		}
+	if len(sqlEvents) == 0 {
+		return models.EventCards{}, err
 	}
-	if len(events) == 0 {
+
+	var pageEvents models.EventCards
+
+	for i := (page - 1) * 6; i < page*6; i++ {
+		if i >= len(sqlEvents) {
+			break
+		}
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
 		return models.EventCards{}, nil
 	}
 
-	return events, nil
+	return pageEvents, nil
 }

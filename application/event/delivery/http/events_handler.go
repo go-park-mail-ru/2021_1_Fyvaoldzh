@@ -39,8 +39,21 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 func (eh EventHandler) Recomend(c echo.Context) error {
 	defer c.Request().Body.Close()
 
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+
 	if uid, err := eh.GetUserID(c); err == nil {
-		events, err := eh.UseCase.GetRecomended(uid)
+		events, err := eh.UseCase.GetRecomended(uid, page)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -148,7 +161,19 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	category := c.QueryParam("category")
-	events, err := eh.UseCase.GetEventsByCategory(category)
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+	events, err := eh.UseCase.GetEventsByCategory(category, page)
 
 	if err != nil {
 		log.Println(err)
@@ -251,7 +276,20 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	str := c.QueryParam("find")
-	events, err := eh.UseCase.FindEvents(str)
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		if err != nil {
+			log.Println(err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if page == 0 {
+		page = 1
+	}
+
+	events, err := eh.UseCase.FindEvents(str, page)
 
 	if err != nil {
 		log.Println(err)
