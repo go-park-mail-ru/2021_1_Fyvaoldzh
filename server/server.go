@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/microcosm-cc/bluemonday"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -12,6 +13,7 @@ import (
 	"kudago/application/user/repository"
 	"kudago/application/user/usecase"
 	"kudago/pkg/constants"
+	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/infrastructure"
 
 	_ "github.com/jackc/pgx/stdlib"
@@ -64,9 +66,11 @@ func NewServer(logger *zap.SugaredLogger) *echo.Echo {
 	sm := infrastructure.SessionManager{}
 	sm.Conn = conn
 
-	http.CreateUserHandler(e, userUC, &sm, logger)
+	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
+
+	http.CreateUserHandler(e, userUC, &sm, sanitizer, logger)
 	shttp.CreateSubscriptionsHandler(e, subUC, &sm, logger)
-	ehttp.CreateEventHandler(e, eventUC, &sm, logger)
+	ehttp.CreateEventHandler(e, eventUC, &sm, sanitizer, logger)
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup: constants.CSRFHeader,

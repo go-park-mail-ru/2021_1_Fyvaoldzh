@@ -6,6 +6,7 @@ import (
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/pkg/constants"
+	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/infrastructure"
 	"log"
 	"math/rand"
@@ -19,14 +20,15 @@ import (
 )
 
 type EventHandler struct {
-	UseCase event.UseCase
-	Sm      *infrastructure.SessionManager
-	Logger  *zap.SugaredLogger
+	UseCase   event.UseCase
+	Sm        *infrastructure.SessionManager
+	Logger    *zap.SugaredLogger
+	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, logger *zap.SugaredLogger) {
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger *zap.SugaredLogger) {
 
-	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger}
+	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger, sanitizer: sz}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
@@ -58,6 +60,7 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 
 	if uid, err := eh.GetUserID(c); err == nil {
 		events, err := eh.UseCase.GetRecomended(uid, page)
+		events = eh.sanitizer.SanitizeEventCards(events)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -100,6 +103,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	}
 
 	events, err := eh.UseCase.GetAllEvents(page)
+	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -161,7 +165,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-
+	eh.sanitizer.SanitizeEvent(&ev)
 	if uid, err := eh.GetUserID(c); err == nil {
 		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
 			log.Println(err)
@@ -195,6 +199,7 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 		page = 1
 	}
 	events, err := eh.UseCase.GetEventsByCategory(category, page)
+	events = eh.sanitizer.SanitizeEventCards(events)
 
 	if err != nil {
 		log.Println(err)
@@ -312,7 +317,7 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	}
 
 	events, err := eh.UseCase.FindEvents(str, category, page)
-
+	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
 		log.Println(err)
 		return err

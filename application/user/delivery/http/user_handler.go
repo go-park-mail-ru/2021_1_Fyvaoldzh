@@ -5,6 +5,7 @@ import (
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/constants"
+	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/generator"
 	"kudago/pkg/infrastructure"
 	"log"
@@ -19,13 +20,15 @@ import (
 )
 
 type UserHandler struct {
-	UseCase user.UseCase
-	Sm      *infrastructure.SessionManager
-	Logger  *zap.SugaredLogger
+	UseCase   user.UseCase
+	Sm        *infrastructure.SessionManager
+	Logger    *zap.SugaredLogger
+	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateUserHandler(e *echo.Echo, uc user.UseCase, sm *infrastructure.SessionManager, logger *zap.SugaredLogger) {
-	userHandler := UserHandler{UseCase: uc, Sm: sm, Logger: logger}
+func CreateUserHandler(e *echo.Echo, uc user.UseCase,
+	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger *zap.SugaredLogger) {
+	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz, Logger: logger}
 
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout", userHandler.Logout)
@@ -38,7 +41,7 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase, sm *infrastructure.Session
 	e.GET("/api/v1/users", userHandler.GetUsers)
 }
 
-func (h *UserHandler) Login(c echo.Context) error {
+func (uh *UserHandler) Login(c echo.Context) error {
 	defer c.Request().Body.Close()
 	start := time.Now()
 	request_id := fmt.Sprintf("%016x", rand.Int())
@@ -47,7 +50,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 	cookie, err := c.Cookie(constants.SessionCookieName)
 
 	if err != nil && cookie != nil {
-		h.Logger.Warn(c.Request().URL.Path,
+		uh.Logger.Warn(c.Request().URL.Path,
 			zap.String("method", c.Request().Method),
 			zap.String("remote_addr", c.Request().RemoteAddr),
 			zap.String("url", c.Request().URL.Path),
@@ -64,7 +67,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := h.UseCase.Login(u)
+	uid, err := uh.UseCase.Login(u)
 
 	if err != nil {
 		log.Println(err)
@@ -72,7 +75,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 	}
 
 	if cookie != nil {
-		exists, id, err := h.Sm.CheckSession(cookie.Value)
+		exists, id, err := uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -83,8 +86,8 @@ func (h *UserHandler) Login(c echo.Context) error {
 		}
 	}
 
-	cookie = h.CreateCookie(constants.CookieLength)
-	err = h.Sm.InsertSession(uid, cookie.Value)
+	cookie = uh.CreateCookie(constants.CookieLength)
+	err = uh.Sm.InsertSession(uid, cookie.Value)
 
 	if err != nil {
 		log.Println(err)
@@ -93,7 +96,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 
 	c.SetCookie(cookie)
 
-	h.Logger.Info(c.Request().URL.Path,
+	uh.Logger.Info(c.Request().URL.Path,
 		zap.String("method", c.Request().Method),
 		zap.String("remote_addr", c.Request().RemoteAddr),
 		zap.String("url", c.Request().URL.Path),
@@ -104,7 +107,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) Logout(c echo.Context) error {
+func (uh *UserHandler) Logout(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
@@ -117,7 +120,7 @@ func (h *UserHandler) Logout(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	flag, _, err := h.Sm.CheckSession(cookie.Value)
+	flag, _, err := uh.Sm.CheckSession(cookie.Value)
 
 	if err != nil {
 		log.Println(err)
@@ -128,7 +131,7 @@ func (h *UserHandler) Logout(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	err = h.Sm.DeleteSession(cookie.Value)
+	err = uh.Sm.DeleteSession(cookie.Value)
 
 	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
@@ -136,7 +139,7 @@ func (h *UserHandler) Logout(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) Register(c echo.Context) error {
+func (uh *UserHandler) Register(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
@@ -146,7 +149,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 	}
 
 	if cookie != nil {
-		exists, _, err := h.Sm.CheckSession(cookie.Value)
+		exists, _, err := uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -165,15 +168,15 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := h.UseCase.Add(newData)
+	uid, err := uh.UseCase.Add(newData)
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	cookie = h.CreateCookie(constants.CookieLength)
-	err = h.Sm.InsertSession(uid, cookie.Value)
+	cookie = uh.CreateCookie(constants.CookieLength)
+	err = uh.Sm.InsertSession(uid, cookie.Value)
 
 	if err != nil {
 		log.Println(err)
@@ -184,7 +187,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) Update(c echo.Context) error {
+func (uh *UserHandler) Update(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
@@ -196,7 +199,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 	var uid uint64
 	var exists bool
 	if cookie != nil {
-		exists, uid, err = h.Sm.CheckSession(cookie.Value)
+		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -214,7 +217,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	err = h.UseCase.Update(uid, ud)
+	err = uh.UseCase.Update(uid, ud)
 
 	if err != nil {
 		log.Println(err)
@@ -225,8 +228,7 @@ func (h *UserHandler) Update(c echo.Context) error {
 }
 
 // TODO: унести в session manager
-func (h *UserHandler) CreateCookie(n uint8) *http.Cookie {
-
+func (uh *UserHandler) CreateCookie(n uint8) *http.Cookie {
 	key := generator.RandStringRunes(n)
 
 	newCookie := &http.Cookie{
@@ -239,7 +241,7 @@ func (h *UserHandler) CreateCookie(n uint8) *http.Cookie {
 	return newCookie
 }
 
-func (h *UserHandler) GetOwnProfile(c echo.Context) error {
+func (uh *UserHandler) GetOwnProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie("SID")
@@ -250,8 +252,7 @@ func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 
 	var uid uint64
 	var exists bool
-
-	exists, uid, err = h.Sm.CheckSession(cookie.Value)
+	exists, uid, err = uh.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -261,12 +262,13 @@ func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	usr, err := h.UseCase.GetOwnProfile(uid)
+	usr, err := uh.UseCase.GetOwnProfile(uid)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
+	uh.sanitizer.SanitizeOwnProfile(usr)
 	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -275,7 +277,7 @@ func (h *UserHandler) GetOwnProfile(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
+func (uh *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	uid, err := strconv.Atoi(c.Param("id"))
@@ -288,13 +290,14 @@ func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
-	usr, err := h.UseCase.GetOtherProfile(uint64(uid))
+	usr, err := uh.UseCase.GetOtherProfile(uint64(uid))
 
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
+	uh.sanitizer.SanitizeOtherProfile(usr)
 	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -303,7 +306,7 @@ func (h *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) UploadAvatar(c echo.Context) error {
+func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	cookie, err := c.Cookie("SID")
@@ -314,7 +317,7 @@ func (h *UserHandler) UploadAvatar(c echo.Context) error {
 	var uid uint64
 	var exists bool
 	if cookie != nil {
-		exists, uid, err = h.Sm.CheckSession(cookie.Value)
+		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -335,12 +338,12 @@ func (h *UserHandler) UploadAvatar(c echo.Context) error {
 		return nil
 	}
 
-	err = h.UseCase.UploadAvatar(uid, img)
+	err = uh.UseCase.UploadAvatar(uid, img)
 
 	return nil
 }
 
-func (h *UserHandler) GetAvatar(c echo.Context) error {
+func (uh *UserHandler) GetAvatar(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	uid, err := strconv.Atoi(c.Param("id"))
@@ -349,7 +352,7 @@ func (h *UserHandler) GetAvatar(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	file, err := h.UseCase.GetAvatar(uint64(uid))
+	file, err := uh.UseCase.GetAvatar(uint64(uid))
 
 	if err != nil {
 		log.Println(err)
@@ -360,7 +363,7 @@ func (h *UserHandler) GetAvatar(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) CheckUser(c echo.Context) error {
+func (uh *UserHandler) CheckUser(c echo.Context) error {
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
@@ -368,7 +371,7 @@ func (h *UserHandler) CheckUser(c echo.Context) error {
 
 	var exists bool
 	if cookie != nil {
-		exists, _, err = h.Sm.CheckSession(cookie.Value)
+		exists, _, err = uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -387,7 +390,7 @@ func (h *UserHandler) CheckUser(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	_, err = h.UseCase.CheckUser(u)
+	_, err = uh.UseCase.CheckUser(u)
 
 	if err != nil {
 		log.Println(err)
@@ -397,7 +400,7 @@ func (h *UserHandler) CheckUser(c echo.Context) error {
 	return nil
 }
 
-func (h *UserHandler) GetUsers(c echo.Context) error {
+func (uh *UserHandler) GetUsers(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	page := c.QueryParam("page")
@@ -409,12 +412,13 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
-	users, err := h.UseCase.GetUsers(pageNum)
+	users, err := uh.UseCase.GetUsers(pageNum)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
+	users = uh.sanitizer.SanitizeUsersOnEvent(users)
 	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		log.Println(err)
 		return err
