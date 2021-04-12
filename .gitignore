@@ -5,7 +5,7 @@
 *jpg
 *.txt
 public/events/*
-public/*
+
 *.lua
 !public/default.png
 scripts/*

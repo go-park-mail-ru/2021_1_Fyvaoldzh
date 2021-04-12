@@ -8,4 +8,5 @@ type UseCase interface {
 	AddVisited(userId uint64, eid uint64) error
 	RemoveVisited(userId uint64, eid uint64) error
 	UpdateEventStatus(userId uint64, eventId uint64) error
+	IsAddedEvent(userId uint64, eventId uint64) (bool, error)
 }

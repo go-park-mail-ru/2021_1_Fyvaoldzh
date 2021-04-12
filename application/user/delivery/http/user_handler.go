@@ -44,18 +44,16 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase,
 func (uh *UserHandler) Login(c echo.Context) error {
 	defer c.Request().Body.Close()
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	u := &models.User{}
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 
 	if err != nil && cookie != nil {
-		uh.Logger.Warn(c.Request().URL.Path,
+		uh.Logger.Error(c.Request().URL.Path,
 			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
 			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
+			zap.String("request_id", requestId),
 			zap.Errors("error", []error{err}),
 		)
 		return err
@@ -63,7 +61,12 @@ func (uh *UserHandler) Login(c echo.Context) error {
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
 	if err != nil {
-		log.Println(err)
+		uh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("url", c.Request().URL.Path),
+			zap.String("request_id", requestId),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -101,7 +104,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 		zap.String("remote_addr", c.Request().RemoteAddr),
 		zap.String("url", c.Request().URL.Path),
 		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
+		zap.String("request_id", requestId),
 	)
 
 	return nil

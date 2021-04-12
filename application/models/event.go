@@ -56,6 +56,12 @@ type Tag struct {
 	Name string `json:"name"`
 }
 
+type IsAddedEvent struct {
+	UserId uint64 `json:"userId"`
+	EventId uint64 `json:"eventId"`
+	IsAdded bool `json:"isAdded"`
+}
+
 type Recomend struct {
 	Show    uint64 `json:"show"`
 	Movie   uint64 `json:"movie"`

@@ -2,6 +2,8 @@ package http
 
 import (
 	"fmt"
+	"github.com/mailru/easyjson"
+	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
@@ -31,21 +33,21 @@ func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm *infra
 	e.DELETE("/api/v1/remove/planning/:id", subscriptionHandler.RemovePlanningEvent)
 	e.POST("/api/v1/add/visited/:id", subscriptionHandler.AddVisitedEvent)
 	e.DELETE("/api/v1/remove/visited/:id", subscriptionHandler.RemoveVisitedEvent)
+	e.GET("/api/v1/event/is_added/:id", subscriptionHandler.IsAdded)
 }
 
 func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
-	log.Println(err)
 	if err != nil {
 		h.Logger.Warn(c.Request().URL.Path,
 			zap.String("method", c.Request().Method),
 			zap.String("remote_addr", c.Request().RemoteAddr),
 			zap.String("url", c.Request().URL.Path),
 			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
+			zap.String("request_id", requestId),
 			zap.Errors("error", []error{err}),
 		)
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
@@ -217,4 +219,55 @@ func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
 	}
 
 	return h.UseCase.RemoveVisited(userId, uint64(eventId))
+}
+
+func (h SubscriptionHandler) IsAdded(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	requestId := fmt.Sprintf("%016x", rand.Int())
+	cookie, err := c.Cookie(constants.SessionCookieName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	var userId uint64
+	var exists bool
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+	}
+
+	eventId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	var answer models.IsAddedEvent
+	answer.EventId = uint64(eventId)
+	answer.UserId = userId
+	answer.IsAdded, err = h.UseCase.IsAddedEvent(userId, uint64(eventId))
+	if err != nil {
+		h.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("request_id", requestId),
+			zap.Errors("error", []error{err}),
+		)
+	}
+
+	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
+		h.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("request_id", requestId),
+			zap.Errors("error", []error{err}),
+		)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }
