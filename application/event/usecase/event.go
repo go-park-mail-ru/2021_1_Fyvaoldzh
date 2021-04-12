@@ -116,7 +116,13 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 }
 
 func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent, time.Now())
+	var sqlEvents []models.EventCardWithDateSQL
+	var err error
+	if typeEvent == "" {
+		sqlEvents, err = e.repo.GetAllEvents(time.Now())
+	} else {
+		sqlEvents, err = e.repo.GetEventsByCategory(typeEvent, time.Now())
+	}
 	if err != nil {
 		e.logger.Warn(err)
 		return models.EventCards{}, err
