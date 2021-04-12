@@ -13,7 +13,6 @@ import (
 	"kudago/application/user/usecase"
 	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
-	"log"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -21,9 +20,10 @@ import (
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
 	"github.com/tarantool/go-tarantool"
+	"go.uber.org/zap"
 )
 
-func NewServer() *echo.Echo {
+func NewServer(logger *zap.SugaredLogger) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"*"},
@@ -32,11 +32,11 @@ func NewServer() *echo.Echo {
 
 	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err)
 	}
 	err = pool.Ping(context.Background())
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err)
 	}
 
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
@@ -45,33 +45,32 @@ func NewServer() *echo.Echo {
 	})
 
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err)
 	}
 
 	_, err = conn.Ping()
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatal(err)
 	}
 
-	userRep := repository.NewUserDatabase(pool)
-	eventRep := erepository.NewEventDatabase(pool)
-	subRep := srepository.NewSubscriptionDatabase(pool)
+	userRep := repository.NewUserDatabase(pool, logger)
+	eventRep := erepository.NewEventDatabase(pool, logger)
+	subRep := srepository.NewSubscriptionDatabase(pool, logger)
 
-	userUC := usecase.NewUser(userRep, subRep)
-	eventUC := eusecase.NewEvent(eventRep, subRep)
-	subUC := susecase.NewSubscription(subRep)
+	userUC := usecase.NewUser(userRep, subRep, logger)
+	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
+	subUC := susecase.NewSubscription(subRep, logger)
 
 	sm := infrastructure.SessionManager{}
 	sm.Conn = conn
 
-	http.CreateUserHandler(e, userUC, &sm)
-	shttp.CreateSubscriptionsHandler(e, subUC, &sm)
-	ehttp.CreateEventHandler(e, eventUC, &sm)
+	http.CreateUserHandler(e, userUC, &sm, logger)
+	shttp.CreateSubscriptionsHandler(e, subUC, &sm, logger)
+	ehttp.CreateEventHandler(e, eventUC, &sm, logger)
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup:    constants.CSRFHeader,
-		CookiePath: "/",
-
+		TokenLookup: constants.CSRFHeader,
+		CookiePath:  "/",
 	}))
 
 	return e

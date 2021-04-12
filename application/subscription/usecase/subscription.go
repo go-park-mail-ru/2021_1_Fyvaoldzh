@@ -1,21 +1,25 @@
 package usecase
 
 import (
-	"github.com/labstack/echo"
 	"kudago/application/subscription"
 	"net/http"
+
+	"github.com/labstack/echo"
+	"go.uber.org/zap"
 )
 
 type Subscription struct {
-	repo     subscription.Repository
+	repo   subscription.Repository
+	logger *zap.SugaredLogger
 }
 
-func NewSubscription(subRepo subscription.Repository) subscription.UseCase {
-	return &Subscription{repo: subRepo}
+func NewSubscription(subRepo subscription.Repository, logger *zap.SugaredLogger) subscription.UseCase {
+	return &Subscription{repo: subRepo, logger: logger}
 }
 
 func (s Subscription) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
 	if subscriberId == subscribedToId {
+		s.logger.Warn("subscriberId == subscribedToId")
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -24,6 +28,7 @@ func (s Subscription) SubscribeUser(subscriberId uint64, subscribedToId uint64) 
 
 func (s Subscription) UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error {
 	if subscriberId == subscribedToId {
+		s.logger.Warn("subscriberId == subscribedToId")
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -49,5 +54,3 @@ func (s Subscription) RemoveVisited(userId uint64, eventId uint64) error {
 func (s Subscription) UpdateEventStatus(userId uint64, eventId uint64) error {
 	return s.repo.UpdateEventStatus(userId, eventId)
 }
-
-

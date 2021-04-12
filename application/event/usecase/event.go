@@ -9,7 +9,6 @@ import (
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -18,20 +17,23 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 type Event struct {
 	repo    event.Repository
 	repoSub subscription.Repository
+	logger  *zap.SugaredLogger
 }
 
-func NewEvent(e event.Repository, repoSubscription subscription.Repository) event.UseCase {
-	return &Event{repo: e, repoSub: repoSubscription}
+func NewEvent(e event.Repository, repoSubscription subscription.Repository, logger *zap.SugaredLogger) event.UseCase {
+	return &Event{repo: e, repoSub: repoSubscription, logger: logger}
 }
 
 func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetAllEvents(time.Now())
 	if err != nil {
+		e.logger.Warn(err)
 		return models.EventCards{}, err
 	}
 
@@ -44,6 +46,7 @@ func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
+		e.logger.Debugf("page %d is empty", page)
 		return models.EventCards{}, nil
 	}
 
@@ -53,6 +56,7 @@ func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	ev, err := e.repo.GetOneEventByID(eventId)
 	if err != nil {
+		e.logger.Warn(err)
 		return models.Event{}, err
 	}
 
@@ -60,6 +64,7 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 
 	tags, err := e.repo.GetTags(eventId)
 	if err != nil {
+		e.logger.Warn(err)
 		return jsonEvent, err
 	}
 
@@ -67,6 +72,7 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 
 	followers, err := e.repoSub.GetEventFollowers(eventId)
 	if err != nil {
+		e.logger.Warn(err)
 		return jsonEvent, err
 	}
 
@@ -87,7 +93,7 @@ func (e Event) CreateNewEvent(newEvent *models.Event) error {
 func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 	src, err := img.Open()
 	if err != nil {
-		log.Println(err)
+		e.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer src.Close()
@@ -96,11 +102,13 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 
 	dst, err := os.Create(fileName)
 	if err != nil {
+		e.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
+		e.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -110,10 +118,12 @@ func (e Event) SaveImage(eventId uint64, img *multipart.FileHeader) error {
 func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetEventsByCategory(typeEvent, time.Now())
 	if err != nil {
+		e.logger.Warn(err)
 		return models.EventCards{}, err
 	}
 
 	if len(sqlEvents) == 0 {
+		e.logger.Debugf("page %d in category %s empty", page, typeEvent)
 		return models.EventCards{}, err
 	}
 
@@ -126,6 +136,7 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
+		e.logger.Debugf("page %d in category %s empty", page, typeEvent)
 		return models.EventCards{}, nil
 	}
 
@@ -135,12 +146,13 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 func (e Event) GetImage(eventId uint64) ([]byte, error) {
 	ev, err := e.repo.GetOneEventByID(eventId)
 	if err != nil {
+		e.logger.Warn(err)
 		return []byte{}, err
 	}
 
 	file, err := ioutil.ReadFile(ev.Image.String)
 	if err != nil {
-		log.Println("Cannot open file: " + ev.Image.String)
+		e.logger.Warn("Cannot open file: " + ev.Image.String)
 		return []byte{}, err
 	}
 
@@ -158,10 +170,12 @@ func (e Event) FindEvents(str string, category string, page int) (models.EventCa
 		sqlEvents, err = e.repo.CategorySearch(str, category, time.Now())
 	}
 	if err != nil {
+		e.logger.Warn(err)
 		return models.EventCards{}, err
 	}
 
 	if len(sqlEvents) == 0 {
+		e.logger.Debug("empty result for method FindEvents")
 		return models.EventCards{}, err
 	}
 
@@ -174,6 +188,7 @@ func (e Event) FindEvents(str string, category string, page int) (models.EventCa
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
+		e.logger.Debug("empty result for method FindEvents")
 		return models.EventCards{}, nil
 	}
 
@@ -184,6 +199,7 @@ func (e Event) RecomendSystem(uid uint64, category string) error {
 	if err := e.repo.RecomendSystem(uid, category); err != nil {
 		time.Sleep(1 * time.Second)
 		if err := e.repo.RecomendSystem(uid, category); err != nil {
+			e.logger.Warn(err)
 			return errors.New("cannot add record in user_prefer")
 		}
 	}
@@ -193,10 +209,12 @@ func (e Event) RecomendSystem(uid uint64, category string) error {
 func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetRecomended(uid, time.Now())
 	if err != nil {
+		e.logger.Warn(err)
 		return models.EventCards{}, err
 	}
 
 	if len(sqlEvents) == 0 {
+		e.logger.Debug("empty result for method GetRecomended")
 		return models.EventCards{}, err
 	}
 
@@ -209,6 +227,7 @@ func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
+		e.logger.Debug("empty result for method GetRecomended")
 		return models.EventCards{}, nil
 	}
 
