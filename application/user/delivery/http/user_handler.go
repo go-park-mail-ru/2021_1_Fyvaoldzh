@@ -1,8 +1,7 @@
 package http
 
 import (
-	"github.com/labstack/echo"
-	"github.com/mailru/easyjson"
+	"fmt"
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/constants"
@@ -10,20 +9,26 @@ import (
 	"kudago/pkg/generator"
 	"kudago/pkg/infrastructure"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/labstack/echo"
+	"github.com/mailru/easyjson"
+	"go.uber.org/zap"
 )
 
 type UserHandler struct {
 	UseCase   user.UseCase
 	Sm        *infrastructure.SessionManager
+	Logger    *zap.SugaredLogger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase,
-	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer) {
-	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz}
+	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger *zap.SugaredLogger) {
+	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz, Logger: logger}
 
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout", userHandler.Logout)
@@ -38,12 +43,21 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase,
 
 func (uh *UserHandler) Login(c echo.Context) error {
 	defer c.Request().Body.Close()
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	u := &models.User{}
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 
 	if err != nil && cookie != nil {
-		log.Println(err)
+		uh.Logger.Warn(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return err
 	}
 
@@ -81,6 +95,14 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	}
 
 	c.SetCookie(cookie)
+
+	uh.Logger.Info(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+	)
 
 	return nil
 }
@@ -404,5 +426,3 @@ func (uh *UserHandler) GetUsers(c echo.Context) error {
 
 	return nil
 }
-
-

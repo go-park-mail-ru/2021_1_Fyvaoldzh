@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/georgysavva/scany v0.2.7
-	github.com/golang/mock v1.5.0 // indirect
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.11.0
@@ -17,4 +16,6 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/tarantool/go-tarantool v0.0.0-20210330210617-56fe55c5fa5c
 	github.com/valyala/fasttemplate v1.2.1 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.16.0
 )

@@ -4,20 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/labstack/echo"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"net/http"
+
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/labstack/echo"
+	"go.uber.org/zap"
 )
 
 type SubscriptionDatabase struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	logger *zap.SugaredLogger
 }
 
-func NewSubscriptionDatabase(conn *pgxpool.Pool) subscription.Repository {
-	return &SubscriptionDatabase{pool: conn}
+func NewSubscriptionDatabase(conn *pgxpool.Pool, logger *zap.SugaredLogger) subscription.Repository {
+	return &SubscriptionDatabase{pool: conn, logger: logger}
 }
 
 func (sd SubscriptionDatabase) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
@@ -25,6 +28,7 @@ func (sd SubscriptionDatabase) SubscribeUser(subscriberId uint64, subscribedToId
 		`INSERT INTO subscriptions (subscriber_id, subscribed_to_id) VALUES ($1, $2)`,
 		subscriberId, subscribedToId)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -36,10 +40,12 @@ func (sd SubscriptionDatabase) UnsubscribeUser(subscriberId uint64, subscribedTo
 		`DELETE FROM subscriptions WHERE subscriber_id = $1 AND subscribed_to_id = $2`,
 		subscriberId, subscribedToId)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	if resp.RowsAffected() == 0 {
+		sd.logger.Warn("subscription does not exist")
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"subscription does not exist")
 	}
@@ -52,6 +58,7 @@ func (sd SubscriptionDatabase) AddPlanning(userId uint64, eventId uint64) error 
 		`INSERT INTO user_event (user_id, event_id, is_planning) VALUES ($1, $2, $3)`,
 		userId, eventId, true)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -63,9 +70,11 @@ func (sd SubscriptionDatabase) RemovePlanning(userId uint64, eventId uint64) err
 		`DELETE FROM user_event WHERE user_id = $1 AND event_id = $2 AND is_planning = $3`,
 		userId, eventId, true)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if resp.RowsAffected() == 0 {
+		sd.logger.Warnf("subscription with id %d in profile with id %d does not exist in planing", userId, eventId)
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"event does not exist in list")
 	}
@@ -78,6 +87,7 @@ func (sd SubscriptionDatabase) AddVisited(userId uint64, eventId uint64) error {
 		`INSERT INTO user_event (user_id, event_id, is_planning) VALUES ($1, $2, $3)`,
 		userId, eventId, false)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -89,9 +99,11 @@ func (sd SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
 		`DELETE FROM user_event WHERE user_id = $1 AND event_id = $2 AND is_planning = $3`,
 		uid, eid, false)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if resp.RowsAffected() == 0 {
+		sd.logger.Warn("subscription with id %d in profile with id %d does not exist in visited", uid, eid)
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"event does not exist in list")
 	}
@@ -99,15 +111,16 @@ func (sd SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
 	return nil
 }
 
-
 func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
 	resp, err := sd.pool.Exec(context.Background(),
 		`UPDATE user_event SET is_planning = $1 WHERE user_id = $2 AND event_id = $3`,
 		false, userId, eventId)
 	if err != nil {
+		sd.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if resp.RowsAffected() == 0 {
+		sd.logger.Warn("event does not exist in list")
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"event does not exist in list")
 	}
@@ -120,9 +133,11 @@ func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
 	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
 		FROM subscriptions WHERE subscribed_to_id = $1`, id)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		sd.logger.Debugf("got no rows in method GetFollowers with id %d", id)
 		return []uint64{}, nil
 	}
 	if err != nil {
+		sd.logger.Warn(err)
 		return []uint64{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -137,9 +152,11 @@ func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardW
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, true)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
+		sd.logger.Debugf("got no rows in method GetPlanningEvents with id %d", id)
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
+		sd.logger.Warn(err)
 		return []models.EventCardWithDateSQL{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -154,9 +171,11 @@ func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWi
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, false)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
+		sd.logger.Debugf("got no rows in method GetVisitedEvents with id %d", id)
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
+		sd.logger.Warn(err)
 		return []models.EventCardWithDateSQL{}, err
 	}
 
@@ -171,9 +190,11 @@ func (sd SubscriptionDatabase) GetEventFollowers(eventId uint64) (models.UsersOn
 		JOIN users u ON u.id = user_id
 		WHERE event_id = $1`, eventId)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		sd.logger.Debugf("got no rows in method GetEventFollowers with id %d", eventId)
 		return models.UsersOnEvent{}, nil
 	}
 	if err != nil {
+		sd.logger.Warn(err)
 		return models.UsersOnEvent{}, err
 	}
 

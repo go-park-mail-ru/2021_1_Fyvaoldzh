@@ -9,23 +9,26 @@ import (
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/infrastructure"
 	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
+	"go.uber.org/zap"
 )
 
 type EventHandler struct {
-	UseCase event.UseCase
-	Sm      *infrastructure.SessionManager
+	UseCase   event.UseCase
+	Sm        *infrastructure.SessionManager
+	Logger    *zap.SugaredLogger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase,
-	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer) {
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger *zap.SugaredLogger) {
 
-	eventHandler := EventHandler{UseCase: uc, Sm: sm, sanitizer: sz}
+	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger, sanitizer: sz}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
@@ -77,12 +80,21 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
 		if err != nil {
-			log.Println(err)
+			eh.Logger.Warn(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -101,6 +113,14 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
+	eh.Logger.Info(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+	)
 
 	return nil
 }

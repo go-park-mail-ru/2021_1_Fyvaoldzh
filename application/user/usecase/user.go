@@ -15,15 +15,17 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"go.uber.org/zap"
 )
 
 type UserUseCase struct {
-	repo user.Repository
+	repo    user.Repository
 	repoSub subscription.Repository
+	logger  *zap.SugaredLogger
 }
 
-func NewUser(u user.Repository, repoSubscription subscription.Repository) user.UseCase {
-	return &UserUseCase{repo: u, repoSub: repoSubscription}
+func NewUser(u user.Repository, repoSubscription subscription.Repository, logger *zap.SugaredLogger) user.UseCase {
+	return &UserUseCase{repo: u, repoSub: repoSubscription, logger: logger}
 }
 
 func (uc UserUseCase) Login(user *models.User) (uint64, error) {
@@ -33,10 +35,12 @@ func (uc UserUseCase) Login(user *models.User) (uint64, error) {
 func (uc UserUseCase) CheckUser(u *models.User) (uint64, error) {
 	gotUser, err := uc.repo.IsCorrect(u)
 	if err != nil {
+		uc.logger.Warn(err)
 		return 0, err
 	}
 
 	if !generator.CheckHashedPassword(gotUser.Password, u.Password) {
+		uc.logger.Warn("incorrect data")
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -49,15 +53,18 @@ func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 
 	flag, err := uc.repo.IsExisting(usr.Login)
 	if err != nil {
+		uc.logger.Warn(err)
 		return 0, err
 	}
 	if flag {
+		uc.logger.Warn("user with this login does exist")
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
 	}
 
 	id, err := uc.repo.Add(usr)
 	err = uc.repo.AddToPreferences(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return 0, err
 	}
 
@@ -68,6 +75,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 	usr, err := uc.repo.GetByIdOwn(id)
 
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
 	}
 
@@ -76,6 +84,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 
 	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
 	}
 
@@ -83,6 +92,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 		if elem.EndDate.Before(time.Now()) {
 			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
 			if err != nil {
+				uc.logger.Warn(err)
 				return &models.OtherUserProfile{}, err
 			}
 		} else {
@@ -93,6 +103,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 
 	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
 	}
 	for _, elem := range visitedEventsSQL {
@@ -101,6 +112,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 
 	other.Followers, err = uc.repoSub.GetFollowers(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
 	}
 
@@ -112,6 +124,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	usr, err := uc.repo.GetByIdOwn(id)
 
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
 	}
 
@@ -120,6 +133,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 
 	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
 	}
 
@@ -127,6 +141,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 		if elem.EndDate.Before(time.Now()) {
 			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
 			if err != nil {
+				uc.logger.Warn(err)
 				return &models.UserOwnProfile{}, err
 			}
 		} else {
@@ -137,6 +152,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 
 	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
 	}
 	for _, elem := range visitedEventsSQL {
@@ -145,6 +161,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 
 	own.Followers, err = uc.repoSub.GetFollowers(id)
 	if err != nil {
+		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
 	}
 
@@ -154,6 +171,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	changeUser, err := uc.repo.GetByIdOwn(uid)
 	if err != nil {
+		uc.logger.Warn(err)
 		return err
 	}
 
@@ -164,18 +182,21 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 
 	if len(ud.OldPassword) != 0 {
 		if !generator.CheckHashedPassword(changeUser.Password.String, ud.OldPassword) {
+			uc.logger.Warn("passwords are not same")
 			return echo.NewHTTPError(http.StatusBadRequest, "passwords are not same")
 		}
-		changeUser.Password.String  = generator.HashPassword(ud.NewPassword)
+		changeUser.Password.String = generator.HashPassword(ud.NewPassword)
 		changeUser.Password.Valid = true
 	}
 
 	if len(ud.Email) != 0 {
 		flag, err := uc.repo.IsExistingEmail(ud.Email)
 		if err != nil {
+			uc.logger.Warn(err)
 			return err
 		}
 		if flag {
+			uc.logger.Warn("this email does exist")
 			return echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
 		}
 		changeUser.Email.String = ud.Email
@@ -190,6 +211,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	if len(ud.Birthday) != 0 {
 		dt, err := time.Parse(constants.TimeFormat, ud.Birthday)
 		if err != nil {
+			uc.logger.Warn(err)
 			return err
 		}
 		changeUser.Birthday.Time = dt
@@ -204,6 +226,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	err = uc.repo.Update(uid, changeUser)
 
 	if err != nil {
+		uc.logger.Warn(err)
 		return err
 	}
 
@@ -213,6 +236,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 func (uc UserUseCase) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
 	src, err := img.Open()
 	if err != nil {
+		uc.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer src.Close()
@@ -220,17 +244,20 @@ func (uc UserUseCase) UploadAvatar(uid uint64, img *multipart.FileHeader) error 
 	fileName := constants.UserPicDir + fmt.Sprint(uid) + generator.RandStringRunes(6) + img.Filename
 	dst, err := os.Create(fileName)
 	if err != nil {
+		uc.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
+		uc.logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	err = uc.repo.ChangeAvatar(uid, fileName)
 
 	if err != nil {
+		uc.logger.Warn(err)
 		return err
 	}
 
@@ -240,13 +267,14 @@ func (uc UserUseCase) UploadAvatar(uid uint64, img *multipart.FileHeader) error 
 func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 	usr, err := uc.repo.GetByIdOwn(uid)
 	if err != nil {
+		uc.logger.Warn(err)
 		return []byte{}, err
 	}
-
 
 	if usr.Avatar.Valid {
 		file, err := ioutil.ReadFile(usr.Avatar.String)
 		if err != nil {
+			uc.logger.Warn(err)
 			return []byte{}, echo.NewHTTPError(http.StatusInternalServerError, "Cannot open file")
 		}
 		return file, nil
@@ -258,5 +286,3 @@ func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 func (uc UserUseCase) GetUsers(page int) (models.UsersOnEvent, error) {
 	return uc.repo.GetUsers(page)
 }
-
-

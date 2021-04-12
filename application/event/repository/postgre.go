@@ -7,7 +7,6 @@ import (
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/pkg/constants"
-	"log"
 	"net/http"
 	"time"
 
@@ -15,14 +14,16 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
+	"go.uber.org/zap"
 )
 
 type EventDatabase struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	logger *zap.SugaredLogger
 }
 
-func NewEventDatabase(conn *pgxpool.Pool) event.Repository {
-	return &EventDatabase{pool: conn}
+func NewEventDatabase(conn *pgxpool.Pool, logger *zap.SugaredLogger) event.Repository {
+	return &EventDatabase{pool: conn, logger: logger}
 }
 
 func (ed EventDatabase) GetAllEvents(now time.Time) ([]models.EventCardWithDateSQL, error) {
@@ -32,10 +33,12 @@ func (ed EventDatabase) GetAllEvents(now time.Time) ([]models.EventCardWithDateS
 		ORDER BY id DESC`)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		ed.logger.Debug("no rows in method GetAllEvents")
 		return []models.EventCardWithDateSQL{}, nil
 	}
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return nil, err
 	}
 
@@ -57,10 +60,12 @@ func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time) ([]
 		WHERE category = $1 ORDER BY id DESC`, typeEvent)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		ed.logger.Debug("no rows in method GetEventsByCategory")
 		return []models.EventCardWithDateSQL{}, nil
 	}
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return []models.EventCardWithDateSQL{}, err
 	}
 
@@ -81,10 +86,12 @@ func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error)
 		`SELECT * FROM events WHERE id = $1`, eventId)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(ev) == 0 {
+		ed.logger.Warnf("no event with id %d", eventId)
 		return models.EventSQL{}, echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(eventId)+" not found"))
 	}
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return models.EventSQL{}, err
 	}
 
@@ -100,10 +107,12 @@ func (ed EventDatabase) GetTags(eventId uint64) (models.Tags, error) {
         WHERE e.event_id = $1`, eventId)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(parameters) == 0 {
+		ed.logger.Debug("no rows in method GetTags")
 		return models.Tags{}, nil
 	}
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return models.Tags{}, err
 	}
 
@@ -118,6 +127,7 @@ func (ed EventDatabase) AddEvent(newEvent *models.Event) error {
 		newEvent.Title, newEvent.Place, newEvent.Subway, newEvent.Street, newEvent.Description,
 		newEvent.Category, newEvent.StartDate, newEvent.EndDate, newEvent.Image)
 	if err != nil {
+		ed.logger.Warn(err)
 		return err
 	}
 
@@ -129,6 +139,7 @@ func (ed EventDatabase) DeleteById(eventId uint64) error {
 		`DELETE FROM events WHERE id = $1`, eventId)
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return err
 	}
 
@@ -144,6 +155,7 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 		`UPDATE events SET image = $1 WHERE id = $2`, path, eventId)
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return err
 	}
 
@@ -162,10 +174,12 @@ func (ed EventDatabase) FindEvents(str string, now time.Time) ([]models.EventCar
 		ORDER BY e.id DESC`, str)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		ed.logger.Debugf("no rows in method FindEvents with string %s", str)
 		return []models.EventCardWithDateSQL{}, nil
 	}
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return []models.EventCardWithDateSQL{}, err
 	}
 
@@ -185,8 +199,13 @@ func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
 	_, err := ed.pool.Exec(context.Background(),
 		`UPDATE user_preference SET `+constants.Category[category]+`=`+constants.Category[category]+`+1 `+`WHERE user_id = $1`, uid)
 
+	if errors.As(err, &pgx.ErrNoRows) {
+		ed.logger.Debugf("no rows in method RecomendSystem with id %d", uid)
+		return err
+	}
+
 	if err != nil {
-		log.Println("here")
+		ed.logger.Warn(err)
 		return err
 	}
 
@@ -200,7 +219,13 @@ func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
 		FROM user_preference
 		WHERE user_id = $1`, uid)
 
+	if errors.As(err, &pgx.ErrNoRows) {
+		ed.logger.Debugf("no rows in method GetPreference with id %d", uid)
+		return models.Recomend{}, err
+	}
+
 	if err != nil {
+		ed.logger.Warn(err)
 		return models.Recomend{}, err
 	}
 	return recomend[0], nil
@@ -218,10 +243,12 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 		ORDER BY e.id DESC`, str, category)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		ed.logger.Debugf("no rows in method CategorySearch with searchstring %s", str)
 		return []models.EventCardWithDateSQL{}, nil
 	}
 
 	if err != nil {
+		ed.logger.Warn(err)
 		return []models.EventCardWithDateSQL{}, err
 	}
 
@@ -240,6 +267,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
 	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
+		ed.logger.Debug(err)
 		return ed.GetAllEvents(now)
 	}
 	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
@@ -250,6 +278,7 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ORDER BY id DESC`)
 
 		if err != nil {
+			ed.logger.Warn(err)
 			return nil, err
 		}
 		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
@@ -258,10 +287,12 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ORDER BY id DESC`)
 
 		if err != nil {
+			ed.logger.Warn(err)
 			return nil, err
 		}
 		eventsPrefer = append(eventsPrefer, otherEvents...)
 		if len(eventsPrefer) == 0 {
+			ed.logger.Debug("no rows in method GetRecomended")
 			return []models.EventCardWithDateSQL{}, nil
 		}
 		var validEvents []models.EventCardWithDateSQL
@@ -282,6 +313,7 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ORDER BY id DESC`)
 
 		if err != nil {
+			ed.logger.Warn(err)
 			return nil, err
 		}
 		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
@@ -290,10 +322,12 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ORDER BY id DESC`)
 
 		if err != nil {
+			ed.logger.Warn(err)
 			return nil, err
 		}
 		eventsPrefer = append(eventsPrefer, otherEvents...)
 		if len(eventsPrefer) == 0 {
+			ed.logger.Debug("no rows in method GetRecomended")
 			return []models.EventCardWithDateSQL{}, nil
 		}
 		var validEvents []models.EventCardWithDateSQL
@@ -313,6 +347,7 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ORDER BY id DESC`)
 
 		if err != nil {
+			ed.logger.Warn(err)
 			return nil, err
 		}
 		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
@@ -321,10 +356,12 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ORDER BY id DESC`)
 
 		if err != nil {
+			ed.logger.Warn(err)
 			return nil, err
 		}
 		eventsPrefer = append(eventsPrefer, otherEvents...)
 		if len(eventsPrefer) == 0 {
+			ed.logger.Debug("no rows in method GetRecomended")
 			return []models.EventCardWithDateSQL{}, nil
 		}
 		var validEvents []models.EventCardWithDateSQL
