@@ -34,7 +34,6 @@ func NewServer() *echo.Echo {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	err = pool.Ping(context.Background())
 	if err != nil {
 		log.Fatalln(err)
@@ -71,6 +70,8 @@ func NewServer() *echo.Echo {
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup:    constants.CSRFHeader,
+		CookiePath: "/",
+
 	}))
 
 	return e
