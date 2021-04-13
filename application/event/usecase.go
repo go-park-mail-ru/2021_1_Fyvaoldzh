@@ -15,5 +15,5 @@ type UseCase interface {
 	GetImage(eventId uint64) ([]byte, error)
 	FindEvents(str string, category string, page int) (models.EventCards, error)
 	RecomendSystem(uid uint64, category string) error
-	GetRecomended(uid uint64, page int) (models.EventCards, error)
+	GetRecommended(uid uint64, page int) (models.EventCards, error)
 }

@@ -39,10 +39,10 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
 	e.POST("/api/v1/save/:id", eventHandler.Save)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
-	e.GET("/api/v1/recomend", eventHandler.Recomend)
+	e.GET("/api/v1/recomend", eventHandler.Recommend)
 }
 
-func (eh EventHandler) Recomend(c echo.Context) error {
+func (eh EventHandler) Recommend(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
@@ -61,7 +61,7 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 	}
 
 	if uid, err := eh.GetUserID(c); err == nil {
-		events, err := eh.UseCase.GetRecomended(uid, page)
+		events, err := eh.UseCase.GetRecommended(uid, page)
 		events = eh.sanitizer.SanitizeEventCards(events)
 		if err != nil {
 			eh.Logger.LogError(c, start, requestId, err)

@@ -165,9 +165,9 @@ func (e Event) FindEvents(str string, category string, page int) (models.EventCa
 	var sqlEvents []models.EventCardWithDateSQL
 	var err error
 	if category == "" {
-		sqlEvents, err = e.repo.FindEvents(str, time.Now())
+		sqlEvents, err = e.repo.FindEvents(str, time.Now(), page)
 	} else {
-		sqlEvents, err = e.repo.CategorySearch(str, category, time.Now())
+		sqlEvents, err = e.repo.CategorySearch(str, category, time.Now(), page)
 	}
 	if err != nil {
 		e.logger.Warn(err)
@@ -181,12 +181,10 @@ func (e Event) FindEvents(str string, category string, page int) (models.EventCa
 
 	var pageEvents models.EventCards
 
-	for i := (page - 1) * 6; i < page*6; i++ {
-		if i >= len(sqlEvents) {
-			break
-		}
+	for i := range sqlEvents {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
+
 	if len(pageEvents) == 0 {
 		e.logger.Debug("empty result for method FindEvents")
 		return models.EventCards{}, nil
@@ -206,8 +204,8 @@ func (e Event) RecomendSystem(uid uint64, category string) error {
 	return nil
 }
 
-func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetRecomended(uid, time.Now())
+func (e Event) GetRecommended(uid uint64, page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetRecommended(uid, time.Now(), page)
 	if err != nil {
 		e.logger.Warn(err)
 		return models.EventCards{}, err
@@ -220,10 +218,7 @@ func (e Event) GetRecomended(uid uint64, page int) (models.EventCards, error) {
 
 	var pageEvents models.EventCards
 
-	for i := (page - 1) * 6; i < page*6; i++ {
-		if i >= len(sqlEvents) {
-			break
-		}
+	for i := range sqlEvents {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
