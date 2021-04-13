@@ -26,11 +26,13 @@ func NewEventDatabase(conn *pgxpool.Pool, logger *zap.SugaredLogger) event.Repos
 	return &EventDatabase{pool: conn, logger: logger}
 }
 
-func (ed EventDatabase) GetAllEvents(now time.Time) ([]models.EventCardWithDateSQL, error) {
+func (ed EventDatabase) GetAllEvents(now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
 		`SELECT id, title, description, image, start_date, end_date FROM events
-		ORDER BY id DESC`)
+		WHERE end_date > $1
+		ORDER BY id DESC
+		LIMIT 6 OFFSET $2`, now, (page-1)*6)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method GetAllEvents")
@@ -42,22 +44,16 @@ func (ed EventDatabase) GetAllEvents(now time.Time) ([]models.EventCardWithDateS
 		return nil, err
 	}
 
-	var validEvents []models.EventCardWithDateSQL
-
-	for _, elem := range events {
-		if elem.EndDate.After(now) {
-			validEvents = append(validEvents, elem)
-		}
-	}
-
-	return validEvents, nil
+	return events, nil
 }
 
-func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time) ([]models.EventCardWithDateSQL, error) {
+func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
 		`SELECT id, title, description, image, start_date, end_date FROM events
-		WHERE category = $1 ORDER BY id DESC`, typeEvent)
+		WHERE category = $1 AND end_date > $2
+		ORDER BY id DESC
+		LIMIT 6 OFFSET $3`, typeEvent, now, (page-1)*6)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method GetEventsByCategory")
@@ -69,15 +65,7 @@ func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time) ([]
 		return []models.EventCardWithDateSQL{}, err
 	}
 
-	var validEvents []models.EventCardWithDateSQL
-
-	for _, elem := range events {
-		if elem.EndDate.After(now) {
-			validEvents = append(validEvents, elem)
-		}
-	}
-
-	return validEvents, nil
+	return events, nil
 }
 
 func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error) {
@@ -268,7 +256,7 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 	recomend, err := ed.GetPreference(uid)
 	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
 		ed.logger.Debug(err)
-		return ed.GetAllEvents(now)
+		return ed.GetAllEvents(now, 1)
 	}
 	var eventsPrefer, otherEvents []models.EventCardWithDateSQL
 	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {

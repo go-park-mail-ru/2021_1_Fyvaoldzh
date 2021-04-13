@@ -31,7 +31,7 @@ func NewEvent(e event.Repository, repoSubscription subscription.Repository, logg
 }
 
 func (e Event) GetAllEvents(page int) (models.EventCards, error) {
-	sqlEvents, err := e.repo.GetAllEvents(time.Now())
+	sqlEvents, err := e.repo.GetAllEvents(time.Now(), page)
 	if err != nil {
 		e.logger.Warn(err)
 		return models.EventCards{}, err
@@ -39,10 +39,7 @@ func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 
 	var pageEvents models.EventCards
 
-	for i := (page - 1) * 6; i < page*6; i++ {
-		if i >= len(sqlEvents) {
-			break
-		}
+	for i := range sqlEvents {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
@@ -119,9 +116,9 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 	var sqlEvents []models.EventCardWithDateSQL
 	var err error
 	if typeEvent == "" {
-		sqlEvents, err = e.repo.GetAllEvents(time.Now())
+		sqlEvents, err = e.repo.GetAllEvents(time.Now(), page)
 	} else {
-		sqlEvents, err = e.repo.GetEventsByCategory(typeEvent, time.Now())
+		sqlEvents, err = e.repo.GetEventsByCategory(typeEvent, time.Now(), page)
 	}
 	if err != nil {
 		e.logger.Warn(err)
@@ -135,10 +132,7 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 
 	var pageEvents models.EventCards
 
-	for i := (page - 1) * 6; i < page*6; i++ {
-		if i >= len(sqlEvents) {
-			break
-		}
+	for i := range sqlEvents {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
