@@ -270,8 +270,8 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 		ed.logger.Debug(err)
 		return ed.GetAllEvents(now)
 	}
+	var eventsPrefer, otherEvents []models.EventCardWithDateSQL
 	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
-		var eventsPrefer, otherEvents []models.EventCardWithDateSQL
 		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
 			`SELECT id, title, description, image, start_date, end_date FROM events
 			WHERE category = 'Музей'
@@ -290,23 +290,8 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ed.logger.Warn(err)
 			return nil, err
 		}
-		eventsPrefer = append(eventsPrefer, otherEvents...)
-		if len(eventsPrefer) == 0 {
-			ed.logger.Debug("no rows in method GetRecomended")
-			return []models.EventCardWithDateSQL{}, nil
-		}
-		var validEvents []models.EventCardWithDateSQL
-
-		for _, elem := range eventsPrefer {
-			if elem.EndDate.After(now) {
-				validEvents = append(validEvents, elem)
-			}
-		}
-
-		return validEvents, nil
 	}
 	if recomend.Movie >= recomend.Concert && recomend.Movie >= recomend.Show {
-		var eventsPrefer, otherEvents []models.EventCardWithDateSQL
 		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
 			`SELECT id, title, description, image, start_date, end_date FROM events
 			WHERE category = 'Кино'
@@ -325,22 +310,8 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ed.logger.Warn(err)
 			return nil, err
 		}
-		eventsPrefer = append(eventsPrefer, otherEvents...)
-		if len(eventsPrefer) == 0 {
-			ed.logger.Debug("no rows in method GetRecomended")
-			return []models.EventCardWithDateSQL{}, nil
-		}
-		var validEvents []models.EventCardWithDateSQL
-
-		for _, elem := range eventsPrefer {
-			if elem.EndDate.After(now) {
-				validEvents = append(validEvents, elem)
-			}
-		}
-
-		return validEvents, nil
-	} else {
-		var eventsPrefer, otherEvents []models.EventCardWithDateSQL
+	}
+	if recomend.Show >= recomend.Concert && recomend.Show >= recomend.Movie {
 		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
 			`SELECT id, title, description, image, start_date, end_date FROM events
 			WHERE category = 'Выставка'
@@ -359,19 +330,20 @@ func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.Event
 			ed.logger.Warn(err)
 			return nil, err
 		}
-		eventsPrefer = append(eventsPrefer, otherEvents...)
-		if len(eventsPrefer) == 0 {
-			ed.logger.Debug("no rows in method GetRecomended")
-			return []models.EventCardWithDateSQL{}, nil
-		}
-		var validEvents []models.EventCardWithDateSQL
-
-		for _, elem := range eventsPrefer {
-			if elem.EndDate.After(now) {
-				validEvents = append(validEvents, elem)
-			}
-		}
-
-		return validEvents, nil
 	}
+
+	eventsPrefer = append(eventsPrefer, otherEvents...)
+	if len(eventsPrefer) == 0 {
+		ed.logger.Debug("no rows in method GetRecomended")
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	var validEvents []models.EventCardWithDateSQL
+
+	for _, elem := range eventsPrefer {
+		if elem.EndDate.After(now) {
+			validEvents = append(validEvents, elem)
+		}
+	}
+
+	return validEvents, nil
 }
