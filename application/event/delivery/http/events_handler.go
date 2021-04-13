@@ -42,6 +42,38 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.GET("/api/v1/recomend", eventHandler.Recomend)
 }
 
+func (eh EventHandler) LogInfo(c echo.Context, start time.Time, request_id string) {
+	eh.Logger.Info(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+	)
+}
+
+func (eh EventHandler) LogWarn(c echo.Context, start time.Time, request_id string, err error) {
+	eh.Logger.Warn(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+		zap.Errors("error", []error{err}),
+	)
+}
+
+func (eh EventHandler) LogError(c echo.Context, start time.Time, request_id string, err error) {
+	eh.Logger.Error(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+		zap.Errors("error", []error{err}),
+	)
+}
+
 func (eh EventHandler) Recomend(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -52,14 +84,7 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			eh.Logger.Error(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogError(c, start, request_id, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -71,45 +96,18 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 		events, err := eh.UseCase.GetRecomended(uid, page)
 		events = eh.sanitizer.SanitizeEventCards(events)
 		if err != nil {
-			eh.Logger.Error(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogError(c, start, request_id, err)
 			return err
 		}
 
 		if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-			eh.Logger.Error(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogError(c, start, request_id, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-		eh.Logger.Info(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-		)
+		eh.LogInfo(c, start, request_id)
 		return nil
 	} else {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 }
@@ -124,14 +122,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			eh.Logger.Error(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogError(c, start, request_id, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -142,36 +133,16 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	events, err := eh.UseCase.GetAllEvents(page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return err
 	}
 
 	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.Logger.Info(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-	)
+	eh.LogInfo(c, start, request_id)
 
 	return nil
 }
@@ -181,14 +152,7 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	request_id := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		eh.Logger.Warn(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogWarn(c, start, request_id, err)
 		return 0, errors.New("user is not authorized")
 	}
 
@@ -198,39 +162,18 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	if cookie != nil {
 		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			eh.Logger.Warn(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogWarn(c, start, request_id, err)
 			return 0, err
 		}
 
 		if !exists {
-			eh.Logger.Warn(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{errors.New("cookie does not exist")}),
-			)
+			eh.LogWarn(c, start, request_id, err)
 			return 0, errors.New("user is not authorized")
 		}
 
 		return uid, nil
 	}
-	eh.Logger.Warn(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-		zap.Errors("error", []error{errors.New("got no cookie")}),
-	)
+	eh.LogWarn(c, start, request_id, err)
 	return 0, errors.New("user is not authorized")
 }
 
@@ -241,71 +184,30 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	request_id := fmt.Sprintf("%016x", rand.Int())
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return err
 	}
 	eh.sanitizer.SanitizeEvent(&ev)
 	if uid, err := eh.GetUserID(c); err == nil {
 		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
-			eh.Logger.Warn(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogWarn(c, start, request_id, err)
 		}
 	} else {
-		eh.Logger.Warn(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{errors.New("cannot get user ID")}),
-		)
+		eh.LogWarn(c, start, request_id, err)
 	}
 
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.Logger.Info(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-	)
+	eh.LogInfo(c, start, request_id)
 	return nil
 }
 
@@ -320,14 +222,7 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			eh.Logger.Error(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogError(c, start, request_id, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -338,36 +233,16 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	events = eh.sanitizer.SanitizeEventCards(events)
 
 	if err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.Logger.Info(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-	)
+	eh.LogInfo(c, start, request_id)
 	return nil
 }
 
@@ -468,14 +343,7 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			eh.Logger.Error(c.Request().URL.Path,
-				zap.String("method", c.Request().Method),
-				zap.String("remote_addr", c.Request().RemoteAddr),
-				zap.String("url", c.Request().URL.Path),
-				zap.Duration("work_time", time.Since(start)),
-				zap.String("request_id", request_id),
-				zap.Errors("error", []error{err}),
-			)
+			eh.LogError(c, start, request_id, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -486,35 +354,15 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	events, err := eh.UseCase.FindEvents(str, category, page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return err
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		eh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", request_id),
-			zap.Errors("error", []error{err}),
-		)
+		eh.LogError(c, start, request_id, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.Logger.Info(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-	)
+	eh.LogInfo(c, start, request_id)
 	return nil
 }
