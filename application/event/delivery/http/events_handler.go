@@ -45,12 +45,21 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 func (eh EventHandler) Recomend(c echo.Context) error {
 	defer c.Request().Body.Close()
 
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
 		if err != nil {
-			log.Println(err)
+			eh.Logger.Error(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -62,17 +71,45 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 		events, err := eh.UseCase.GetRecomended(uid, page)
 		events = eh.sanitizer.SanitizeEventCards(events)
 		if err != nil {
-			log.Println(err)
+			eh.Logger.Error(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return err
 		}
 
 		if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-			log.Println(err)
+			eh.Logger.Error(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-
+		eh.Logger.Info(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+		)
 		return nil
 	} else {
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 }
@@ -87,7 +124,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			eh.Logger.Warn(c.Request().URL.Path,
+			eh.Logger.Error(c.Request().URL.Path,
 				zap.String("method", c.Request().Method),
 				zap.String("remote_addr", c.Request().RemoteAddr),
 				zap.String("url", c.Request().URL.Path),
@@ -105,12 +142,26 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	events, err := eh.UseCase.GetAllEvents(page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return err
 	}
 
 	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -126,9 +177,18 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 }
 
 func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		log.Println(err)
+		eh.Logger.Warn(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return 0, errors.New("user is not authorized")
 	}
 
@@ -138,60 +198,136 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	if cookie != nil {
 		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			log.Println(err)
+			eh.Logger.Warn(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return 0, err
 		}
 
 		if !exists {
-			log.Println("cookie does not exist")
+			eh.Logger.Warn(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{errors.New("cookie does not exist")}),
+			)
 			return 0, errors.New("user is not authorized")
 		}
+
 		return uid, nil
 	}
-	log.Println("got no cookie")
+	eh.Logger.Warn(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+		zap.Errors("error", []error{errors.New("got no cookie")}),
+	)
 	return 0, errors.New("user is not authorized")
 }
 
 func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
 
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return err
 	}
 	eh.sanitizer.SanitizeEvent(&ev)
 	if uid, err := eh.GetUserID(c); err == nil {
 		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
-			log.Println(err)
+			eh.Logger.Warn(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 		}
 	} else {
-		log.Println("cannot get userID")
+		eh.Logger.Warn(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{errors.New("cannot get user ID")}),
+		)
 	}
 
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	eh.Logger.Info(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+	)
 	return nil
 }
 
 func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	category := c.QueryParam("category")
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
 		if err != nil {
-			log.Println(err)
+			eh.Logger.Error(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -202,18 +338,40 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	events = eh.sanitizer.SanitizeEventCards(events)
 
 	if err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	eh.Logger.Info(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+	)
 	return nil
 }
 
+//Эти функции будут удалены, поэтому почти не изменялись с переноса архитектуры
 func (eh EventHandler) Create(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -301,6 +459,8 @@ func (eh EventHandler) GetImage(c echo.Context) error {
 func (eh EventHandler) FindEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
+	start := time.Now()
+	request_id := fmt.Sprintf("%016x", rand.Int())
 	str := c.QueryParam("find")
 	category := c.QueryParam("category")
 	page, err := strconv.Atoi(c.QueryParam("page"))
@@ -308,7 +468,14 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			log.Println(err)
+			eh.Logger.Error(c.Request().URL.Path,
+				zap.String("method", c.Request().Method),
+				zap.String("remote_addr", c.Request().RemoteAddr),
+				zap.String("url", c.Request().URL.Path),
+				zap.Duration("work_time", time.Since(start)),
+				zap.String("request_id", request_id),
+				zap.Errors("error", []error{err}),
+			)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -319,14 +486,35 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	events, err := eh.UseCase.FindEvents(str, category, page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return err
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		log.Println(err)
+		eh.Logger.Error(c.Request().URL.Path,
+			zap.String("method", c.Request().Method),
+			zap.String("remote_addr", c.Request().RemoteAddr),
+			zap.String("url", c.Request().URL.Path),
+			zap.Duration("work_time", time.Since(start)),
+			zap.String("request_id", request_id),
+			zap.Errors("error", []error{err}),
+		)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	eh.Logger.Info(c.Request().URL.Path,
+		zap.String("method", c.Request().Method),
+		zap.String("remote_addr", c.Request().RemoteAddr),
+		zap.String("url", c.Request().URL.Path),
+		zap.Duration("work_time", time.Since(start)),
+		zap.String("request_id", request_id),
+	)
 	return nil
 }
