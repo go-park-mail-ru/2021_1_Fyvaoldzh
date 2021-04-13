@@ -197,6 +197,12 @@ func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
 func (ed EventDatabase) GetSixPreference(recomend models.Recomend) models.Recomend {
 	var sixPreference models.Recomend
 	recomendSumm := recomend.Concert + recomend.Movie + recomend.Show
+	if recomendSumm == 0 {
+		sixPreference.Show = 2
+		sixPreference.Movie = sixPreference.Show
+		sixPreference.Concert = sixPreference.Movie
+		return sixPreference
+	}
 	concertProcent := float64(recomend.Concert) / float64(recomendSumm)
 	showProcent := float64(recomend.Show) / float64(recomendSumm)
 	sixPreference.Concert = uint64(concertProcent * 6)
@@ -208,10 +214,10 @@ func (ed EventDatabase) GetSixPreference(recomend models.Recomend) models.Recome
 	}
 	sixPreference.Show = uint64(showProcent * 6)
 	if sixPreference.Show == 0 {
-		sixPreference.Concert = 1
+		sixPreference.Show = 1
 	}
 	if sixPreference.Show > 4 {
-		sixPreference.Concert = 4
+		sixPreference.Show = 4
 	}
 	sixPreference.Movie = 6 - sixPreference.Concert - sixPreference.Show
 	return sixPreference
@@ -248,7 +254,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 		OR LOWER(t.name) LIKE '%' || $1 || '%') AND e.category = $2
 		AND end_date > $3
 		ORDER BY e.id DESC
-		LIMIT 6 OFFSET $3`, str, category, now, (page-1)*6)
+		LIMIT 6 OFFSET $4`, str, category, now, (page-1)*6)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method CategorySearch with searchstring " + str)
@@ -263,6 +269,46 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 	return events, nil
 }
 
+/*func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
+	recomend, err := ed.GetPreference(uid)
+	if err != nil {
+		ed.logger.Debug(string(err.Error()))
+		return ed.GetAllEvents(now, 1)
+	}
+	var eventsConcert, eventsShow, eventsMovie []models.EventCardWithDateSQL
+	err = pgxscan.Select(context.Background(), ed.pool, &eventsConcert,
+		`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Музей' AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, recomend.Concert, (page-1)*int(recomend.Concert))
+	if err != nil {
+		ed.logger.Warn(err)
+		return nil, err
+	}
+	err = pgxscan.Select(context.Background(), ed.pool, &eventsShow,
+		`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Выставка' AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, recomend.Show, (page-1)*int(recomend.Show))
+	if err != nil {
+		ed.logger.Warn(err)
+		return nil, err
+	}
+	err = pgxscan.Select(context.Background(), ed.pool, &eventsMovie,
+		`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = 'Кино' AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, recomend.Movie, (page-1)*int(recomend.Movie))
+	if err != nil {
+		ed.logger.Warn(err)
+		return nil, err
+	}
+	eventsConcert = append(eventsConcert, eventsShow...)
+	eventsConcert = append(eventsConcert, eventsMovie...)
+
+	return eventsConcert, nil
+}*/
+
 //TODO сделать нормальный обсчет
 func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
@@ -270,84 +316,34 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 		ed.logger.Debug(string(err.Error()))
 		return ed.GetAllEvents(now, 1)
 	}
-	var eventsPrefer, otherEvents []models.EventCardWithDateSQL
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
-		`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category = 'Кино'
-			ORDER BY id DESC`)
-	/*if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
-		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
-			`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category = 'Музей'
-			ORDER BY id DESC`)
-
-		if err != nil {
-			ed.logger.Warn(err)
-			return nil, err
-		}
-		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
-			`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category != 'Музей'
-			ORDER BY id DESC`)
-
-		if err != nil {
-			ed.logger.Warn(err)
-			return nil, err
-		}
-	}*/
+	var eventsPrefer []models.EventCardWithDateSQL
+	var param string
+	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
+		param = "Музей"
+	}
 	if recomend.Movie >= recomend.Concert && recomend.Movie >= recomend.Show {
-		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
-			`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category = 'Кино'
-			ORDER BY id DESC`)
-
-		if err != nil {
-			ed.logger.Warn(err)
-			return nil, err
-		}
-		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
-			`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category != 'Кино'
-			ORDER BY id DESC`)
-
-		if err != nil {
-			ed.logger.Warn(err)
-			return nil, err
-		}
+		param = "Кино"
 	}
 	if recomend.Show >= recomend.Concert && recomend.Show >= recomend.Movie {
-		err := pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
-			`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category = 'Выставка'
-			ORDER BY id DESC`)
-
-		if err != nil {
-			ed.logger.Warn(err)
-			return nil, err
-		}
-		err = pgxscan.Select(context.Background(), ed.pool, &otherEvents,
-			`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category != 'Выставка'
-			ORDER BY id DESC`)
-
-		if err != nil {
-			ed.logger.Warn(err)
-			return nil, err
-		}
+		param = "Выставка"
+	}
+	err = pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
+		`SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category = $1 AND end_date > $2
+			UNION
+			SELECT id, title, description, image, start_date, end_date FROM events
+			WHERE category != $1 AND end_date > $2
+			ORDER BY id DESC
+			LIMIT 6 OFFSET $3`, param, now, (page-1)*6)
+	if err != nil {
+		ed.logger.Warn(err)
+		return nil, err
 	}
 
-	eventsPrefer = append(eventsPrefer, otherEvents...)
 	if len(eventsPrefer) == 0 {
 		ed.logger.Debug("no rows in method GetRecomended")
 		return []models.EventCardWithDateSQL{}, nil
 	}
-	var validEvents []models.EventCardWithDateSQL
 
-	for _, elem := range eventsPrefer {
-		if elem.EndDate.After(now) {
-			validEvents = append(validEvents, elem)
-		}
-	}
-
-	return validEvents, nil
+	return eventsPrefer, nil
 }
