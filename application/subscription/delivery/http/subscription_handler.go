@@ -2,28 +2,29 @@ package http
 
 import (
 	"fmt"
-	"github.com/mailru/easyjson"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
+	"kudago/pkg/logger"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/mailru/easyjson"
+
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 )
 
 type SubscriptionHandler struct {
 	UseCase subscription.UseCase
 	Sm      *infrastructure.SessionManager
-	Logger  *zap.SugaredLogger
+	Logger  logger.Logger
 }
 
-func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm *infrastructure.SessionManager, logger *zap.SugaredLogger) {
+func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm *infrastructure.SessionManager, logger logger.Logger) {
 
 	subscriptionHandler := SubscriptionHandler{UseCase: uc, Sm: sm, Logger: logger}
 
@@ -42,14 +43,7 @@ func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 	requestId := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
-		h.Logger.Warn(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("remote_addr", c.Request().RemoteAddr),
-			zap.String("url", c.Request().URL.Path),
-			zap.Duration("work_time", time.Since(start)),
-			zap.String("request_id", requestId),
-			zap.Errors("error", []error{err}),
-		)
+		h.Logger.LogWarn(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 	log.Println(cookie.Value)
@@ -224,7 +218,6 @@ func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
 func (h SubscriptionHandler) IsAdded(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	requestId := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
@@ -253,19 +246,11 @@ func (h SubscriptionHandler) IsAdded(c echo.Context) error {
 	answer.UserId = userId
 	answer.IsAdded, err = h.UseCase.IsAddedEvent(userId, uint64(eventId))
 	if err != nil {
-		h.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("request_id", requestId),
-			zap.Errors("error", []error{err}),
-		)
+		log.Println(err)
 	}
 
 	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
-		h.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("request_id", requestId),
-			zap.Errors("error", []error{err}),
-		)
+		log.Println(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 

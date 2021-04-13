@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"github.com/microcosm-cc/bluemonday"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -15,6 +14,9 @@ import (
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/infrastructure"
+	"kudago/pkg/logger"
+
+	"github.com/microcosm-cc/bluemonday"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -25,8 +27,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewServer(logger *zap.SugaredLogger) *echo.Echo {
+func NewServer(l *zap.SugaredLogger) *echo.Echo {
 	e := echo.New()
+	logger := logger.NewLogger(l)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"*"},
 		AllowCredentials: true,

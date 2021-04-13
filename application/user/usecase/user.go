@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,22 +10,22 @@ import (
 	"kudago/application/user"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
+	"kudago/pkg/logger"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 )
 
 type UserUseCase struct {
 	repo    user.Repository
 	repoSub subscription.Repository
-	logger  *zap.SugaredLogger
+	logger  logger.Logger
 }
 
-func NewUser(u user.Repository, repoSubscription subscription.Repository, logger *zap.SugaredLogger) user.UseCase {
+func NewUser(u user.Repository, repoSubscription subscription.Repository, logger logger.Logger) user.UseCase {
 	return &UserUseCase{repo: u, repoSub: repoSubscription, logger: logger}
 }
 
@@ -40,7 +41,7 @@ func (uc UserUseCase) CheckUser(u *models.User) (uint64, error) {
 	}
 
 	if !generator.CheckHashedPassword(gotUser.Password, u.Password) {
-		uc.logger.Warn("incorrect data")
+		uc.logger.Warn(errors.New("incorrect data"))
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -57,7 +58,7 @@ func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 		return 0, err
 	}
 	if flag {
-		uc.logger.Warn("user with this login does exist")
+		uc.logger.Warn(errors.New("user with this login does exist"))
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
 	}
 
@@ -182,7 +183,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 
 	if len(ud.OldPassword) != 0 {
 		if !generator.CheckHashedPassword(changeUser.Password.String, ud.OldPassword) {
-			uc.logger.Warn("passwords are not same")
+			uc.logger.Warn(errors.New("passwords are not same"))
 			return echo.NewHTTPError(http.StatusBadRequest, "passwords are not same")
 		}
 		changeUser.Password.String = generator.HashPassword(ud.NewPassword)
@@ -196,7 +197,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 			return err
 		}
 		if flag {
-			uc.logger.Warn("this email does exist")
+			uc.logger.Warn(errors.New("this email does exist"))
 			return echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
 		}
 		changeUser.Email.String = ud.Email

@@ -6,21 +6,21 @@ import (
 	"errors"
 	"kudago/application/models"
 	"kudago/application/user"
+	"kudago/pkg/logger"
 	"net/http"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 )
 
 type UserDatabase struct {
 	pool   *pgxpool.Pool
-	logger *zap.SugaredLogger
+	logger logger.Logger
 }
 
-func NewUserDatabase(conn *pgxpool.Pool, logger *zap.SugaredLogger) user.Repository {
+func NewUserDatabase(conn *pgxpool.Pool, logger logger.Logger) user.Repository {
 	return &UserDatabase{pool: conn, logger: logger}
 }
 
@@ -115,7 +115,6 @@ func (ud UserDatabase) GetByIdOwn(id uint64) (*models.UserData, error) {
 		FROM users WHERE id = $1`, id)
 
 	if len(usr) == 0 {
-		ud.logger.Warnf("user with id %d does not exist", id)
 		return &models.UserData{}, echo.NewHTTPError(http.StatusBadRequest, "user does not exist")
 	}
 	if err != nil {

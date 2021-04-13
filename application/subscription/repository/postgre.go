@@ -4,22 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"kudago/application/models"
 	"kudago/application/subscription"
+	"kudago/pkg/logger"
 	"net/http"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 )
 
 type SubscriptionDatabase struct {
 	pool   *pgxpool.Pool
-	logger *zap.SugaredLogger
+	logger logger.Logger
 }
 
-func NewSubscriptionDatabase(conn *pgxpool.Pool, logger *zap.SugaredLogger) subscription.Repository {
+func NewSubscriptionDatabase(conn *pgxpool.Pool, logger logger.Logger) subscription.Repository {
 	return &SubscriptionDatabase{pool: conn, logger: logger}
 }
 
@@ -45,7 +46,7 @@ func (sd SubscriptionDatabase) UnsubscribeUser(subscriberId uint64, subscribedTo
 	}
 
 	if resp.RowsAffected() == 0 {
-		sd.logger.Warn("subscription does not exist")
+		sd.logger.Warn(errors.New("subscription does not exist"))
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"subscription does not exist")
 	}
@@ -74,7 +75,7 @@ func (sd SubscriptionDatabase) RemovePlanning(userId uint64, eventId uint64) err
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if resp.RowsAffected() == 0 {
-		sd.logger.Warnf("subscription with id %d in profile with id %d does not exist in planing", userId, eventId)
+		sd.logger.Warn(errors.New("subscription with id " + fmt.Sprint(userId) + "in profile with id" + fmt.Sprint(eventId) + "does not exist in planing"))
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"event does not exist in list")
 	}
@@ -103,7 +104,7 @@ func (sd SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if resp.RowsAffected() == 0 {
-		sd.logger.Warn("subscription with id %d in profile with id %d does not exist in visited", uid, eid)
+		sd.logger.Warn(errors.New("subscription with id " + fmt.Sprint(uid) + "in profile with id" + fmt.Sprint(eid) + "does not exist in visited"))
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"event does not exist in list")
 	}
@@ -120,7 +121,7 @@ func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) 
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if resp.RowsAffected() == 0 {
-		sd.logger.Warn("event does not exist in list")
+		sd.logger.Warn(errors.New("event does not exist in list"))
 		return echo.NewHTTPError(http.StatusBadRequest,
 			"event does not exist in list")
 	}
@@ -133,7 +134,7 @@ func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
 	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
 		FROM subscriptions WHERE subscribed_to_id = $1`, id)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		sd.logger.Debugf("got no rows in method GetFollowers with id %d", id)
+		sd.logger.Debug("got no rows in method GetFollowers with id " + fmt.Sprint(id))
 		return []uint64{}, nil
 	}
 	if err != nil {
@@ -152,7 +153,7 @@ func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardW
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, true)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		sd.logger.Debugf("got no rows in method GetPlanningEvents with id %d", id)
+		sd.logger.Debug("got no rows in method GetPlanningEvents with id " + fmt.Sprint(id))
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
@@ -171,7 +172,7 @@ func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWi
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, false)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		sd.logger.Debugf("got no rows in method GetVisitedEvents with id %d", id)
+		sd.logger.Debug("got no rows in method GetVisitedEvents with id " + fmt.Sprint(id))
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
@@ -190,7 +191,7 @@ func (sd SubscriptionDatabase) GetEventFollowers(eventId uint64) (models.UsersOn
 		JOIN users u ON u.id = user_id
 		WHERE event_id = $1`, eventId)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		sd.logger.Debugf("got no rows in method GetEventFollowers with id %d", eventId)
+		sd.logger.Debug("got no rows in method GetEventFollowers with id " + fmt.Sprint(eventId))
 		return models.UsersOnEvent{}, nil
 	}
 	if err != nil {

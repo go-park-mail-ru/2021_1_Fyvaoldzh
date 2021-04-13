@@ -8,6 +8,7 @@ import (
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/infrastructure"
+	"kudago/pkg/logger"
 	"log"
 	"math/rand"
 	"net/http"
@@ -16,17 +17,16 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
-	"go.uber.org/zap"
 )
 
 type EventHandler struct {
 	UseCase   event.UseCase
 	Sm        *infrastructure.SessionManager
-	Logger    *zap.SugaredLogger
+	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger *zap.SugaredLogger) {
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
 
 	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger, sanitizer: sz}
 
@@ -42,49 +42,17 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.Sessi
 	e.GET("/api/v1/recomend", eventHandler.Recomend)
 }
 
-func (eh EventHandler) LogInfo(c echo.Context, start time.Time, request_id string) {
-	eh.Logger.Info(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-	)
-}
-
-func (eh EventHandler) LogWarn(c echo.Context, start time.Time, request_id string, err error) {
-	eh.Logger.Warn(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-		zap.Errors("error", []error{err}),
-	)
-}
-
-func (eh EventHandler) LogError(c echo.Context, start time.Time, request_id string, err error) {
-	eh.Logger.Error(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", request_id),
-		zap.Errors("error", []error{err}),
-	)
-}
-
 func (eh EventHandler) Recomend(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
 		if err != nil {
-			eh.LogError(c, start, request_id, err)
+			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -96,18 +64,18 @@ func (eh EventHandler) Recomend(c echo.Context) error {
 		events, err := eh.UseCase.GetRecomended(uid, page)
 		events = eh.sanitizer.SanitizeEventCards(events)
 		if err != nil {
-			eh.LogError(c, start, request_id, err)
+			eh.Logger.LogError(c, start, requestId, err)
 			return err
 		}
 
 		if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-			eh.LogError(c, start, request_id, err)
+			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-		eh.LogInfo(c, start, request_id)
+		eh.Logger.LogInfo(c, start, requestId)
 		return nil
 	} else {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 }
@@ -116,13 +84,13 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
 		if err != nil {
-			eh.LogError(c, start, request_id, err)
+			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -133,26 +101,26 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	events, err := eh.UseCase.GetAllEvents(page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
 	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.LogInfo(c, start, request_id)
+	eh.Logger.LogInfo(c, start, requestId)
 
 	return nil
 }
 
 func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		eh.LogWarn(c, start, request_id, err)
+		eh.Logger.LogWarn(c, start, requestId, err)
 		return 0, errors.New("user is not authorized")
 	}
 
@@ -162,18 +130,18 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	if cookie != nil {
 		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			eh.LogWarn(c, start, request_id, err)
+			eh.Logger.LogWarn(c, start, requestId, err)
 			return 0, err
 		}
 
 		if !exists {
-			eh.LogWarn(c, start, request_id, err)
+			eh.Logger.LogWarn(c, start, requestId, err)
 			return 0, errors.New("user is not authorized")
 		}
 
 		return uid, nil
 	}
-	eh.LogWarn(c, start, request_id, err)
+	eh.Logger.LogWarn(c, start, requestId, err)
 	return 0, errors.New("user is not authorized")
 }
 
@@ -181,33 +149,33 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 	eh.sanitizer.SanitizeEvent(&ev)
 	if uid, err := eh.GetUserID(c); err == nil {
 		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
-			eh.LogWarn(c, start, request_id, err)
+			eh.Logger.LogWarn(c, start, requestId, err)
 		}
 	} else {
-		eh.LogWarn(c, start, request_id, err)
+		eh.Logger.LogWarn(c, start, requestId, err)
 	}
 
 	if _, err = easyjson.MarshalToWriter(ev, c.Response().Writer); err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.LogInfo(c, start, request_id)
+	eh.Logger.LogInfo(c, start, requestId)
 	return nil
 }
 
@@ -215,14 +183,14 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	category := c.QueryParam("category")
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
 		if err != nil {
-			eh.LogError(c, start, request_id, err)
+			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -233,16 +201,16 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	events = eh.sanitizer.SanitizeEventCards(events)
 
 	if err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.LogInfo(c, start, request_id)
+	eh.Logger.LogInfo(c, start, requestId)
 	return nil
 }
 
@@ -335,7 +303,7 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
-	request_id := fmt.Sprintf("%016x", rand.Int())
+	requestId := fmt.Sprintf("%016x", rand.Int())
 	str := c.QueryParam("find")
 	category := c.QueryParam("category")
 	page, err := strconv.Atoi(c.QueryParam("page"))
@@ -343,7 +311,7 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 		page = 1
 	} else {
 		if err != nil {
-			eh.LogError(c, start, request_id, err)
+			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
@@ -354,15 +322,15 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	events, err := eh.UseCase.FindEvents(str, category, page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 	if err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-		eh.LogError(c, start, request_id, err)
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	eh.LogInfo(c, start, request_id)
+	eh.Logger.LogInfo(c, start, requestId)
 	return nil
 }

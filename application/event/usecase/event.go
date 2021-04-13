@@ -9,6 +9,7 @@ import (
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
+	"kudago/pkg/logger"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -17,16 +18,15 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 type Event struct {
 	repo    event.Repository
 	repoSub subscription.Repository
-	logger  *zap.SugaredLogger
+	logger  logger.Logger
 }
 
-func NewEvent(e event.Repository, repoSubscription subscription.Repository, logger *zap.SugaredLogger) event.UseCase {
+func NewEvent(e event.Repository, repoSubscription subscription.Repository, logger logger.Logger) event.UseCase {
 	return &Event{repo: e, repoSub: repoSubscription, logger: logger}
 }
 
@@ -43,7 +43,7 @@ func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
-		e.logger.Debugf("page %d is empty", page)
+		e.logger.Debug("page" + fmt.Sprint(page) + "is empty")
 		return models.EventCards{}, nil
 	}
 
@@ -126,7 +126,7 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 	}
 
 	if len(sqlEvents) == 0 {
-		e.logger.Debugf("page %d in category %s empty", page, typeEvent)
+		e.logger.Debug("page" + fmt.Sprint(page) + "in category" + typeEvent + "empty")
 		return models.EventCards{}, err
 	}
 
@@ -136,7 +136,7 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
 	}
 	if len(pageEvents) == 0 {
-		e.logger.Debugf("page %d in category %s empty", page, typeEvent)
+		e.logger.Debug("page" + fmt.Sprint(page) + "in category" + typeEvent + "empty")
 		return models.EventCards{}, nil
 	}
 
@@ -152,7 +152,7 @@ func (e Event) GetImage(eventId uint64) ([]byte, error) {
 
 	file, err := ioutil.ReadFile(ev.Image.String)
 	if err != nil {
-		e.logger.Warn("Cannot open file: " + ev.Image.String)
+		e.logger.Warn(errors.New("Cannot open file: " + ev.Image.String))
 		return []byte{}, err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/pkg/constants"
+	"kudago/pkg/logger"
 	"net/http"
 	"time"
 
@@ -14,15 +15,14 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
-	"go.uber.org/zap"
 )
 
 type EventDatabase struct {
 	pool   *pgxpool.Pool
-	logger *zap.SugaredLogger
+	logger logger.Logger
 }
 
-func NewEventDatabase(conn *pgxpool.Pool, logger *zap.SugaredLogger) event.Repository {
+func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository {
 	return &EventDatabase{pool: conn, logger: logger}
 }
 
@@ -74,7 +74,7 @@ func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error)
 		`SELECT * FROM events WHERE id = $1`, eventId)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(ev) == 0 {
-		ed.logger.Warnf("no event with id %d", eventId)
+		ed.logger.Debug("no event with id " + fmt.Sprint(eventId))
 		return models.EventSQL{}, echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(eventId)+" not found"))
 	}
 
@@ -162,7 +162,7 @@ func (ed EventDatabase) FindEvents(str string, now time.Time) ([]models.EventCar
 		ORDER BY e.id DESC`, str)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		ed.logger.Debugf("no rows in method FindEvents with string %s", str)
+		ed.logger.Debug("no rows in method FindEvents with string " + str)
 		return []models.EventCardWithDateSQL{}, nil
 	}
 
@@ -188,7 +188,7 @@ func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
 		`UPDATE user_preference SET `+constants.Category[category]+`=`+constants.Category[category]+`+1 `+`WHERE user_id = $1`, uid)
 
 	if errors.As(err, &pgx.ErrNoRows) {
-		ed.logger.Debugf("no rows in method RecomendSystem with id %d", uid)
+		ed.logger.Debug("no rows in method RecomendSystem with id " + fmt.Sprint(uid))
 		return err
 	}
 
@@ -208,7 +208,7 @@ func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
 		WHERE user_id = $1`, uid)
 
 	if errors.As(err, &pgx.ErrNoRows) {
-		ed.logger.Debugf("no rows in method GetPreference with id %d", uid)
+		ed.logger.Debug("no rows in method GetPreference with id " + fmt.Sprint(uid))
 		return models.Recomend{}, err
 	}
 
@@ -231,7 +231,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 		ORDER BY e.id DESC`, str, category)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		ed.logger.Debugf("no rows in method CategorySearch with searchstring %s", str)
+		ed.logger.Debug("no rows in method CategorySearch with searchstring " + str)
 		return []models.EventCardWithDateSQL{}, nil
 	}
 
@@ -255,7 +255,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 func (ed EventDatabase) GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
 	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
-		ed.logger.Debug(err)
+		ed.logger.Debug(string(err.Error()))
 		return ed.GetAllEvents(now, 1)
 	}
 	var eventsPrefer, otherEvents []models.EventCardWithDateSQL

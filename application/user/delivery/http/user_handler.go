@@ -8,6 +8,7 @@ import (
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/generator"
 	"kudago/pkg/infrastructure"
+	"kudago/pkg/logger"
 	"log"
 	"math/rand"
 	"net/http"
@@ -16,18 +17,17 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
-	"go.uber.org/zap"
 )
 
 type UserHandler struct {
 	UseCase   user.UseCase
 	Sm        *infrastructure.SessionManager
-	Logger    *zap.SugaredLogger
+	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase,
-	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger *zap.SugaredLogger) {
+	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
 	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz, Logger: logger}
 
 	e.POST("/api/v1/login", userHandler.Login)
@@ -50,23 +50,13 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	cookie, err := c.Cookie(constants.SessionCookieName)
 
 	if err != nil && cookie != nil {
-		uh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("url", c.Request().URL.Path),
-			zap.String("request_id", requestId),
-			zap.Errors("error", []error{err}),
-		)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
 	if err != nil {
-		uh.Logger.Error(c.Request().URL.Path,
-			zap.String("method", c.Request().Method),
-			zap.String("url", c.Request().URL.Path),
-			zap.String("request_id", requestId),
-			zap.Errors("error", []error{err}),
-		)
+		uh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -99,13 +89,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 
 	c.SetCookie(cookie)
 
-	uh.Logger.Info(c.Request().URL.Path,
-		zap.String("method", c.Request().Method),
-		zap.String("remote_addr", c.Request().RemoteAddr),
-		zap.String("url", c.Request().URL.Path),
-		zap.Duration("work_time", time.Since(start)),
-		zap.String("request_id", requestId),
-	)
+	uh.Logger.LogInfo(c, start, requestId)
 
 	return nil
 }
