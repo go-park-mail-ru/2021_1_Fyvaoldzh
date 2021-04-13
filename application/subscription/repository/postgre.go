@@ -200,3 +200,22 @@ func (sd SubscriptionDatabase) GetEventFollowers(eventId uint64) (models.UsersOn
 
 	return users, nil
 }
+
+func (sd SubscriptionDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool, error) {
+	var id uint64
+	err := sd.pool.
+		QueryRow(context.Background(),
+			`SELECT event_id FROM user_event WHERE event_id = $1 AND user_id = $2`,
+			eventId, userId).Scan(&id)
+
+	if errors.As(err, &sql.ErrNoRows) {
+		sd.logger.Debug("no rows in method IsAddedEvent")
+		return false, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return false, err
+	}
+
+	return true, nil
+}

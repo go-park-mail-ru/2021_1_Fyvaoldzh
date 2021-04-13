@@ -54,3 +54,7 @@ func (s Subscription) RemoveVisited(userId uint64, eventId uint64) error {
 func (s Subscription) UpdateEventStatus(userId uint64, eventId uint64) error {
 	return s.repo.UpdateEventStatus(userId, eventId)
 }
+
+func (s Subscription) IsAddedEvent(userId uint64, eventId uint64) (bool, error) {
+	return s.repo.IsAddedEvent(userId, eventId)
+}
