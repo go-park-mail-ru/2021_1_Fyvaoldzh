@@ -63,14 +63,14 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	uid, err := uh.UseCase.Login(u)
 
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
 	if cookie != nil {
 		exists, id, err := uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			log.Println(err)
+			uh.Logger.LogError(c, start, requestId, err)
 			return err
 		}
 
@@ -83,7 +83,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	err = uh.Sm.InsertSession(uid, cookie.Value)
 
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
@@ -96,10 +96,12 @@ func (uh *UserHandler) Login(c echo.Context) error {
 
 func (uh *UserHandler) Logout(c echo.Context) error {
 	defer c.Request().Body.Close()
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
 	}
 
@@ -110,7 +112,7 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 	flag, _, err := uh.Sm.CheckSession(cookie.Value)
 
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
@@ -119,6 +121,10 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 	}
 
 	err = uh.Sm.DeleteSession(cookie.Value)
+	if err != nil {
+		uh.Logger.LogError(c, start, requestId, err)
+		return err
+	}
 
 	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
@@ -128,17 +134,19 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 
 func (uh *UserHandler) Register(c echo.Context) error {
 	defer c.Request().Body.Close()
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
 	}
 
 	if cookie != nil {
 		exists, _, err := uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			log.Println(err)
+			uh.Logger.LogError(c, start, requestId, err)
 			return err
 		}
 
@@ -151,22 +159,20 @@ func (uh *UserHandler) Register(c echo.Context) error {
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, newData)
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	uid, err := uh.UseCase.Add(newData)
-
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
 	cookie = uh.CreateCookie(constants.CookieLength)
 	err = uh.Sm.InsertSession(uid, cookie.Value)
-
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
@@ -176,10 +182,12 @@ func (uh *UserHandler) Register(c echo.Context) error {
 
 func (uh *UserHandler) Update(c echo.Context) error {
 	defer c.Request().Body.Close()
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
@@ -188,7 +196,7 @@ func (uh *UserHandler) Update(c echo.Context) error {
 	if cookie != nil {
 		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			log.Println(err)
+			uh.Logger.LogError(c, start, requestId, err)
 			return err
 		}
 
@@ -200,14 +208,13 @@ func (uh *UserHandler) Update(c echo.Context) error {
 	ud := &models.UserOwnProfile{}
 	err = easyjson.UnmarshalFromReader(c.Request().Body, ud)
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	err = uh.UseCase.Update(uid, ud)
-
 	if err != nil {
-		log.Println(err)
+		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 

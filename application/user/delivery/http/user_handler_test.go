@@ -101,6 +101,11 @@ var testUserFront = &models.User{
 	Password: frontPassword,
 }
 
+var testRegData = &models.RegData{
+	Login:    login,
+	Password: frontPassword,
+}
+
 func setUp(t *testing.T, url, method string) (echo.Context,
 	UserHandler, *mock_user.MockUseCase,*mock_infrastructure.MockSessionTarantool) {
 	e := echo.New()
@@ -130,11 +135,20 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 	var req *http.Request
 	switch method {
 	case http.MethodPost:
-		if url == "/api/v1/login"{
+		switch url{
+		case "/api/v1/login":
 			f, _ := testUserFront.MarshalJSON()
+			req = httptest.NewRequest(http.MethodGet, url, bytes.NewBuffer(f))
+		case "/api/v1/register":
+			f, _ := testRegData.MarshalJSON()
+			req = httptest.NewRequest(http.MethodGet, url, bytes.NewBuffer(f))
+		case "/api/v1/update":
+			f, _ := testOwnUserProfile.MarshalJSON()
 			req = httptest.NewRequest(http.MethodGet, url, bytes.NewBuffer(f))
 		}
 	case http.MethodGet:
+		req = httptest.NewRequest(http.MethodGet, url, nil)
+	case http.MethodDelete:
 		req = httptest.NewRequest(http.MethodGet, url, nil)
 	}
 	rec := httptest.NewRecorder()
@@ -385,14 +399,178 @@ func TestUserHandler_LoginErrorSMInsertSession(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserHandler_Logout(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/login",  http.MethodDelete)
+	c, h, _, sm := setUp(t, "/api/v1/login",  http.MethodDelete)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
 
-	usecase.EXPECT().Login(testUserFront).Return(userId, nil)
-	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(nil)
+	sm.EXPECT().CheckSession(cookie.Value).Return(true, userId, nil)
+	sm.EXPECT().DeleteSession(cookie.Value).Return( nil)
 
-	err = h.Login(c)
+	err = h.Logout(c)
 
 	assert.Nil(t, err)
 }
 
+func TestUserHandler_LogoutErrorSMDeleteSession(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/login",  http.MethodDelete)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(cookie.Value).Return(true, userId, nil)
+	sm.EXPECT().DeleteSession(cookie.Value).Return( echo.NewHTTPError(http.StatusInternalServerError))
+
+	err = h.Logout(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_LogoutUnauthorized(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/login",  http.MethodDelete)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(cookie.Value).Return(false, userId, nil)
+
+	err = h.Logout(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_LogoutErrorSMCheckSession(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/login",  http.MethodDelete)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(cookie.Value).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err = h.Logout(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_LogoutNoCookie(t *testing.T) {
+	c, h, _, _ := setUp(t, "/api/v1/login",  http.MethodDelete)
+
+	err = h.Logout(c)
+
+	assert.Error(t, err)
+}
+
 ///////////////////////////////////////////////////
+
+func TestUserHandler_Register(t *testing.T) {
+	c, h, usecase, sm := setUp(t, "/api/v1/register",  http.MethodPost)
+
+	usecase.EXPECT().Add(testRegData).Return(userId, nil)
+	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(nil)
+
+	err = h.Register(c)
+
+	assert.Nil(t, err)
+}
+
+func TestUserHandler_RegisterErrorSMInsertSession(t *testing.T) {
+	c, h, usecase, sm := setUp(t, "/api/v1/register",  http.MethodPost)
+
+	usecase.EXPECT().Add(testRegData).Return(userId, nil)
+	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(echo.NewHTTPError(http.StatusInternalServerError))
+
+	err = h.Register(c)
+
+	assert.Error(t, err)
+}
+
+
+func TestUserHandler_RegisterErrorUCAdd(t *testing.T) {
+	c, h, usecase, _ := setUp(t, "/api/v1/register",  http.MethodPost)
+
+	usecase.EXPECT().Add(testRegData).Return(userId, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err = h.Register(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_RegisterLoggedIn(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/register",  http.MethodPost)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, nil)
+
+	err = h.Register(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_RegisterErrorSMCheckSession(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/register",  http.MethodPost)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err = h.Register(c)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestUserHandler_Update(t *testing.T) {
+	c, h, usecase, sm := setUp(t, "/api/v1/update",  http.MethodPost)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	usecase.EXPECT().Update(userId, testOwnUserProfile).Return(nil)
+	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, nil)
+
+	err = h.Update(c)
+
+	assert.Nil(t, err)
+}
+
+func TestUserHandler_UpdateErrorUC(t *testing.T) {
+	c, h, usecase, sm := setUp(t, "/api/v1/update",  http.MethodPost)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	usecase.EXPECT().Update(userId, testOwnUserProfile).Return(echo.NewHTTPError(http.StatusInternalServerError))
+	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, nil)
+
+	err = h.Update(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_UpdateSessionNotExists(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/update",  http.MethodPost)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(gomock.Any()).Return(false, userId, nil)
+
+	err = h.Update(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_UpdateErrorSM(t *testing.T) {
+	c, h, _, sm := setUp(t, "/api/v1/update",  http.MethodPost)
+	cookie := h.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	sm.EXPECT().CheckSession(gomock.Any()).Return(false, userId, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err = h.Update(c)
+
+	assert.Error(t, err)
+}
+
+func TestUserHandler_UpdateNoCookie(t *testing.T) {
+	c, h, _, _ := setUp(t, "/api/v1/update",  http.MethodPost)
+
+	err = h.Update(c)
+
+	assert.Error(t, err)
+}
