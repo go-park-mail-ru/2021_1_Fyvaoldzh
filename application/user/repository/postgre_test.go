@@ -1,7 +1,7 @@
 package repository
 
-
 import (
+	"context"
 	"database/sql"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/require"
@@ -15,15 +15,13 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 
-
-	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4/stdlib"
 
 	"testing"
 )
 
 var (
-	userId          = uint64(1)
+	userId          uint64 = 1
 	pageNum         = 1
 	login           = "userlogin"
 	name            = "username"
@@ -92,7 +90,6 @@ func setUp(t *testing.T) (*pgx.Conn, *sql.DB, sqlmock.Sqlmock, logger.Logger) {
 	}
 
 	newBd, _ := stdlib.AcquireConn(db)
-	log.Println(newBd == (&pgxpool.Conn{}).Conn())
 
 	l, err := zap.NewProduction()
 	if err != nil {
@@ -104,16 +101,10 @@ func setUp(t *testing.T) (*pgx.Conn, *sql.DB, sqlmock.Sqlmock, logger.Logger) {
 	return newBd, db, mock, logger.NewLogger(sugar)
 }
 
+/*
 func TestUserDatabase_IsCorrect(t *testing.T) {
-	pool, db, mock, logger := setUp(t)
-	defer func() {
-		mock.ExpectClose()
-		if err := db.Close(); err != nil {
-			t.Fatalf("error '%s' while closing resource", err)
-		}
-	}()
-	ud := NewUserDatabase(pool, logger)
-
+	conn, _, mock, l := setUp(t)
+	defer conn.Close(context.Background())
 	// good query
 	rows := sqlmock.
 		NewRows([]string{"id", "password"})
@@ -124,10 +115,36 @@ func TestUserDatabase_IsCorrect(t *testing.T) {
 		WithArgs(expect.Login).
 		WillReturnRows(rows)
 
+	ud := &UserDatabase{
+		conn: conn,
+		logger: l,
+	}
 	gotUser, err := ud.IsCorrect(testUserBack)
 	if err != nil {
 		t.Error(err.Error())
 	}
 	require.Equal(t, testUserBack, gotUser)
 }
+
+ */
+
+func TestUserDatabase_IsExisting(t *testing.T) {
+	conn, _, mock, l := setUp(t)
+	defer conn.Close(context.Background())
+
+	expect := testUserBack
+	mock.ExpectQuery(`id FROM users WHERE`).
+		WithArgs(expect.Login).
+		WillReturnError(sql.ErrNoRows)
+
+	ud := &UserDatabase{
+		conn: conn,
+		logger: l,
+	}
+	flag, err := ud.IsExisting(testUserBack.Login)
+
+	require.Error(t, err, sql.ErrNoRows)
+	require.Equal(t, flag, false)
+}
+
 
