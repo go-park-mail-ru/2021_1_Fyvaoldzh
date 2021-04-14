@@ -20,11 +20,11 @@ import (
 
 type SubscriptionHandler struct {
 	UseCase subscription.UseCase
-	Sm      *infrastructure.SessionTarantool
+	Sm      infrastructure.SessionTarantool
 	Logger  logger.Logger
 }
 
-func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm *infrastructure.SessionTarantool, logger logger.Logger) {
+func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm infrastructure.SessionTarantool, logger logger.Logger) {
 
 	subscriptionHandler := SubscriptionHandler{UseCase: uc, Sm: sm, Logger: logger}
 
@@ -50,7 +50,7 @@ func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 
 	var subscriberId uint64
 	var exists bool
-	exists, subscriberId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, subscriberId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (h SubscriptionHandler) Unsubscribe(c echo.Context) error {
 
 	var subscriberId uint64
 	var exists bool
-	exists, subscriberId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, subscriberId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (h SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
 
 	var userId uint64
 	var exists bool
-	exists, userId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (h SubscriptionHandler) RemovePlanningEvent(c echo.Context) error {
 
 	var userId uint64
 	var exists bool
-	exists, userId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (h SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
 
 	var userId uint64
 	var exists bool
-	exists, userId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -196,7 +196,7 @@ func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
 
 	var userId uint64
 	var exists bool
-	exists, userId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func (h SubscriptionHandler) IsAdded(c echo.Context) error {
 
 	var userId uint64
 	var exists bool
-	exists, userId, err = (*h.Sm).CheckSession(cookie.Value)
+	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
 		return err
 	}

@@ -261,7 +261,7 @@ func TestUserUseCase_AddDBErrorAdd(t *testing.T) {
 
 	_, err := uc.Add(testRegData)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_AddDBErrorAddToPreferences(t *testing.T) {
@@ -272,7 +272,7 @@ func TestUserUseCase_AddDBErrorAddToPreferences(t *testing.T) {
 
 	_, err := uc.Add(testRegData)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_AddDBErrorIsExisting(t *testing.T) {
@@ -282,7 +282,7 @@ func TestUserUseCase_AddDBErrorIsExisting(t *testing.T) {
 
 	_, err := uc.Add(testRegData)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 ///////////////////////////////////////////////////
@@ -309,7 +309,7 @@ func TestUserUseCase_GetOtherProfileDBErrorGetByID(t *testing.T) {
 
 	_, err := uc.GetOtherProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOtherProfileDBErrorGetPlanningEvents(t *testing.T) {
@@ -321,7 +321,7 @@ func TestUserUseCase_GetOtherProfileDBErrorGetPlanningEvents(t *testing.T) {
 
 	_, err := uc.GetOtherProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOtherProfileDBErrorGetVisitedEvents(t *testing.T) {
@@ -335,7 +335,7 @@ func TestUserUseCase_GetOtherProfileDBErrorGetVisitedEvents(t *testing.T) {
 
 	_, err := uc.GetOtherProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOtherProfileDBErrorUpdateEventStatus(t *testing.T) {
@@ -347,7 +347,7 @@ func TestUserUseCase_GetOtherProfileDBErrorUpdateEventStatus(t *testing.T) {
 
 	_, err := uc.GetOtherProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOtherProfileDBErrorGetFollowers(t *testing.T) {
@@ -362,7 +362,7 @@ func TestUserUseCase_GetOtherProfileDBErrorGetFollowers(t *testing.T) {
 
 	_, err := uc.GetOtherProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 ///////////////////////////////////////////////////
@@ -389,7 +389,7 @@ func TestUserUseCase_GetOwnProfileDBErrorGetByID(t *testing.T) {
 
 	_, err := uc.GetOwnProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOwnProfileDBErrorGetPlanningEvents(t *testing.T) {
@@ -401,7 +401,7 @@ func TestUserUseCase_GetOwnProfileDBErrorGetPlanningEvents(t *testing.T) {
 
 	_, err := uc.GetOwnProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOwnProfileDBErrorGetVisitedEvents(t *testing.T) {
@@ -415,7 +415,7 @@ func TestUserUseCase_GetOwnProfileDBErrorGetVisitedEvents(t *testing.T) {
 
 	_, err := uc.GetOwnProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOwnProfileDBErrorUpdateEventStatus(t *testing.T) {
@@ -427,7 +427,7 @@ func TestUserUseCase_GetOwnProfileDBErrorUpdateEventStatus(t *testing.T) {
 
 	_, err := uc.GetOwnProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetOwnProfileDBErrorGetFollowers(t *testing.T) {
@@ -442,7 +442,7 @@ func TestUserUseCase_GetOwnProfileDBErrorGetFollowers(t *testing.T) {
 
 	_, err := uc.GetOwnProfile(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 ///////////////////////////////////////////////////
@@ -466,7 +466,7 @@ func TestUserUseCase_UpdateBDErrorGetByIdOwn(t *testing.T) {
 
 	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_UpdateBDErrorIsExistingEmail(t *testing.T) {
@@ -477,7 +477,7 @@ func TestUserUseCase_UpdateBDErrorIsExistingEmail(t *testing.T) {
 
 	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_UpdateBDErrorUpdate(t *testing.T) {
@@ -489,7 +489,7 @@ func TestUserUseCase_UpdateBDErrorUpdate(t *testing.T) {
 
 	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 ///////////////////////////////////////////////////
@@ -518,7 +518,7 @@ func TestUserUseCase_GetAvatarDBErrorGetByIdOwn(t *testing.T) {
 
 	_, err := uc.GetAvatar(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 func TestUserUseCase_GetAvatarErrorReadFile(t *testing.T) {
@@ -528,7 +528,7 @@ func TestUserUseCase_GetAvatarErrorReadFile(t *testing.T) {
 
 	_, err := uc.GetAvatar(userId)
 
-	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+	assert.Error(t, err)
 }
 
 ///////////////////////////////////////////////////
