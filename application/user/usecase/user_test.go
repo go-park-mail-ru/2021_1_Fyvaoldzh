@@ -182,6 +182,8 @@ func deleteImage() {
 	os.Remove(imageName)
 }
 
+///////////////////////////////////////////////////
+
 func TestUserUseCase_Login(t *testing.T) {
 	rep, _, uc := setUp(t)
 
@@ -214,7 +216,7 @@ func TestUserUseCase_CheckUserIncorrectData(t *testing.T) {
 	assert.Equal(t, err, echo.NewHTTPError(http.StatusBadRequest, "incorrect data"))
 }
 
-func TestUserUseCase_CheckUserIncorrectDataNoUser(t *testing.T) {
+func TestUserUseCase_CheckUserIncorrectDBError(t *testing.T) {
 	rep, _, uc := setUp(t)
 
 	rep.EXPECT().IsCorrect(testUserFront).Return(&models.User{},
@@ -224,6 +226,8 @@ func TestUserUseCase_CheckUserIncorrectDataNoUser(t *testing.T) {
 
 	assert.Equal(t, err, echo.NewHTTPError(http.StatusBadRequest, "incorrect data"))
 }
+
+///////////////////////////////////////////////////
 
 func TestUserUseCase_AddOK(t *testing.T) {
 	rep, _, uc := setUp(t)
@@ -248,6 +252,40 @@ func TestUserUseCase_AddExistingLogin(t *testing.T) {
 	assert.Equal(t, err, echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist"))
 }
 
+func TestUserUseCase_AddDBErrorAdd(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().IsExisting(testUserFront.Login).Return(false, nil)
+	rep.EXPECT().Add(testRegData).Return(userId, nil)
+	rep.EXPECT().AddToPreferences(userId).Return(echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.Add(testRegData)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_AddDBErrorAddToPreferences(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().IsExisting(testUserFront.Login).Return(false, nil)
+	rep.EXPECT().Add(testRegData).Return(userId, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.Add(testRegData)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_AddDBErrorIsExisting(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().IsExisting(testUserFront.Login).Return(false, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.Add(testRegData)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+///////////////////////////////////////////////////
 
 func TestUserUseCase_GetOtherProfileOK(t *testing.T) {
 	rep, repSub, uc := setUp(t)
@@ -264,6 +302,71 @@ func TestUserUseCase_GetOtherProfileOK(t *testing.T) {
 	assert.Equal(t, testOtherUserProfile, other)
 }
 
+func TestUserUseCase_GetOtherProfileDBErrorGetByID(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOtherProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOtherProfileDBErrorGetPlanningEvents(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return([]models.EventCardWithDateSQL{},
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOtherProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOtherProfileDBErrorGetVisitedEvents(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
+	repSub.EXPECT().GetVisitedEvents(userId).Return([]models.EventCardWithDateSQL{},
+		echo.NewHTTPError(http.StatusInternalServerError))
+	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
+
+	_, err := uc.GetOtherProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOtherProfileDBErrorUpdateEventStatus(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
+	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOtherProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOtherProfileDBErrorGetFollowers(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
+	repSub.EXPECT().GetVisitedEvents(userId).Return(eventsVisitedSQL, nil)
+	repSub.EXPECT().GetFollowers(userId).Return([]uint64{},
+		echo.NewHTTPError(http.StatusInternalServerError))
+	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
+
+	_, err := uc.GetOtherProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+///////////////////////////////////////////////////
+
 func TestUserUseCase_GetOwnProfileOK(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
@@ -279,6 +382,71 @@ func TestUserUseCase_GetOwnProfileOK(t *testing.T) {
 	assert.Equal(t, testOwnUserProfile, own)
 }
 
+func TestUserUseCase_GetOwnProfileDBErrorGetByID(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOwnProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOwnProfileDBErrorGetPlanningEvents(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return([]models.EventCardWithDateSQL{},
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOwnProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOwnProfileDBErrorGetVisitedEvents(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
+	repSub.EXPECT().GetVisitedEvents(userId).Return([]models.EventCardWithDateSQL{},
+		echo.NewHTTPError(http.StatusInternalServerError))
+	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
+
+	_, err := uc.GetOwnProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOwnProfileDBErrorUpdateEventStatus(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
+	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOwnProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetOwnProfileDBErrorGetFollowers(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
+	repSub.EXPECT().GetVisitedEvents(userId).Return(eventsVisitedSQL, nil)
+	repSub.EXPECT().GetFollowers(userId).Return([]uint64{},
+		echo.NewHTTPError(http.StatusInternalServerError))
+	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
+
+	_, err := uc.GetOwnProfile(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+///////////////////////////////////////////////////
+
 func TestUserUseCase_UpdateOK(t *testing.T) {
 	rep, _, uc := setUp(t)
 
@@ -290,6 +458,41 @@ func TestUserUseCase_UpdateOK(t *testing.T) {
 
 	assert.Nil(t, err)
 }
+
+func TestUserUseCase_UpdateBDErrorGetByIdOwn(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_UpdateBDErrorIsExistingEmail(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(testUserData, nil)
+	rep.EXPECT().IsExistingEmail(testOwnUserProfileToUpdate.Email).Return(false, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_UpdateBDErrorUpdate(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(testUserData, nil)
+	rep.EXPECT().IsExistingEmail(testOwnUserProfileToUpdate.Email).Return(false, nil)
+	rep.EXPECT().Update(testOwnUserProfileToUpdate.Uid, testNewUserData).Return(echo.NewHTTPError(http.StatusInternalServerError))
+
+	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+///////////////////////////////////////////////////
 
 func TestUserUseCase_GetAvatar(t *testing.T) {
 	rep, _, uc := setUp(t)
@@ -307,6 +510,28 @@ func TestUserUseCase_GetAvatar(t *testing.T) {
 	assert.Equal(t, file, gotFile)
 	deleteImage()
 }
+
+func TestUserUseCase_GetAvatarDBErrorGetByIdOwn(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetAvatar(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+func TestUserUseCase_GetAvatarErrorReadFile(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserDataWithAvatar, nil)
+
+	_, err := uc.GetAvatar(userId)
+
+	assert.Error(t, err, echo.NewHTTPError(http.StatusInternalServerError))
+}
+
+///////////////////////////////////////////////////
 
 func TestUserUseCase_GetUsers(t *testing.T) {
 	rep, _, uc := setUp(t)
