@@ -1,29 +1,55 @@
 package http
 
-/*
 import (
+	"bytes"
 	"github.com/golang/mock/gomock"
-	"github.com/labstack/echo"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	mock_user "kudago/application/user/mocks"
+	"kudago/pkg/custom_sanitizer"
+	"kudago/pkg/logger"
+	"log"
+	"net/http"
 	"testing"
 )
 
-func beforeTest(t *testing.T) (*UserHandler, *mock_user.MockUseCase, *server.MockContext, *server.MockResponseWriter) {
+func setUp(t *testing.T) (*UserHandler, *mock_user.MockUseCase) {
 	ctrl := gomock.NewController(t)
-	w := server.NewMockResponseWriter(ctrl)
-	ctx := server.NewMockContext(ctrl)
+
+	l, err := zap.NewProduction()
+	if err != nil {
+		log.Fatal(err)
+	}
+	sugar := l.Sugar()
+	zap.NewAtomicLevelAt(zapcore.DebugLevel)
 	usecase := mock_user.NewMockUseCase(ctrl)
+	cs := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 	handler := UserHandler{
 		UseCase: usecase,
-		Logger: zap.NewExample(), sanitizer: bluemonday.UGCPolicy()}
+		Logger: logger.NewLogger(sugar),
+		sanitizer: cs,
+	}
 
-	response := echo.NewResponse(w, echo.New())
-	ctx.EXPECT().Response().Return(response).AnyTimes()
-	w.EXPECT().Write(gomock.Any()).AnyTimes()
 
-	return &handler, usecase, ctx, w
+	return &handler, usecase
 }
 
- */
+
+func TestPersonHandler_GetById(t *testing.T) {
+	handler, usecase := setUp(t)
+	request, err := http.NewRequest("", "", bytes.NewReader([]byte{}))
+	if err != nil {
+		t.Errorf("unexpected error: '%s'", err)
+	}
+
+	ctx.EXPECT().Request().Return(request).AnyTimes()
+	ctx.EXPECT().Param(param).Return(id)
+	usecase.EXPECT().GetById(testPerson.Id).Return(&testPerson, nil)
+	w.EXPECT().WriteHeader(ok)
+
+	err = handler.GetById(ctx)
+
+	assert.Nil(t, err)
+}
