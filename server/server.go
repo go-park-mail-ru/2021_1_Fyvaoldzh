@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/jackc/pgx/v4"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -44,6 +45,15 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 		logger.Fatal(err)
 	}
 
+	c, err := pgx.Connect(context.Background(), constants.DBPgxConnect)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	err = c.Ping(context.Background())
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
 		User: constants.TarantoolUser,
 		Pass: constants.TarantoolPassword,
@@ -58,7 +68,7 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 		logger.Fatal(err)
 	}
 
-	userRep := repository.NewUserDatabase(pool, logger)
+	userRep := repository.NewUserDatabase(c, logger)
 	eventRep := erepository.NewEventDatabase(pool, logger)
 	subRep := srepository.NewSubscriptionDatabase(pool, logger)
 

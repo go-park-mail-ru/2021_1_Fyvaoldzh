@@ -37,7 +37,7 @@ func setUp(t *testing.T) (*UserHandler, *mock_user.MockUseCase) {
 }
 
 
-func TestPersonHandler_GetById(t *testing.T) {
+func TestUserHandler_CheckUser_GetById(t *testing.T) {
 	handler, usecase := setUp(t)
 	request, err := http.NewRequest("", "", bytes.NewReader([]byte{}))
 	if err != nil {
