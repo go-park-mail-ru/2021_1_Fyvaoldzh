@@ -325,7 +325,13 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 		return nil
 	}
 
-	err = uh.UseCase.UploadAvatar(uid, img)
+	src, err := img.Open()
+	if err != nil {
+		uh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	defer src.Close()
+	err = uh.UseCase.UploadAvatar(uid, src, img.Filename)
 
 	return nil
 }

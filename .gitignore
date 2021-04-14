@@ -2,12 +2,11 @@
 2021_1_Fyvaoldzh
 *.out
 *.png
+!public/*.png
 *jpg
 *.txt
-public/events/*
 
 *.lua
-!public/default.png
 scripts/*
 
 

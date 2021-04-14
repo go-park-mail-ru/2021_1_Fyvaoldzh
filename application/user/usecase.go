@@ -12,7 +12,7 @@ type UseCase interface {
 	Update(id uint64, user *models.UserOwnProfile) error
 	Login(usr *models.User) (uint64, error)
 	CheckUser(usr *models.User) (uint64, error)
-	UploadAvatar(id uint64, img *multipart.FileHeader) error
+	UploadAvatar(id uint64, img multipart.File, filename string) error
 	GetAvatar(id uint64) ([]byte, error)
 	GetUsers(page int) (models.UsersOnEvent, error)
 }

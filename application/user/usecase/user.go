@@ -234,15 +234,8 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	return nil
 }
 
-func (uc UserUseCase) UploadAvatar(uid uint64, img *multipart.FileHeader) error {
-	src, err := img.Open()
-	if err != nil {
-		uc.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	defer src.Close()
-
-	fileName := constants.UserPicDir + fmt.Sprint(uid) + generator.RandStringRunes(6) + img.Filename
+func (uc UserUseCase) UploadAvatar(uid uint64, src multipart.File, filename string) error {
+	fileName := constants.UserPicDir + fmt.Sprint(uid) + generator.RandStringRunes(6) + filename
 	dst, err := os.Create(fileName)
 	if err != nil {
 		uc.logger.Warn(err)
