@@ -21,13 +21,13 @@ import (
 
 type UserHandler struct {
 	UseCase   user.UseCase
-	Sm        *infrastructure.SessionManager
+	Sm        infrastructure.SessionTarantool
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase,
-	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+	sm infrastructure.SessionTarantool, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
 	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz, Logger: logger}
 
 	e.POST("/api/v1/login", userHandler.Login)

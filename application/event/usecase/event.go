@@ -125,11 +125,6 @@ func (e Event) GetEventsByCategory(typeEvent string, page int) (models.EventCard
 		return models.EventCards{}, err
 	}
 
-	if len(sqlEvents) == 0 {
-		e.logger.Debug("page" + fmt.Sprint(page) + "in category" + typeEvent + "empty")
-		return models.EventCards{}, err
-	}
-
 	var pageEvents models.EventCards
 
 	for i := range sqlEvents {
@@ -174,11 +169,6 @@ func (e Event) FindEvents(str string, category string, page int) (models.EventCa
 		return models.EventCards{}, err
 	}
 
-	if len(sqlEvents) == 0 {
-		e.logger.Debug("empty result for method FindEvents")
-		return models.EventCards{}, err
-	}
-
 	var pageEvents models.EventCards
 
 	for i := range sqlEvents {
@@ -208,11 +198,6 @@ func (e Event) GetRecommended(uid uint64, page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetRecommended(uid, time.Now(), page)
 	if err != nil {
 		e.logger.Warn(err)
-		return models.EventCards{}, err
-	}
-
-	if len(sqlEvents) == 0 {
-		e.logger.Debug("empty result for method GetRecomended")
 		return models.EventCards{}, err
 	}
 

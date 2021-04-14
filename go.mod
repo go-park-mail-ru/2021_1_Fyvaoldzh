@@ -14,6 +14,7 @@ require (
 	github.com/mailru/easyjson v0.7.7
 	github.com/microcosm-cc/bluemonday v1.0.8
 	github.com/pkg/errors v0.9.1
+	github.com/stretchr/testify v1.5.1
 	github.com/tarantool/go-tarantool v0.0.0-20210330210617-56fe55c5fa5c
 	github.com/valyala/fasttemplate v1.2.1 // indirect
 	go.uber.org/zap v1.16.0

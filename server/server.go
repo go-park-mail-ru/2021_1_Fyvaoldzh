@@ -13,7 +13,7 @@ import (
 	"kudago/application/user/usecase"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
-	"kudago/pkg/infrastructure"
+	infrastructure "kudago/pkg/infrastructure/session_manager"
 	"kudago/pkg/logger"
 
 	"github.com/microcosm-cc/bluemonday"

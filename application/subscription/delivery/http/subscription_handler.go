@@ -5,7 +5,7 @@ import (
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
-	"kudago/pkg/infrastructure"
+	infrastructure "kudago/pkg/infrastructure/session_manager"
 	"kudago/pkg/logger"
 	"log"
 	"math/rand"
