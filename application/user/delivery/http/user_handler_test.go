@@ -375,11 +375,24 @@ func TestUserHandler_LoginErrorSMInsertSession(t *testing.T) {
 	c, h, usecase, sm := setUp(t, "/api/v1/login",  http.MethodPost)
 
 	usecase.EXPECT().Login(testUserFront).Return(userId, nil)
-	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(nil)
+	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(echo.NewHTTPError(http.StatusInternalServerError))
 
 	err = h.Login(c)
 
 	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestUserHandler_Logout(t *testing.T) {
+	c, h, usecase, sm := setUp(t, "/api/v1/login",  http.MethodDelete)
+
+	usecase.EXPECT().Login(testUserFront).Return(userId, nil)
+	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(nil)
+
+	err = h.Login(c)
+
+	assert.Nil(t, err)
 }
 
 ///////////////////////////////////////////////////
