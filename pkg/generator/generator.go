@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"kudago/pkg/constants"
 	"math/rand"
+	"net/http"
+	"time"
 )
 
 func RandStringRunes(n uint8) string {
@@ -34,3 +36,17 @@ func CheckHashedPassword(databasePassword string, gotPassword string) bool {
 
 	return true
 }
+
+func CreateCookie(n uint8) *http.Cookie {
+	key := RandStringRunes(n)
+
+	newCookie := &http.Cookie{
+		Name:     constants.SessionCookieName,
+		Value:    key,
+		Expires:  time.Now().Add(10 * time.Hour),
+		HttpOnly: true,
+	}
+
+	return newCookie
+}
+

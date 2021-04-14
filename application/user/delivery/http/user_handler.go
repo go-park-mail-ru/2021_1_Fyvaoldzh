@@ -9,7 +9,6 @@ import (
 	"kudago/pkg/generator"
 	"kudago/pkg/infrastructure"
 	"kudago/pkg/logger"
-	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -79,7 +78,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 		}
 	}
 
-	cookie = uh.CreateCookie(constants.CookieLength)
+	cookie = generator.CreateCookie(constants.CookieLength)
 	err = uh.Sm.InsertSession(uid, cookie.Value)
 
 	if err != nil {
@@ -169,7 +168,7 @@ func (uh *UserHandler) Register(c echo.Context) error {
 		return err
 	}
 
-	cookie = uh.CreateCookie(constants.CookieLength)
+	cookie = generator.CreateCookie(constants.CookieLength)
 	err = uh.Sm.InsertSession(uid, cookie.Value)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
@@ -221,20 +220,6 @@ func (uh *UserHandler) Update(c echo.Context) error {
 	return nil
 }
 
-// TODO: унести в session manager
-func (uh *UserHandler) CreateCookie(n uint8) *http.Cookie {
-	key := generator.RandStringRunes(n)
-
-	newCookie := &http.Cookie{
-		Name:     constants.SessionCookieName,
-		Value:    key,
-		Expires:  time.Now().Add(10 * time.Hour),
-		HttpOnly: true,
-	}
-
-	return newCookie
-}
-
 func (uh *UserHandler) GetOwnProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
 	start := time.Now()
@@ -275,12 +260,10 @@ func (uh *UserHandler) GetOwnProfile(c echo.Context) error {
 
 func (uh *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	defer c.Request().Body.Close()
-	start := time.Now()
-	requestId := fmt.Sprintf("%016x", rand.Int())
 
 	uid, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -290,13 +273,13 @@ func (uh *UserHandler) GetOtherUserProfile(c echo.Context) error {
 
 	usr, err := uh.UseCase.GetOtherProfile(uint64(uid))
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return err
 	}
 
 	uh.sanitizer.SanitizeOtherProfile(usr)
 	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -316,7 +299,7 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 	if cookie != nil {
 		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
 		if err != nil {
-			log.Println(err)
+			uh.Logger.Warn(err)
 			return err
 		}
 
@@ -327,7 +310,7 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 
 	img, err := c.FormFile("avatar")
 	if err != nil {
-		log.Println(err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -364,43 +347,6 @@ func (uh *UserHandler) GetAvatar(c echo.Context) error {
 	}
 
 	c.Response().Write(file)
-
-	return nil
-}
-
-func (uh *UserHandler) CheckUser(c echo.Context) error {
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	var exists bool
-	if cookie != nil {
-		exists, _, err = uh.Sm.CheckSession(cookie.Value)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
-
-		if !exists {
-			return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-		}
-	}
-
-	u := &models.User{}
-
-	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	_, err = uh.UseCase.CheckUser(u)
-
-	if err != nil {
-		log.Println(err)
-		return err
-	}
 
 	return nil
 }

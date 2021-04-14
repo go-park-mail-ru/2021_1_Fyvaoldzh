@@ -1,5 +1,6 @@
 package repository
 
+/*
 import (
 	"context"
 	"database/sql"
@@ -101,7 +102,6 @@ func setUp(t *testing.T) (*pgx.Conn, *sql.DB, sqlmock.Sqlmock, logger.Logger) {
 	return newBd, db, mock, logger.NewLogger(sugar)
 }
 
-/*
 func TestUserDatabase_IsCorrect(t *testing.T) {
 	conn, _, mock, l := setUp(t)
 	defer conn.Close(context.Background())
@@ -126,7 +126,6 @@ func TestUserDatabase_IsCorrect(t *testing.T) {
 	require.Equal(t, testUserBack, gotUser)
 }
 
- */
 
 func TestUserDatabase_IsExisting(t *testing.T) {
 	conn, _, mock, l := setUp(t)
@@ -148,3 +147,5 @@ func TestUserDatabase_IsExisting(t *testing.T) {
 }
 
 
+
+*/

@@ -1,19 +1,14 @@
 package http
 
 import (
-	"fmt"
+	"github.com/mailru/easyjson"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/infrastructure"
 	"kudago/pkg/logger"
-	"log"
-	"math/rand"
 	"net/http"
 	"strconv"
-	"time"
-
-	"github.com/mailru/easyjson"
 
 	"github.com/labstack/echo"
 )
@@ -39,19 +34,16 @@ func CreateSubscriptionsHandler(e *echo.Echo, uc subscription.UseCase, sm infras
 
 func (h SubscriptionHandler) Subscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
-	start := time.Now()
-	requestId := fmt.Sprintf("%016x", rand.Int())
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil {
-		h.Logger.LogWarn(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
-	log.Println(cookie.Value)
 
 	var subscriberId uint64
 	var exists bool
 	exists, subscriberId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 	if !exists {
@@ -81,6 +73,7 @@ func (h SubscriptionHandler) Unsubscribe(c echo.Context) error {
 	var exists bool
 	exists, subscriberId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 
@@ -111,6 +104,7 @@ func (h SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
 	var exists bool
 	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 	if !exists {
@@ -140,6 +134,7 @@ func (h SubscriptionHandler) RemovePlanningEvent(c echo.Context) error {
 	var exists bool
 	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 	if !exists {
@@ -169,6 +164,7 @@ func (h SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
 	var exists bool
 	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 	if !exists {
@@ -198,6 +194,7 @@ func (h SubscriptionHandler) RemoveVisitedEvent(c echo.Context) error {
 	var exists bool
 	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 	if !exists {
@@ -227,6 +224,7 @@ func (h SubscriptionHandler) IsAdded(c echo.Context) error {
 	var exists bool
 	exists, userId, err = h.Sm.CheckSession(cookie.Value)
 	if err != nil {
+		h.Logger.Warn(err)
 		return err
 	}
 	if !exists {
@@ -242,15 +240,14 @@ func (h SubscriptionHandler) IsAdded(c echo.Context) error {
 	}
 
 	var answer models.IsAddedEvent
-	answer.EventId = uint64(eventId)
-	answer.UserId = userId
 	answer.IsAdded, err = h.UseCase.IsAddedEvent(userId, uint64(eventId))
 	if err != nil {
-		log.Println(err)
+		h.Logger.Warn(err)
+		return err
 	}
 
 	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
-		log.Println(err)
+		h.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 

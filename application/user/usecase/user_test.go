@@ -24,21 +24,21 @@ import (
 )
 
 var (
-	userId          = uint64(1)
-	pageNum         = 1
-	login           = "userlogin"
-	name            = "username"
-	frontPassword   = "123456"
-	backPassword    = "IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
-	badBackPassword = "1111IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
-	email           = "email@mail.ru"
-	birthdayStr     = "1999-01-01"
-	birthday, err   = time.Parse(constants.TimeFormat, "1999-01-01")
-	city            = "City"
-	about           = "some personal information"
-	avatar          = "public/users/default.png"
-	imageName       = "image.png"
-	evPlanningSQL   = models.EventCardWithDateSQL{
+	userId          uint64 = 1
+	pageNum                = 1
+	login                  = "userlogin"
+	name                   = "username"
+	frontPassword          = "123456"
+	backPassword           = "IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
+	badBackPassword        = "1111IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
+	email                  = "email@mail.ru"
+	birthdayStr            = "1999-01-01"
+	birthday, err          = time.Parse(constants.TimeFormat, "1999-01-01")
+	city                   = "City"
+	about                  = "some personal information"
+	avatar                 = "public/users/default.png"
+	imageName              = "image.png"
+	evPlanningSQL          = models.EventCardWithDateSQL{
 		ID:        1,
 		StartDate: time.Now(),
 		EndDate:   time.Now().Add(10 * time.Hour),

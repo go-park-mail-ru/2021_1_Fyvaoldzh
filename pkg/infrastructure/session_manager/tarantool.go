@@ -60,3 +60,4 @@ func (sm SessionManager) DeleteSession(value string) error {
 
 	return nil
 }
+
