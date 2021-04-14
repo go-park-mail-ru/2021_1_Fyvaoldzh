@@ -21,13 +21,13 @@ import (
 
 type UserHandler struct {
 	UseCase   user.UseCase
-	Sm        *infrastructure.SessionManager
+	Sm        *infrastructure.SessionTarantool
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase,
-	sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+	sm *infrastructure.SessionTarantool, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
 	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz, Logger: logger}
 
 	e.POST("/api/v1/login", userHandler.Login)
@@ -68,7 +68,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	}
 
 	if cookie != nil {
-		exists, id, err := uh.Sm.CheckSession(cookie.Value)
+		exists, id, err := (*uh.Sm).CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -80,7 +80,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	}
 
 	cookie = uh.CreateCookie(constants.CookieLength)
-	err = uh.Sm.InsertSession(uid, cookie.Value)
+	err = (*uh.Sm).InsertSession(uid, cookie.Value)
 
 	if err != nil {
 		log.Println(err)
@@ -107,7 +107,7 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	flag, _, err := uh.Sm.CheckSession(cookie.Value)
+	flag, _, err := (*uh.Sm).CheckSession(cookie.Value)
 
 	if err != nil {
 		log.Println(err)
@@ -118,7 +118,7 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	err = uh.Sm.DeleteSession(cookie.Value)
+	err = (*uh.Sm).DeleteSession(cookie.Value)
 
 	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
@@ -136,7 +136,7 @@ func (uh *UserHandler) Register(c echo.Context) error {
 	}
 
 	if cookie != nil {
-		exists, _, err := uh.Sm.CheckSession(cookie.Value)
+		exists, _, err := (*uh.Sm).CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -163,7 +163,7 @@ func (uh *UserHandler) Register(c echo.Context) error {
 	}
 
 	cookie = uh.CreateCookie(constants.CookieLength)
-	err = uh.Sm.InsertSession(uid, cookie.Value)
+	err = (*uh.Sm).InsertSession(uid, cookie.Value)
 
 	if err != nil {
 		log.Println(err)
@@ -186,7 +186,7 @@ func (uh *UserHandler) Update(c echo.Context) error {
 	var uid uint64
 	var exists bool
 	if cookie != nil {
-		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
+		exists, uid, err = (*uh.Sm).CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -239,7 +239,7 @@ func (uh *UserHandler) GetOwnProfile(c echo.Context) error {
 
 	var uid uint64
 	var exists bool
-	exists, uid, err = uh.Sm.CheckSession(cookie.Value)
+	exists, uid, err = (*uh.Sm).CheckSession(cookie.Value)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -304,7 +304,7 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 	var uid uint64
 	var exists bool
 	if cookie != nil {
-		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
+		exists, uid, err = (*uh.Sm).CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err
@@ -364,7 +364,7 @@ func (uh *UserHandler) CheckUser(c echo.Context) error {
 
 	var exists bool
 	if cookie != nil {
-		exists, _, err = uh.Sm.CheckSession(cookie.Value)
+		exists, _, err = (*uh.Sm).CheckSession(cookie.Value)
 		if err != nil {
 			log.Println(err)
 			return err

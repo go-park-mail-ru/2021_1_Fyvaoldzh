@@ -1,14 +1,19 @@
-package infrastructure
+package session_manager
 
 import (
 	"github.com/labstack/echo"
 	"github.com/tarantool/go-tarantool"
 	"kudago/pkg/constants"
+	"kudago/pkg/infrastructure"
 	"net/http"
 )
 
 type SessionManager struct {
 	Conn *tarantool.Connection
+}
+
+func NewSessionManager(c *tarantool.Connection) infrastructure.SessionTarantool {
+	return &SessionManager{Conn: c}
 }
 
 func (sm SessionManager) CheckSession(value string) (bool, uint64, error) {

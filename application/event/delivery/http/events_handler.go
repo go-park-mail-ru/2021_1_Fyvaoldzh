@@ -21,12 +21,12 @@ import (
 
 type EventHandler struct {
 	UseCase   event.UseCase
-	Sm        *infrastructure.SessionManager
+	Sm        *infrastructure.SessionTarantool
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionTarantool, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
 
 	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger, sanitizer: sz}
 
@@ -128,7 +128,7 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	var exists bool
 
 	if cookie != nil {
-		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
+		exists, uid, err = (*eh.Sm).CheckSession(cookie.Value)
 		if err != nil {
 			eh.Logger.LogWarn(c, start, requestId, err)
 			return 0, err

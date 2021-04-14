@@ -13,7 +13,7 @@ import (
 	"kudago/application/user/usecase"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
-	"kudago/pkg/infrastructure"
+	tarantool2 "kudago/pkg/infrastructure/session_manager"
 	"kudago/pkg/logger"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -66,8 +66,7 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
 	subUC := susecase.NewSubscription(subRep, logger)
 
-	sm := infrastructure.SessionManager{}
-	sm.Conn = conn
+	sm := tarantool2.NewSessionManager(conn)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
