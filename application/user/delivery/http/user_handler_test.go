@@ -1,5 +1,6 @@
 package http
 
+/*
 import (
 	"github.com/golang/mock/gomock"
 	"github.com/labstack/echo"
@@ -24,3 +25,5 @@ func beforeTest(t *testing.T) (*UserHandler, *mock_user.MockUseCase, *server.Moc
 
 	return &handler, usecase, ctx, w
 }
+
+ */
