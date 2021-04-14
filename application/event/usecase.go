@@ -5,6 +5,8 @@ import (
 	"mime/multipart"
 )
 
+//go:generate mockgen -destination=./mock/usecase_mock.go -package=mock -source=./application/event/usecase.go
+
 type UseCase interface {
 	GetAllEvents(page int) (models.EventCards, error)
 	GetOneEvent(eventId uint64) (models.Event, error)

@@ -309,7 +309,6 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 	return eventsConcert, nil
 }*/
 
-//TODO сделать нормальный обсчет
 func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
 	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
