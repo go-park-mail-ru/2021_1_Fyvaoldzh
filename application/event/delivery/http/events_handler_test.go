@@ -146,8 +146,7 @@ func TestEventsHandler_GetAllEventsOk(t *testing.T) {
 }
 
 func TestEventsHandler_GetAllEventsAtoiError(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page='aaaa'", http.MethodGet)
-	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
+	c, h, _, _ := setUp(t, "/api/v1/?page='aaaa'", http.MethodGet)
 
 	err := h.GetAllEvents(c)
 

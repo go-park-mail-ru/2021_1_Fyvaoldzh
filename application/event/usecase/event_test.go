@@ -243,7 +243,6 @@ func TestEventUseCase_CreateNewEvent(t *testing.T) {
 
 func TestEventUseCase_SaveImageError(t *testing.T) {
 	rep, _, uc := setUp(t)
-	rep.EXPECT().UpdateEventAvatar(1, gomock.Any()).Return(nil)
 
 	err := uc.SaveImage(uint64(1), &multipart.FileHeader{})
 	assert.NotNil(t, err)
