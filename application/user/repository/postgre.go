@@ -9,21 +9,23 @@ import (
 	"kudago/pkg/logger"
 	"net/http"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
 )
 
 type UserDatabase struct {
-	conn   *pgx.Conn
+	pool   *pgxpool.Pool
 	logger logger.Logger
 }
 
-func NewUserDatabase(conn *pgx.Conn, logger logger.Logger) user.Repository {
-	return &UserDatabase{conn: conn, logger: logger}
+func NewUserDatabase(conn *pgxpool.Pool, logger logger.Logger) user.Repository {
+	return &UserDatabase{pool: conn, logger: logger}
 }
 
 func (ud UserDatabase) ChangeAvatar(uid uint64, path string) error {
-	_, err := ud.conn.Exec(context.Background(),
+	_, err := ud.pool.Exec(context.Background(),
 		`UPDATE users SET avatar = $1 WHERE id = $2`, path, uid)
 	if err != nil {
 		ud.logger.Warn(err)
@@ -35,7 +37,7 @@ func (ud UserDatabase) ChangeAvatar(uid uint64, path string) error {
 
 func (ud UserDatabase) Add(usr *models.RegData) (uint64, error) {
 	var id uint64
-	err := ud.conn.QueryRow(context.Background(),
+	err := ud.pool.QueryRow(context.Background(),
 		`INSERT INTO users (name, login, password) VALUES ($1, $2, $3) RETURNING id`,
 		usr.Name, usr.Login, usr.Password).Scan(&id)
 	if err != nil {
@@ -47,7 +49,7 @@ func (ud UserDatabase) Add(usr *models.RegData) (uint64, error) {
 }
 
 func (ud UserDatabase) AddToPreferences(id uint64) error {
-	_, err := ud.conn.Query(context.Background(),
+	_, err := ud.pool.Query(context.Background(),
 		`INSERT INTO user_preference (user_id) VALUES ($1)`, id)
 	if err != nil {
 		ud.logger.Warn(err)
@@ -59,11 +61,11 @@ func (ud UserDatabase) AddToPreferences(id uint64) error {
 
 func (ud UserDatabase) IsExisting(login string) (bool, error) {
 	var id uint64
-	err := ud.conn.
+	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE login = $1`, login).Scan(&id)
 
-	if err == sql.ErrNoRows {
+	if errors.As(err, &pgx.ErrNoRows) {
 		ud.logger.Debug("no rows in method IsExisting")
 		return false, nil
 	}
@@ -77,11 +79,11 @@ func (ud UserDatabase) IsExisting(login string) (bool, error) {
 
 func (ud UserDatabase) IsCorrect(user *models.User) (*models.User, error) {
 	var gotUser models.User
-	err := ud.conn.
+	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT id, password FROM users WHERE login = $1`,
 			user.Login).Scan(&gotUser.Id, &gotUser.Password)
-	if err == sql.ErrNoRows {
+	if errors.As(err, &pgx.ErrNoRows) {
 		ud.logger.Debug("no rows in method IsCorrect")
 		return &gotUser, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
@@ -94,7 +96,7 @@ func (ud UserDatabase) IsCorrect(user *models.User) (*models.User, error) {
 }
 
 func (ud UserDatabase) Update(id uint64, us *models.UserData) error {
-	_, err := ud.conn.Exec(context.Background(),
+	_, err := ud.pool.Exec(context.Background(),
 		`UPDATE users SET "name" = $1, "email" = $2, "city" = $3, "about" = $4,
 			"birthday" = $5, "password" = $6 WHERE id = $7`,
 		us.Name, us.Email, us.City, us.About, us.Birthday, us.Password, id,
@@ -108,15 +110,11 @@ func (ud UserDatabase) Update(id uint64, us *models.UserData) error {
 }
 
 func (ud UserDatabase) GetByIdOwn(id uint64) (*models.UserData, error) {
-	usr := &models.UserData{}
-	err := ud.conn.QueryRow(context.Background(),`SELECT id, name, login, birthday, city, email, about, password, avatar 
-		FROM users WHERE id = $1`, id).Scan(
-		&usr.Id, &usr.Name, &usr.Login,
-		&usr.Birthday, &usr.City, &usr.Email,
-		&usr.About, &usr.Password,
-		&usr.Avatar)
+	var usr []*models.UserData
+	err := pgxscan.Select(context.Background(), ud.pool, &usr, `SELECT id, name, login, birthday, city, email, about, password, avatar 
+		FROM users WHERE id = $1`, id)
 
-	if err == sql.ErrNoRows {
+	if len(usr) == 0 {
 		return &models.UserData{}, echo.NewHTTPError(http.StatusBadRequest, "user does not exist")
 	}
 	if err != nil {
@@ -124,16 +122,16 @@ func (ud UserDatabase) GetByIdOwn(id uint64) (*models.UserData, error) {
 		return &models.UserData{}, err
 	}
 
-	return usr, nil
+	return usr[0], nil
 }
 
 func (ud UserDatabase) IsExistingEmail(email string) (bool, error) {
 	var id uint64
-	err := ud.conn.
+	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT id FROM users WHERE email = $1`, email).Scan(&id)
 
-	if err == sql.ErrNoRows {
+	if errors.As(err, &pgx.ErrNoRows) {
 		ud.logger.Debug("no rows in method IsExistingEmail")
 		return false, nil
 	}
@@ -146,7 +144,7 @@ func (ud UserDatabase) IsExistingEmail(email string) (bool, error) {
 }
 
 func (ud UserDatabase) IsExistingUserId(userId uint64) error {
-	_, err := ud.conn.Query(context.Background(),
+	_, err := ud.pool.Query(context.Background(),
 		`SELECT id FROM users WHERE id = $1`, userId)
 	if err == sql.ErrNoRows {
 		ud.logger.Debug("no rows in method IsExistingUser")
@@ -162,25 +160,17 @@ func (ud UserDatabase) IsExistingUserId(userId uint64) error {
 
 func (ud UserDatabase) GetUsers(page int) (models.UsersOnEvent, error) {
 	var users models.UsersOnEvent
-	rows, err := ud.conn.Query(context.Background(),`SELECT id, name, avatar
+	err := pgxscan.Select(context.Background(), ud.pool, &users,
+		`SELECT id, name, avatar
 		FROM users
 		LIMIT 10 OFFSET $1`, (page-1)*10)
-	if err == sql.ErrNoRows {
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
 		ud.logger.Debug("no rows in method GetUsers")
 		return models.UsersOnEvent{}, nil
 	}
 	if err != nil {
 		ud.logger.Warn(err)
 		return models.UsersOnEvent{}, err
-	}
-
-	for rows.Next() {
-		usr := models.UserOnEvent{}
-		err = rows.Scan(&usr.Id, &usr.Name, &usr.Avatar)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, usr)
 	}
 
 	return users, nil

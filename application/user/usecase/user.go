@@ -63,6 +63,10 @@ func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 	}
 
 	id, err := uc.repo.Add(usr)
+	if err != nil {
+		uc.logger.Warn(err)
+		return 0, err
+	}
 	err = uc.repo.AddToPreferences(id)
 	if err != nil {
 		uc.logger.Warn(err)

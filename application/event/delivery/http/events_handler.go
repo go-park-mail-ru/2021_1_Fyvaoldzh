@@ -21,12 +21,12 @@ import (
 
 type EventHandler struct {
 	UseCase   event.UseCase
-	Sm        *infrastructure.SessionManager
+	Sm        infrastructure.SessionTarantool
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm *infrastructure.SessionManager, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm infrastructure.SessionTarantool, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
 
 	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger, sanitizer: sz}
 
