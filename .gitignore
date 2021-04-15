@@ -1,11 +1,11 @@
 .idea
 2021_1_Fyvaoldzh
-*.out
+*.out*
 *.png
 !public/*.png
 *jpg
 *.txt
-
+*.raw
 *.lua
 scripts/*
 

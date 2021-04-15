@@ -1,16 +1,20 @@
 package repository
 
+
 /*
 import (
 	"context"
 	"database/sql"
+	"github.com/golang/mock/gomock"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"kudago/application/models"
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
+	mock_pool "kudago/pkg/pool/mocks"
 	"log"
 	"time"
 
@@ -84,13 +88,9 @@ var testUserBack = &models.User{
 }
 
 
-func setUp(t *testing.T) (*pgx.Conn, *sql.DB, sqlmock.Sqlmock, logger.Logger) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	newBd, _ := stdlib.AcquireConn(db)
+func setUp(t *testing.T) (*pgxpool.Pool, logger.Logger) {
+	ctrl := gomock.NewController(t)
+	bd := mock_pool.NewMockCustomPool(ctrl)
 
 	l, err := zap.NewProduction()
 	if err != nil {
@@ -98,6 +98,8 @@ func setUp(t *testing.T) (*pgx.Conn, *sql.DB, sqlmock.Sqlmock, logger.Logger) {
 	}
 	sugar := l.Sugar()
 	zap.NewAtomicLevelAt(zapcore.DebugLevel)
+
+	rep := NewUserDatabase(bd, logger.NewLogger(sugar))
 
 	return newBd, db, mock, logger.NewLogger(sugar)
 }
@@ -147,5 +149,6 @@ func TestUserDatabase_IsExisting(t *testing.T) {
 }
 
 
+ */
 
-*/
+
