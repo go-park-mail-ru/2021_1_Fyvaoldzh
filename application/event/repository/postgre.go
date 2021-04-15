@@ -108,7 +108,6 @@ func (ed EventDatabase) GetTags(eventId uint64) (models.Tags, error) {
 }
 
 func (ed EventDatabase) AddEvent(newEvent *models.Event) error {
-	// TODO: добавить промежуточный sql, который будет в базу null пихать
 	_, err := ed.pool.Exec(context.Background(),
 		`INSERT INTO events (title, place, subway, street, description, category, start_date, end_date, image) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
