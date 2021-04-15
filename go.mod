@@ -12,13 +12,12 @@ require (
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/gommon v0.3.0 // indirect
-	github.com/lib/pq v1.4.0
+	github.com/lib/pq v1.10.0
 	github.com/mailru/easyjson v0.7.7
-	github.com/microcosm-cc/bluemonday v1.0.7
+	github.com/microcosm-cc/bluemonday v1.0.8
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0
 	github.com/tarantool/go-tarantool v0.0.0-20210330210617-56fe55c5fa5c
 	github.com/valyala/fasttemplate v1.2.1 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
 )

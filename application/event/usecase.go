@@ -5,6 +5,8 @@ import (
 	"mime/multipart"
 )
 
+//go:generate mockgen -destination=./mock/usecase_mock.go -package=mock -source=./application/event/usecase.go
+
 type UseCase interface {
 	GetAllEvents(page int) (models.EventCards, error)
 	GetOneEvent(eventId uint64) (models.Event, error)
@@ -15,5 +17,5 @@ type UseCase interface {
 	GetImage(eventId uint64) ([]byte, error)
 	FindEvents(str string, category string, page int) (models.EventCards, error)
 	RecomendSystem(uid uint64, category string) error
-	GetRecomended(uid uint64, page int) (models.EventCards, error)
+	GetRecommended(uid uint64, page int) (models.EventCards, error)
 }

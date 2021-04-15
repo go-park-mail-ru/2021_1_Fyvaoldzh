@@ -39,29 +39,33 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm infrastructure.Sessio
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
 	e.POST("/api/v1/save/:id", eventHandler.Save)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
-	e.GET("/api/v1/recomend", eventHandler.Recomend)
+	e.GET("/api/v1/recomend", eventHandler.Recommend)
 }
 
-func (eh EventHandler) Recomend(c echo.Context) error {
+func (eh EventHandler) Recommend(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	page, err := strconv.Atoi(c.QueryParam("page"))
+	var page int
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
+		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil {
 			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
-	if page == 0 {
-		page = 1
+
+		if pageatoi == 0 {
+			page = 1
+		} else {
+			page = pageatoi
+		}
 	}
 
 	if uid, err := eh.GetUserID(c); err == nil {
-		events, err := eh.UseCase.GetRecomended(uid, page)
+		events, err := eh.UseCase.GetRecommended(uid, page)
 		events = eh.sanitizer.SanitizeEventCards(events)
 		if err != nil {
 			eh.Logger.LogError(c, start, requestId, err)
@@ -85,17 +89,21 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	page, err := strconv.Atoi(c.QueryParam("page"))
+	var page int
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
+		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil {
 			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
-	if page == 0 {
-		page = 1
+
+		if pageatoi == 0 {
+			page = 1
+		} else {
+			page = pageatoi
+		}
 	}
 
 	events, err := eh.UseCase.GetAllEvents(page)
@@ -185,17 +193,21 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
 	category := c.QueryParam("category")
-	page, err := strconv.Atoi(c.QueryParam("page"))
+	var page int
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
+		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil {
 			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
-	if page == 0 {
-		page = 1
+
+		if pageatoi == 0 {
+			page = 1
+		} else {
+			page = pageatoi
+		}
 	}
 	events, err := eh.UseCase.GetEventsByCategory(category, page)
 	events = eh.sanitizer.SanitizeEventCards(events)
@@ -306,17 +318,21 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	requestId := fmt.Sprintf("%016x", rand.Int())
 	str := c.QueryParam("find")
 	category := c.QueryParam("category")
-	page, err := strconv.Atoi(c.QueryParam("page"))
+	var page int
 	if c.QueryParam("page") == "" {
 		page = 1
 	} else {
+		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
 		if err != nil {
 			eh.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-	}
-	if page == 0 {
-		page = 1
+
+		if pageatoi == 0 {
+			page = 1
+		} else {
+			page = pageatoi
+		}
 	}
 
 	events, err := eh.UseCase.FindEvents(str, category, page)

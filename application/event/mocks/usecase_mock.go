@@ -138,19 +138,19 @@ func (mr *MockUseCaseMockRecorder) GetOneEvent(eventId interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEvent", reflect.TypeOf((*MockUseCase)(nil).GetOneEvent), eventId)
 }
 
-// GetRecomended mocks base method.
-func (m *MockUseCase) GetRecomended(uid uint64, page int) (models.EventCards, error) {
+// GetRecommended mocks base method.
+func (m *MockUseCase) GetRecommended(uid uint64, page int) (models.EventCards, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRecomended", uid, page)
+	ret := m.ctrl.Call(m, "GetRecommended", uid, page)
 	ret0, _ := ret[0].(models.EventCards)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetRecomended indicates an expected call of GetRecomended.
-func (mr *MockUseCaseMockRecorder) GetRecomended(uid, page interface{}) *gomock.Call {
+// GetRecommended indicates an expected call of GetRecommended.
+func (mr *MockUseCaseMockRecorder) GetRecommended(uid, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecomended", reflect.TypeOf((*MockUseCase)(nil).GetRecomended), uid, page)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecommended", reflect.TypeOf((*MockUseCase)(nil).GetRecommended), uid, page)
 }
 
 // RecomendSystem mocks base method.

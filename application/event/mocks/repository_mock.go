@@ -50,18 +50,18 @@ func (mr *MockRepositoryMockRecorder) AddEvent(newEvent interface{}) *gomock.Cal
 }
 
 // CategorySearch mocks base method.
-func (m *MockRepository) CategorySearch(str, category string, now time.Time) ([]models.EventCardWithDateSQL, error) {
+func (m *MockRepository) CategorySearch(str, category string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CategorySearch", str, category, now)
+	ret := m.ctrl.Call(m, "CategorySearch", str, category, now, page)
 	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CategorySearch indicates an expected call of CategorySearch.
-func (mr *MockRepositoryMockRecorder) CategorySearch(str, category, now interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) CategorySearch(str, category, now, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CategorySearch", reflect.TypeOf((*MockRepository)(nil).CategorySearch), str, category, now)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CategorySearch", reflect.TypeOf((*MockRepository)(nil).CategorySearch), str, category, now, page)
 }
 
 // DeleteById mocks base method.
@@ -79,18 +79,18 @@ func (mr *MockRepositoryMockRecorder) DeleteById(eventId interface{}) *gomock.Ca
 }
 
 // FindEvents mocks base method.
-func (m *MockRepository) FindEvents(str string, now time.Time) ([]models.EventCardWithDateSQL, error) {
+func (m *MockRepository) FindEvents(str string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindEvents", str, now)
+	ret := m.ctrl.Call(m, "FindEvents", str, now, page)
 	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindEvents indicates an expected call of FindEvents.
-func (mr *MockRepositoryMockRecorder) FindEvents(str, now interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) FindEvents(str, now, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindEvents", reflect.TypeOf((*MockRepository)(nil).FindEvents), str, now)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindEvents", reflect.TypeOf((*MockRepository)(nil).FindEvents), str, now, page)
 }
 
 // GetAllEvents mocks base method.
@@ -153,19 +153,19 @@ func (mr *MockRepositoryMockRecorder) GetPreference(uid interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPreference", reflect.TypeOf((*MockRepository)(nil).GetPreference), uid)
 }
 
-// GetRecomended mocks base method.
-func (m *MockRepository) GetRecomended(uid uint64, now time.Time) ([]models.EventCardWithDateSQL, error) {
+// GetRecommended mocks base method.
+func (m *MockRepository) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRecomended", uid, now)
+	ret := m.ctrl.Call(m, "GetRecommended", uid, now, page)
 	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetRecomended indicates an expected call of GetRecomended.
-func (mr *MockRepositoryMockRecorder) GetRecomended(uid, now interface{}) *gomock.Call {
+// GetRecommended indicates an expected call of GetRecommended.
+func (mr *MockRepositoryMockRecorder) GetRecommended(uid, now, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecomended", reflect.TypeOf((*MockRepository)(nil).GetRecomended), uid, now)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecommended", reflect.TypeOf((*MockRepository)(nil).GetRecommended), uid, now, page)
 }
 
 // GetTags mocks base method.
