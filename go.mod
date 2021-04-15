@@ -8,6 +8,8 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
 	github.com/jackc/pgconn v1.8.1
+	github.com/jackc/pgmock v0.0.0-20190831213851-13a1b77aafa2
+	github.com/jackc/pgproto3/v2 v2.0.6
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/labstack/echo v3.3.10+incompatible

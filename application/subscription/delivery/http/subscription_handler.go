@@ -1,14 +1,15 @@
 package http
 
 import (
-	"github.com/mailru/easyjson"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
-	infrastructure "kudago/pkg/infrastructure/session_manager"
+	"kudago/pkg/infrastructure"
 	"kudago/pkg/logger"
 	"net/http"
 	"strconv"
+
+	"github.com/mailru/easyjson"
 
 	"github.com/labstack/echo"
 )
