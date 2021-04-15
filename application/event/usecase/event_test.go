@@ -242,7 +242,7 @@ func TestEventUseCase_CreateNewEvent(t *testing.T) {
 }
 
 func TestEventUseCase_SaveImageError(t *testing.T) {
-	rep, _, uc := setUp(t)
+	_, _, uc := setUp(t)
 
 	err := uc.SaveImage(uint64(1), &multipart.FileHeader{})
 	assert.NotNil(t, err)
