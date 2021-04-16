@@ -111,10 +111,10 @@ func (mr *MockUseCaseMockRecorder) GetOwnProfile(id interface{}) *gomock.Call {
 }
 
 // GetUsers mocks base method.
-func (m *MockUseCase) GetUsers(page int) (models.UsersOnEvent, error) {
+func (m *MockUseCase) GetUsers(page int) (models.UserCards, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUsers", page)
-	ret0, _ := ret[0].(models.UsersOnEvent)
+	ret0, _ := ret[0].(models.UserCards)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

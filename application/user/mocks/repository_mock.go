@@ -93,10 +93,10 @@ func (mr *MockRepositoryMockRecorder) GetByIdOwn(id interface{}) *gomock.Call {
 }
 
 // GetUsers mocks base method.
-func (m *MockRepository) GetUsers(page int) (models.UsersOnEvent, error) {
+func (m *MockRepository) GetUsers(page int) ([]models.UserCardSQL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUsers", page)
-	ret0, _ := ret[0].(models.UsersOnEvent)
+	ret0, _ := ret[0].([]models.UserCardSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

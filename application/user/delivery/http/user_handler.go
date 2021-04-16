@@ -372,7 +372,7 @@ func (uh *UserHandler) GetUsers(c echo.Context) error {
 		return err
 	}
 
-	users = uh.sanitizer.SanitizeUsersOnEvent(users)
+	users = uh.sanitizer.SanitizeUserCards(users)
 	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err

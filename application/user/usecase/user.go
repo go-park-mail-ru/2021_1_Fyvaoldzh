@@ -281,6 +281,20 @@ func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 	return []byte{}, err
 }
 
-func (uc UserUseCase) GetUsers(page int) (models.UsersOnEvent, error) {
-	return uc.repo.GetUsers(page)
+func (uc UserUseCase) GetUsers(page int) (models.UserCards, error) {
+	var cards models.UserCards
+	users, err := uc.repo.GetUsers(page)
+	if err != nil {
+		return models.UserCards{}, err
+	}
+	for _, elem := range users {
+		followers, err := uc.repoSub.GetFollowers(elem.Id)
+		if err != nil {
+			return models.UserCards{}, err
+		}
+		newCard := *models.ConvertUserCard(elem)
+		newCard.Followers = uint64(len(followers))
+		cards = append(cards, newCard)
+	}
+	return cards, nil
 }

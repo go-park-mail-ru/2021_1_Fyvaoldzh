@@ -91,6 +91,13 @@ var testRegData = &models.RegData{
 	Password: frontPassword,
 }
 
+var testUserCard = &models.UserCard{
+	Id:   userId,
+	Name: name,
+}
+
+var testUserCards = models.UserCards{*testUserCard}
+
 func setUp(t *testing.T, url, method string) (echo.Context,
 	UserHandler, *mock_user.MockUseCase, *mock_infrastructure.MockSessionTarantool) {
 	e := echo.New()
@@ -247,7 +254,7 @@ func TestUserHandler_GetOtherUserProfileErrorUC(t *testing.T) {
 func TestUserHandler_GetUsers(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/users?page=1", http.MethodGet)
 
-	usecase.EXPECT().GetUsers(1).Return(*testUsersOnEvent, nil)
+	usecase.EXPECT().GetUsers(1).Return(testUserCards, nil)
 
 	err := h.GetUsers(c)
 
@@ -273,7 +280,7 @@ func TestUserHandler_GetUsersErrorMinus(t *testing.T) {
 func TestUserHandler_GetUsersErrorUC(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/users?page=1", http.MethodGet)
 
-	usecase.EXPECT().GetUsers(1).Return(*testUsersOnEvent, echo.NewHTTPError(http.StatusInternalServerError))
+	usecase.EXPECT().GetUsers(1).Return(testUserCards, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.GetUsers(c)
 

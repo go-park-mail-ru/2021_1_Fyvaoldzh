@@ -60,6 +60,18 @@ func (cs *CustomSanitizer) SanitizeUsersOnEvent(users models.UsersOnEvent) model
 	return newUsers
 }
 
+func (cs *CustomSanitizer) SanitizeUserCards(users models.UserCards) models.UserCards {
+	var newUsers models.UserCards
+	for _, elem := range users {
+		elem.City = cs.sanitizer.Sanitize(elem.City)
+		elem.Avatar = cs.sanitizer.Sanitize(elem.Avatar)
+		elem.Name = cs.sanitizer.Sanitize(elem.Name)
+		newUsers = append(newUsers, elem)
+	}
+
+	return newUsers
+}
+
 func (cs *CustomSanitizer) SanitizeEvent(elem *models.Event) {
 	elem.Title = cs.sanitizer.Sanitize(elem.Title)
 	elem.Description = cs.sanitizer.Sanitize(elem.Description)

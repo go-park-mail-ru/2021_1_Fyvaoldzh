@@ -158,19 +158,19 @@ func (ud UserDatabase) IsExistingUserId(userId uint64) error {
 	return nil
 }
 
-func (ud UserDatabase) GetUsers(page int) (models.UsersOnEvent, error) {
-	var users models.UsersOnEvent
+func (ud UserDatabase) GetUsers(page int) ([]models.UserCardSQL, error) {
+	var users []models.UserCardSQL
 	err := pgxscan.Select(context.Background(), ud.pool, &users,
-		`SELECT id, name, avatar
+		`SELECT id, name, avatar, birthday, city
 		FROM users
 		LIMIT 10 OFFSET $1`, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
 		ud.logger.Debug("no rows in method GetUsers")
-		return models.UsersOnEvent{}, nil
+		return []models.UserCardSQL{}, nil
 	}
 	if err != nil {
 		ud.logger.Warn(err)
-		return models.UsersOnEvent{}, err
+		return []models.UserCardSQL{}, err
 	}
 
 	return users, nil

@@ -147,7 +147,13 @@ var testUserOnEvent = &models.UserOnEvent{
 	Name: name,
 }
 
-var testUsersOnEvent = &models.UsersOnEvent{*testUserOnEvent}
+var testUserCardSQL = &models.UserCardSQL{
+	Id:   userId,
+	Name: name,
+}
+
+var testUserCardsSQL = []models.UserCardSQL{*testUserCardSQL}
+
 
 func setUp(t *testing.T) (*mock_user.MockRepository, *mock_subscription.MockRepository, user.UseCase) {
 	ctrl := gomock.NewController(t)
@@ -534,14 +540,14 @@ func TestUserUseCase_GetAvatarErrorReadFile(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserUseCase_GetUsers(t *testing.T) {
-	rep, _, uc := setUp(t)
+	rep, repSub, uc := setUp(t)
 
-	rep.EXPECT().GetUsers(pageNum).Return(*testUsersOnEvent, nil)
+	rep.EXPECT().GetUsers(pageNum).Return(testUserCardsSQL, nil)
+	repSub.EXPECT().GetFollowers(userId).Return([]uint64{userId}, nil)
 
-	res, err := uc.GetUsers(pageNum)
+	_, err := uc.GetUsers(pageNum)
 
 	assert.Nil(t, err)
-	assert.Equal(t, *testUsersOnEvent, res)
 }
 
 /*

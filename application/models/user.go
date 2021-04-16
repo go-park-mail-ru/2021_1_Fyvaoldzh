@@ -19,6 +19,40 @@ type UserOnEvent struct {
 	Avatar string `json:"avatar"`
 }
 
+type UserCard struct {
+	Id        uint64 `json:"id"`
+	Name      string `json:"name"`
+	Avatar    string `json:"avatar"`
+	Age       uint8  `json:"age"`
+	City      string `json:"city"`
+	Followers uint64 `json:"followers"`
+}
+
+//easyjson:json
+type UserCards []UserCard
+
+type UserCardSQL struct {
+	Id       uint64
+	Name     string
+	Avatar   string
+	Birthday sql.NullTime
+	City     sql.NullString
+}
+
+func ConvertUserCard(sqlCard UserCardSQL) *UserCard {
+	var card UserCard
+	card.Id = sqlCard.Id
+	card.Name = sqlCard.Name
+	card.Avatar = sqlCard.Avatar
+	if sqlCard.Birthday.Valid {
+		dif := sqlCard.Birthday.Time.Sub(time.Now())
+		secdif := math.Abs(dif.Seconds())
+		card.Age = uint8(secdif / 31536000)
+	}
+	card.City = sqlCard.City.String
+	return &card
+}
+
 //easyjson:json
 type UsersOnEvent []UserOnEvent
 
