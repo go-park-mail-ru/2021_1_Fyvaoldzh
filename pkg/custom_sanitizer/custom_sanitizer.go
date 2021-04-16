@@ -1,8 +1,9 @@
 package custom_sanitizer
 
 import (
-	"github.com/microcosm-cc/bluemonday"
 	"kudago/application/models"
+
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type CustomSanitizer struct {
@@ -39,7 +40,7 @@ func (cs *CustomSanitizer) SanitizeOtherProfile(profile *models.OtherUserProfile
 func (cs *CustomSanitizer) SanitizeEventCards(events models.EventCards) models.EventCards {
 	var newEvents models.EventCards
 	for _, elem := range events {
-		elem.Image = cs.sanitizer.Sanitize(elem.Image)
+		elem.Place = cs.sanitizer.Sanitize(elem.Place)
 		elem.Description = cs.sanitizer.Sanitize(elem.Description)
 		elem.Title = cs.sanitizer.Sanitize(elem.Title)
 		newEvents = append(newEvents, elem)

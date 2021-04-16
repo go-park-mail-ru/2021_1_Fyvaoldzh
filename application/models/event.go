@@ -36,8 +36,8 @@ type EventSQL struct {
 type EventCard struct {
 	ID          uint64 `json:"id"`
 	Title       string `json:"title"`
+	Place       string `json:place`
 	Description string `json:"description"`
-	Image       string `json:"image"`
 	StartDate   string `json:"startDate"`
 	EndDate     string `json:"endDate"`
 }
@@ -45,8 +45,8 @@ type EventCard struct {
 type EventCardWithDateSQL struct {
 	ID          uint64
 	Title       string
+	Place       string
 	Description string
-	Image       sql.NullString
 	StartDate   time.Time
 	EndDate     time.Time
 }
@@ -57,9 +57,9 @@ type Tag struct {
 }
 
 type IsAddedEvent struct {
-	UserId uint64 `json:"userId"`
+	UserId  uint64 `json:"userId"`
 	EventId uint64 `json:"eventId"`
-	IsAdded bool `json:"isAdded"`
+	IsAdded bool   `json:"isAdded"`
 }
 
 type Recomend struct {
@@ -73,7 +73,7 @@ func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	newCard.ID = old.ID
 	newCard.Title = old.Title
 	newCard.Description = old.Description
-	newCard.Image = old.Image.String
+	newCard.Place = old.Place
 	newCard.StartDate = old.StartDate.String()
 	newCard.EndDate = old.EndDate.String()
 	return newCard

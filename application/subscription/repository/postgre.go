@@ -148,7 +148,7 @@ func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
 func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
-		`SELECT e.id, e.title, e.description, e.image, e.start_date, e.end_date
+		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date
 		FROM events e
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, true)
@@ -167,7 +167,7 @@ func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardW
 func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
-		`SELECT e.id, e.title, e.description, e.image, e.start_date, e.end_date  
+		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date  
 		FROM events e
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, false)

@@ -29,7 +29,7 @@ func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository
 func (ed EventDatabase) GetAllEvents(now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, description, image, start_date, end_date FROM events
+		`SELECT id, title, place, description, start_date, end_date FROM events
 		WHERE end_date > $1
 		ORDER BY id DESC
 		LIMIT 6 OFFSET $2`, now, (page-1)*6)
@@ -50,7 +50,7 @@ func (ed EventDatabase) GetAllEvents(now time.Time, page int) ([]models.EventCar
 func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, description, image, start_date, end_date FROM events
+		`SELECT id, title, place, description, start_date, end_date FROM events
 		WHERE category = $1 AND end_date > $2
 		ORDER BY id DESC
 		LIMIT 6 OFFSET $3`, typeEvent, now, (page-1)*6)
@@ -152,8 +152,8 @@ func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
 func (ed EventDatabase) FindEvents(str string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT ON(e.id) e.id, e.title, e.description,
-		e.image, e.start_date, e.end_date FROM
+		`SELECT DISTINCT ON(e.id) e.id, e.title, e.place,
+		e.description, e.start_date, e.end_date FROM
         events e JOIN event_tag et on e.id = et.event_id
         JOIN tags t on et.tag_id = t.id
 		WHERE (LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
@@ -245,8 +245,8 @@ func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
 func (ed EventDatabase) CategorySearch(str string, category string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT ON(e.id) e.id, e.title, e.description,
-		e.image, e.start_date, e.end_date FROM
+		`SELECT DISTINCT ON(e.id) e.id, e.title, e.place,
+		e.description, e.start_date, e.end_date FROM
         events e JOIN event_tag et on e.id = et.event_id
         JOIN tags t on et.tag_id = t.id
 		WHERE (LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
@@ -268,7 +268,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 	return events, nil
 }
 
-/*func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
+func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
 	if err != nil {
 		ed.logger.Debug(string(err.Error()))
@@ -276,7 +276,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 	}
 	var eventsConcert, eventsShow, eventsMovie []models.EventCardWithDateSQL
 	err = pgxscan.Select(context.Background(), ed.pool, &eventsConcert,
-		`SELECT id, title, description, image, start_date, end_date FROM events
+		`SELECT id, title, place, description, start_date, end_date FROM events
 			WHERE category = 'Музей' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT $2 OFFSET $3`, now, recomend.Concert, (page-1)*int(recomend.Concert))
@@ -285,7 +285,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 		return nil, err
 	}
 	err = pgxscan.Select(context.Background(), ed.pool, &eventsShow,
-		`SELECT id, title, description, image, start_date, end_date FROM events
+		`SELECT id, title, place, description, start_date, end_date FROM events
 			WHERE category = 'Выставка' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT $2 OFFSET $3`, now, recomend.Show, (page-1)*int(recomend.Show))
@@ -294,7 +294,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 		return nil, err
 	}
 	err = pgxscan.Select(context.Background(), ed.pool, &eventsMovie,
-		`SELECT id, title, description, image, start_date, end_date FROM events
+		`SELECT id, title, place, description, start_date, end_date FROM events
 			WHERE category = 'Кино' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT $2 OFFSET $3`, now, recomend.Movie, (page-1)*int(recomend.Movie))
@@ -306,9 +306,9 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 	eventsConcert = append(eventsConcert, eventsMovie...)
 
 	return eventsConcert, nil
-}*/
+}
 
-func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
+/*func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	recomend, err := ed.GetPreference(uid)
 	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
 		ed.logger.Debug(string(err.Error()))
@@ -344,4 +344,4 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 	}
 
 	return eventsPrefer, nil
-}
+}*/

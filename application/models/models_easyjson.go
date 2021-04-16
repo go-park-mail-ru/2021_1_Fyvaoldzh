@@ -1545,10 +1545,10 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels15(in *jlexer.Lexer, out *Even
 			out.ID = uint64(in.Uint64())
 		case "Title":
 			out.Title = string(in.String())
+		case "Place":
+			out.Place = string(in.String())
 		case "Description":
 			out.Description = string(in.String())
-		case "Image":
-			easyjsonD2b7633eDecodeDatabaseSql(in, &out.Image)
 		case "StartDate":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.StartDate).UnmarshalJSON(data))
@@ -1582,14 +1582,14 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels15(out *jwriter.Writer, in Eve
 		out.String(string(in.Title))
 	}
 	{
+		const prefix string = ",\"Place\":"
+		out.RawString(prefix)
+		out.String(string(in.Place))
+	}
+	{
 		const prefix string = ",\"Description\":"
 		out.RawString(prefix)
 		out.String(string(in.Description))
-	}
-	{
-		const prefix string = ",\"Image\":"
-		out.RawString(prefix)
-		easyjsonD2b7633eEncodeDatabaseSql(out, in.Image)
 	}
 	{
 		const prefix string = ",\"StartDate\":"
@@ -1650,10 +1650,10 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels16(in *jlexer.Lexer, out *Even
 			out.ID = uint64(in.Uint64())
 		case "title":
 			out.Title = string(in.String())
+		case "Place":
+			out.Place = string(in.String())
 		case "description":
 			out.Description = string(in.String())
-		case "image":
-			out.Image = string(in.String())
 		case "startDate":
 			out.StartDate = string(in.String())
 		case "endDate":
@@ -1683,14 +1683,14 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels16(out *jwriter.Writer, in Eve
 		out.String(string(in.Title))
 	}
 	{
+		const prefix string = ",\"Place\":"
+		out.RawString(prefix)
+		out.String(string(in.Place))
+	}
+	{
 		const prefix string = ",\"description\":"
 		out.RawString(prefix)
 		out.String(string(in.Description))
-	}
-	{
-		const prefix string = ",\"image\":"
-		out.RawString(prefix)
-		out.String(string(in.Image))
 	}
 	{
 		const prefix string = ",\"startDate\":"
