@@ -36,7 +36,7 @@ type EventSQL struct {
 type EventCard struct {
 	ID          uint64 `json:"id"`
 	Title       string `json:"title"`
-	Place       string `json:place`
+	Place       string `json:"place"`
 	Description string `json:"description"`
 	StartDate   string `json:"startDate"`
 	EndDate     string `json:"endDate"`

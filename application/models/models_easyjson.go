@@ -1650,7 +1650,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels16(in *jlexer.Lexer, out *Even
 			out.ID = uint64(in.Uint64())
 		case "title":
 			out.Title = string(in.String())
-		case "Place":
+		case "place":
 			out.Place = string(in.String())
 		case "description":
 			out.Description = string(in.String())
@@ -1683,7 +1683,7 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels16(out *jwriter.Writer, in Eve
 		out.String(string(in.Title))
 	}
 	{
-		const prefix string = ",\"Place\":"
+		const prefix string = ",\"place\":"
 		out.RawString(prefix)
 		out.String(string(in.Place))
 	}
