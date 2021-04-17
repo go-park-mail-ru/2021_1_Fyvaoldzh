@@ -1,0 +1,13 @@
+.idea
+2021_1_Fyvaoldzh
+*.out*
+*.png
+!public/*.png
+*jpg
+*.txt
+*.raw
+*.lua
+scripts/*
+
+
+
