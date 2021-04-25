@@ -2,12 +2,12 @@ package http
 
 import (
 	"fmt"
+	"kudago/application/microservices/auth/client"
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/generator"
-	"kudago/pkg/infrastructure"
 	"kudago/pkg/logger"
 	"math/rand"
 	"net/http"
@@ -20,14 +20,18 @@ import (
 
 type UserHandler struct {
 	UseCase   user.UseCase
-	Sm        infrastructure.SessionTarantool
+	rpcAuth client.AuthClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
 func CreateUserHandler(e *echo.Echo, uc user.UseCase,
-	sm infrastructure.SessionTarantool, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
-	userHandler := UserHandler{UseCase: uc, Sm: sm, sanitizer: sz, Logger: logger}
+	auth client.AuthClient, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+	userHandler := UserHandler{
+		UseCase: uc,
+		rpcAuth: auth,
+		sanitizer: sz,
+		Logger: logger}
 
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout", userHandler.Logout)
@@ -48,6 +52,7 @@ func (uh *UserHandler) Login(c echo.Context) error {
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 
+	// если убрать куки нил, то упадет с no cookie
 	if err != nil && cookie != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
@@ -59,37 +64,21 @@ func (uh *UserHandler) Login(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := uh.UseCase.Login(u)
-
-	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
-		return err
-	}
-
+	var value string
 	if cookie != nil {
-		exists, id, err := uh.Sm.CheckSession(cookie.Value)
-		if err != nil {
-			uh.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		if exists && id == uid {
-			return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
-		}
+		_, value, err = uh.rpcAuth.Login(u.Login, u.Password, cookie.Value)
+	} else {
+		_, value, err = uh.rpcAuth.Login(u.Login, u.Password, "")
 	}
-
-	cookie = generator.CreateCookie(constants.CookieLength)
-	err = uh.Sm.InsertSession(uid, cookie.Value)
-
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
+	cookie = generator.CreateCookieWithValue(value)
 	c.SetCookie(cookie)
 
 	uh.Logger.LogInfo(c, start, requestId)
-
 	return nil
 }
 
@@ -108,18 +97,7 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 	}
 
-	flag, _, err := uh.Sm.CheckSession(cookie.Value)
-
-	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
-		return err
-	}
-
-	if !flag {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	err = uh.Sm.DeleteSession(cookie.Value)
+	err = uh.rpcAuth.Logout(cookie.Value)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
@@ -143,7 +121,7 @@ func (uh *UserHandler) Register(c echo.Context) error {
 	}
 
 	if cookie != nil {
-		exists, _, err := uh.Sm.CheckSession(cookie.Value)
+		exists, _, err := uh.rpcAuth.Check(cookie.Value)
 		if err != nil {
 			uh.Logger.LogError(c, start, requestId, err)
 			return err
@@ -162,19 +140,19 @@ func (uh *UserHandler) Register(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	uid, err := uh.UseCase.Add(newData)
+	_, err = uh.UseCase.Add(newData)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
-	cookie = generator.CreateCookie(constants.CookieLength)
-	err = uh.Sm.InsertSession(uid, cookie.Value)
+	_, value, err := uh.rpcAuth.Login(newData.Login, newData.Password, "")
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
+	cookie = generator.CreateCookieWithValue(value)
 	c.SetCookie(cookie)
 	return nil
 }
@@ -193,7 +171,7 @@ func (uh *UserHandler) Update(c echo.Context) error {
 	var uid uint64
 	var exists bool
 	if cookie != nil {
-		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
+		exists, uid, err = uh.rpcAuth.Check(cookie.Value)
 		if err != nil {
 			uh.Logger.LogError(c, start, requestId, err)
 			return err
@@ -233,7 +211,7 @@ func (uh *UserHandler) GetOwnProfile(c echo.Context) error {
 
 	var uid uint64
 	var exists bool
-	exists, uid, err = uh.Sm.CheckSession(cookie.Value)
+	exists, uid, err = uh.rpcAuth.Check(cookie.Value)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
@@ -297,7 +275,7 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 	var uid uint64
 	var exists bool
 	if cookie != nil {
-		exists, uid, err = uh.Sm.CheckSession(cookie.Value)
+		exists, uid, err = uh.rpcAuth.Check(cookie.Value)
 		if err != nil {
 			uh.Logger.Warn(err)
 			return err

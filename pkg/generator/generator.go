@@ -37,6 +37,21 @@ func CheckHashedPassword(databasePassword string, gotPassword string) bool {
 	return true
 }
 
+func CreateCookieValue(n uint8) string {
+	key := RandStringRunes(n)
+	return key
+}
+
+func CreateCookieWithValue(value string) *http.Cookie {
+	newCookie := &http.Cookie{
+		Name:     constants.SessionCookieName,
+		Value:    value,
+		Expires:  time.Now().Add(10 * time.Hour),
+		HttpOnly: true,
+	}
+
+	return newCookie
+}
 func CreateCookie(n uint8) *http.Cookie {
 	key := RandStringRunes(n)
 

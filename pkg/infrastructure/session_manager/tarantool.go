@@ -53,7 +53,6 @@ func (sm SessionManager) InsertSession(uid uint64, value string) error {
 
 func (sm SessionManager) DeleteSession(value string) error {
 	_, err := sm.Conn.Delete(constants.TarantoolSpaceName, "primary", []interface{}{value})
-
 	if err != nil {
 		return err
 	}

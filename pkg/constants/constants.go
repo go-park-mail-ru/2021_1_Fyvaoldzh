@@ -9,6 +9,7 @@ const (
 	DefaultAvatar      = "public/default.png"
 	TarantoolAddress   = "127.0.0.1:3301"
 	TarantoolUser      = "admin"
+	AuthServicePort    = ":3001"
 	TarantoolPassword  = "fyvaoldzh"
 	TarantoolSpaceName = "qdago"
 	UserPicDir         = "public/users/"

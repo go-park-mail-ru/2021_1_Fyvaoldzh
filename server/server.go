@@ -5,6 +5,7 @@ import (
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
+	"kudago/application/microservices/auth/client"
 	shttp "kudago/application/subscription/delivery/http"
 	srepository "kudago/application/subscription/repository"
 	susecase "kudago/application/subscription/usecase"
@@ -27,7 +28,13 @@ import (
 	"go.uber.org/zap"
 )
 
-func NewServer(l *zap.SugaredLogger) *echo.Echo {
+type Server struct {
+	rpcAuth *client.AuthClient
+	e *echo.Echo
+}
+
+func NewServer(l *zap.SugaredLogger) *Server {
+	var server Server
 	e := echo.New()
 	logger := logger.NewLogger(l)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -48,12 +55,16 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 		User: constants.TarantoolUser,
 		Pass: constants.TarantoolPassword,
 	})
-
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	_, err = conn.Ping()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	rpcAuth, err := client.NewAuthClient(constants.AuthServicePort, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -70,18 +81,21 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
-	http.CreateUserHandler(e, userUC, sm, sanitizer, logger)
+	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
 	shttp.CreateSubscriptionsHandler(e, subUC, sm, logger)
 	ehttp.CreateEventHandler(e, eventUC, sm, sanitizer, logger)
 
-	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup: constants.CSRFHeader,
-		CookiePath:  "/",
-	}))
+	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+	//	TokenLookup: constants.CSRFHeader,
+	//	CookiePath:  "/",
+	//}))
 
-	return e
+	server.e = e
+	server.rpcAuth = rpcAuth
+	return &server
 }
 
-func ListenAndServe(e *echo.Echo) {
-	e.Logger.Fatal(e.Start(":1323"))
+func (s Server) ListenAndServe() {
+	s.e.Logger.Fatal(s.e.Start(":1323"))
+	defer s.rpcAuth.Close()
 }
