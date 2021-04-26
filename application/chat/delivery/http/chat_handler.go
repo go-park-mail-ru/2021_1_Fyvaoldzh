@@ -197,8 +197,7 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		newMessage.From = uid
-		err := ch.UseCase.SendMessage(newMessage) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.SendMessage(newMessage, uid) //Должна быть проверка на то, является ли чел собеседником
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
@@ -250,15 +249,13 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 	}
 	newMessage := &models.NewMessage{}
 
-	//newMessage должно быть отправлено с полем from!!!
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, newMessage); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
-	//Здесь не опрокидываем uid в качестве from поля, чтобы не было возможности редактировать чужие сообщения(проверка на соответсвие uid и from)
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.EditMessage(uid, id, newMessage) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.EditMessage(uid, uint64(id), newMessage) //Должна быть проверка на то, является ли чел собеседником
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
@@ -315,7 +312,7 @@ func (ch ChatHandler) Search(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.Search(uid, id, str, page) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.Search(uid, uint64(id), str, page) //Должна быть проверка на то, является ли чел собеседником
 
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)

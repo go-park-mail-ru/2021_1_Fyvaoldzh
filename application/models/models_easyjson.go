@@ -1200,8 +1200,6 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels11(in *jlexer.Lexer, out *NewM
 			continue
 		}
 		switch key {
-		case "from":
-			out.From = uint64(in.Uint64())
 		case "to":
 			out.To = uint64(in.Uint64())
 		case "text":
@@ -1221,13 +1219,8 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels11(out *jwriter.Writer, in New
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"from\":"
-		out.RawString(prefix[1:])
-		out.Uint64(uint64(in.From))
-	}
-	{
 		const prefix string = ",\"to\":"
-		out.RawString(prefix)
+		out.RawString(prefix[1:])
 		out.Uint64(uint64(in.To))
 	}
 	{
@@ -1348,9 +1341,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels13(in *jlexer.Lexer, out *Mess
 		switch key {
 		case "ID":
 			out.ID = uint64(in.Uint64())
-		case "from":
+		case "From":
 			out.From = uint64(in.Uint64())
-		case "to":
+		case "To":
 			out.To = uint64(in.Uint64())
 		case "Text":
 			out.Text = string(in.String())
@@ -1380,12 +1373,12 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels13(out *jwriter.Writer, in Mes
 		out.Uint64(uint64(in.ID))
 	}
 	{
-		const prefix string = ",\"from\":"
+		const prefix string = ",\"From\":"
 		out.RawString(prefix)
 		out.Uint64(uint64(in.From))
 	}
 	{
-		const prefix string = ",\"to\":"
+		const prefix string = ",\"To\":"
 		out.RawString(prefix)
 		out.Uint64(uint64(in.To))
 	}
@@ -1451,16 +1444,16 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels14(in *jlexer.Lexer, out *Mess
 		switch key {
 		case "id":
 			out.ID = uint64(in.Uint64())
-		case "from":
-			out.From = uint64(in.Uint64())
-		case "to":
-			out.To = uint64(in.Uint64())
+		case "fromMe":
+			out.FromMe = bool(in.Bool())
 		case "text":
 			out.Text = string(in.String())
 		case "date":
 			out.Date = string(in.String())
 		case "redact":
 			out.Redact = bool(in.Bool())
+		case "read":
+			out.Read = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -1481,14 +1474,9 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels14(out *jwriter.Writer, in Mes
 		out.Uint64(uint64(in.ID))
 	}
 	{
-		const prefix string = ",\"from\":"
+		const prefix string = ",\"fromMe\":"
 		out.RawString(prefix)
-		out.Uint64(uint64(in.From))
-	}
-	{
-		const prefix string = ",\"to\":"
-		out.RawString(prefix)
-		out.Uint64(uint64(in.To))
+		out.Bool(bool(in.FromMe))
 	}
 	{
 		const prefix string = ",\"text\":"
@@ -1504,6 +1492,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels14(out *jwriter.Writer, in Mes
 		const prefix string = ",\"redact\":"
 		out.RawString(prefix)
 		out.Bool(bool(in.Redact))
+	}
+	{
+		const prefix string = ",\"read\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.Read))
 	}
 	out.RawByte('}')
 }
