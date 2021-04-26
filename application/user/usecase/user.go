@@ -87,7 +87,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 	other := models.ConvertToOther(*usr)
 	var newEvents []models.EventCard
 
-	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
+	oldEvents, err := uc.repo.GetPlanningEvents(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
@@ -95,7 +95,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 
 	for _, elem := range oldEvents {
 		if elem.EndDate.Before(time.Now()) {
-			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
+			err := uc.repo.UpdateEventStatus(id, elem.ID)
 			if err != nil {
 				uc.logger.Warn(err)
 				return &models.OtherUserProfile{}, err
@@ -106,7 +106,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 	}
 	other.Planning = newEvents
 
-	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
+	visitedEventsSQL, err := uc.repo.GetVisitedEvents(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
@@ -115,7 +115,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 		other.Visited = append(other.Visited, models.ConvertDateCard(elem))
 	}
 
-	other.Followers, err = uc.repoSub.GetFollowers(id)
+	other.Followers, err = uc.repo.GetFollowers(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
@@ -136,7 +136,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	own := models.ConvertToOwn(*usr)
 	var newEvents []models.EventCard
 
-	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
+	oldEvents, err := uc.repo.GetPlanningEvents(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
@@ -144,7 +144,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 
 	for _, elem := range oldEvents {
 		if elem.EndDate.Before(time.Now()) {
-			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
+			err := uc.repo.UpdateEventStatus(id, elem.ID)
 			if err != nil {
 				uc.logger.Warn(err)
 				return &models.UserOwnProfile{}, err
@@ -155,7 +155,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	}
 	own.Planning = newEvents
 
-	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
+	visitedEventsSQL, err := uc.repo.GetVisitedEvents(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
@@ -164,7 +164,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 		own.Visited = append(own.Visited, models.ConvertDateCard(elem))
 	}
 
-	own.Followers, err = uc.repoSub.GetFollowers(id)
+	own.Followers, err = uc.repo.GetFollowers(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
@@ -288,7 +288,7 @@ func (uc UserUseCase) GetUsers(page int) (models.UserCards, error) {
 		return models.UserCards{}, err
 	}
 	for _, elem := range users {
-		followers, err := uc.repoSub.GetFollowers(elem.Id)
+		followers, err := uc.repo.GetFollowers(elem.Id)
 		if err != nil {
 			return models.UserCards{}, err
 		}
@@ -297,4 +297,12 @@ func (uc UserUseCase) GetUsers(page int) (models.UserCards, error) {
 		cards = append(cards, newCard)
 	}
 	return cards, nil
+}
+
+func (uc UserUseCase) UpdateEventStatus(userId uint64, eventId uint64) error {
+	return uc.repo.UpdateEventStatus(userId, eventId)
+}
+
+func (uc UserUseCase) IsAddedEvent(userId uint64, eventId uint64) (bool, error) {
+	return uc.repo.IsAddedEvent(userId, eventId)
 }

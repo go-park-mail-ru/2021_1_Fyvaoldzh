@@ -5,16 +5,15 @@ import (
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
-	"kudago/application/microservices/auth/client"
+	clientAuth "kudago/application/microservices/auth/client"
+	clientSub "kudago/application/microservices/subscription/client"
 	shttp "kudago/application/subscription/delivery/http"
 	srepository "kudago/application/subscription/repository"
-	susecase "kudago/application/subscription/usecase"
 	"kudago/application/user/delivery/http"
 	"kudago/application/user/repository"
 	"kudago/application/user/usecase"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
-	tarantool2 "kudago/pkg/infrastructure/session_manager"
 	"kudago/pkg/logger"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -29,7 +28,8 @@ import (
 )
 
 type Server struct {
-	rpcAuth *client.AuthClient
+	rpcAuth *clientAuth.AuthClient
+	rpcSub *clientSub.SubscriptionClient
 	e *echo.Echo
 }
 
@@ -64,7 +64,12 @@ func NewServer(l *zap.SugaredLogger) *Server {
 		logger.Fatal(err)
 	}
 
-	rpcAuth, err := client.NewAuthClient(constants.AuthServicePort, logger)
+	rpcAuth, err := clientAuth.NewAuthClient(constants.AuthServicePort, logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	rpcSub, err := clientSub.NewSubscriptionClient(constants.SubscriptionServicePort, logger)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -75,15 +80,13 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
-	subUC := susecase.NewSubscription(subRep, logger)
 
-	sm := tarantool2.NewSessionManager(conn)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
 	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
-	shttp.CreateSubscriptionsHandler(e, subUC, sm, logger)
-	ehttp.CreateEventHandler(e, eventUC, sm, sanitizer, logger)
+	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, logger)
+	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,
@@ -98,4 +101,5 @@ func NewServer(l *zap.SugaredLogger) *Server {
 func (s Server) ListenAndServe() {
 	s.e.Logger.Fatal(s.e.Start(":1323"))
 	defer s.rpcAuth.Close()
+	defer s.rpcSub.Close()
 }

@@ -42,6 +42,7 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase,
 	e.POST("/api/v1/upload_avatar", userHandler.UploadAvatar)
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 	e.GET("/api/v1/users", userHandler.GetUsers)
+	e.GET("/api/v1/event/is_added/:id", userHandler.IsAdded)
 }
 
 func (uh *UserHandler) Login(c echo.Context) error {
@@ -355,6 +356,49 @@ func (uh *UserHandler) GetUsers(c echo.Context) error {
 	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
+	}
+
+	return nil
+}
+
+
+func (uh *UserHandler) IsAdded(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	cookie, err := c.Cookie(constants.SessionCookieName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	var userId uint64
+	var exists bool
+	exists, userId, err = uh.rpcAuth.Check(cookie.Value)
+	if err != nil {
+		uh.Logger.Warn(err)
+		return err
+	}
+	if !exists {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+	}
+
+	eventId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	var answer models.IsAddedEvent
+	answer.IsAdded, err = uh.UseCase.IsAddedEvent(userId, uint64(eventId))
+	if err != nil {
+		uh.Logger.Warn(err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
+		uh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return nil

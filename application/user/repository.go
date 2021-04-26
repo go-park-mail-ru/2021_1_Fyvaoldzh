@@ -13,4 +13,10 @@ type Repository interface {
 	IsCorrect(user *models.User) (*models.User, error)
 	IsExistingUserId(userId uint64) error
 	GetUsers(page int) ([]models.UserCardSQL, error)
+	UpdateEventStatus(userId uint64, eventId uint64) error
+	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
+	GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error)
+	GetFollowers(id uint64) ([]uint64, error)
+	GetEventFollowers(eventId uint64) (models.UsersOnEvent, error)
+	IsAddedEvent(userId uint64, eventId uint64) (bool, error)
 }

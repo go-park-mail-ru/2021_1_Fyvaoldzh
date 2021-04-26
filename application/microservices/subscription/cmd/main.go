@@ -1,11 +1,12 @@
 package main
 
 import (
-	"kudago/application/server"
-	"log"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"kudago/application/microservices/subscription/server"
+	"kudago/pkg/constants"
+	"kudago/pkg/logger"
+	"log"
 )
 
 func main() {
@@ -20,17 +21,8 @@ func main() {
 	}()
 	sugar := lg.Sugar()
 	zap.NewAtomicLevelAt(zapcore.DebugLevel)
+	l := logger.NewLogger(sugar)
 
-	/*conf := zap.Config{
-		Encoding:         "console",
-		OutputPaths:      ["console"],
-		ErrorOutputPaths: ["stderr"],
-	}
-	if err := conf.Level.
-		UnmarshalText([]byte("debug")); err != nil {
-		return nil, err
-	}*/
-
-	s := server.NewServer(sugar)
+	s := server.NewServer(constants.SubscriptionServicePort, &l)
 	s.ListenAndServe()
 }

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"kudago/application/event"
+	"kudago/application/microservices/auth/client"
 	"kudago/application/models"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
-	"kudago/pkg/infrastructure"
 	"kudago/pkg/logger"
 	"log"
 	"math/rand"
@@ -21,14 +21,13 @@ import (
 
 type EventHandler struct {
 	UseCase   event.UseCase
-	Sm        infrastructure.SessionTarantool
+	rpcAuth client.AuthClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm infrastructure.SessionTarantool, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
-
-	eventHandler := EventHandler{UseCase: uc, Sm: sm, Logger: logger, sanitizer: sz}
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.AuthClient, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+	eventHandler := EventHandler{UseCase: uc, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
@@ -39,7 +38,8 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, sm infrastructure.Sessio
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
 	e.POST("/api/v1/save/:id", eventHandler.Save)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
-	e.GET("/api/v1/recomend", eventHandler.Recommend)
+	// TODO фикс названия ручки был
+	e.GET("/api/v1/recommend", eventHandler.Recommend)
 }
 
 func (eh EventHandler) Recommend(c echo.Context) error {
@@ -136,7 +136,7 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	var exists bool
 
 	if cookie != nil {
-		exists, uid, err = eh.Sm.CheckSession(cookie.Value)
+		exists, uid, err = eh.rpcAuth.Check(cookie.Value)
 		if err != nil {
 			eh.Logger.LogWarn(c, start, requestId, err)
 			return 0, err
@@ -350,3 +350,4 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	eh.Logger.LogInfo(c, start, requestId)
 	return nil
 }
+
