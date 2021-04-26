@@ -2,12 +2,10 @@ package server
 
 import (
 	"context"
-	"github.com/labstack/echo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"kudago/application/microservices/auth/proto"
 	"kudago/application/microservices/auth/session"
-	"net/http"
 )
 
 type AuthServer struct {
@@ -27,11 +25,12 @@ func (a *AuthServer) Login(ctx context.Context, usr *proto.User) (*proto.LoginAn
 		}
 		if flag {
 			return &proto.LoginAnswer{Value: sessionValue},
-			echo.NewHTTPError(http.StatusUnauthorized, "user is already authorized")
+			status.Error(codes.AlreadyExists, "user is already logged in")
 		}
 	}
 
 	sessionValue,  err := a.usecase.Login(usr.Login, usr.Password)
+
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

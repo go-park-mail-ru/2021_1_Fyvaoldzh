@@ -140,13 +140,14 @@ func (uh *UserHandler) Register(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
+	oldPassword := newData.Password
 	_, err = uh.UseCase.Add(newData)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
-	_, value, err := uh.rpcAuth.Login(newData.Login, newData.Password, "")
+	_, value, err := uh.rpcAuth.Login(newData.Login, oldPassword, "")
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err

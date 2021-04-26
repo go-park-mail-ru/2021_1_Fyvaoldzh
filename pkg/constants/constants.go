@@ -1,6 +1,7 @@
 package constants
 
 const (
+	Localhost          = "127.0.0.1"
 	CookieLength       = uint8(32)
 	SessionCookieName  = "SID"
 	CSRFHeader         = "header:X-XSRF-TOKEN"

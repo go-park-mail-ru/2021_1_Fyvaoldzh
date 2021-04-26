@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo"
 	"google.golang.org/grpc"
 	"kudago/application/microservices/auth/proto"
+	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"net/http"
 )
@@ -21,7 +22,7 @@ type AuthClient struct {
 
 func NewAuthClient(port string, logger logger.Logger) (*AuthClient, error) {
 	gConn, err := grpc.Dial(
-		"127.0.0.1"+port,
+		constants.Localhost+port,
 		grpc.WithInsecure(),
 	)
 	if err != nil {
@@ -38,9 +39,15 @@ func (a *AuthClient) Login(login string, password string, value string) (uint64,
 		Value: value,
 	}
 
-	flag, _, err := a.Check(value)
-	if flag {
-		return 0, "", echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+	if value != "" {
+		flag, _, err := a.Check(value)
+		if err != nil {
+			return 0, "", err
+		}
+		if flag {
+			return 0, "", echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
+		}
+
 	}
 
 	answer, err := a.client.Login(context.Background(), usr)
