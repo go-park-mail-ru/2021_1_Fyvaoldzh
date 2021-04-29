@@ -53,9 +53,26 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 		return models.Dialogue{}, err
 	}
 
-	return models.ConvertDialogue(dialgueSQL, uid), nil
+	return models.ConvertDialogue(dialogueSQL, uid), nil
 }
 
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
+	isInterlocutor, err := c.repo.IsInterlocutor(uid, id)
+	if err != nil {
+		c.logger.Warn(err)
+		return err
+	}
+	if isInterlocutor {
+		err := c.repo.DeleteDialogue(id)
+		if err != nil {
+			c.logger.Warn(err)
+			return err
+		}
+		return nil
+	}
+	return errors.New("user is not interlocutor")
+}
+
+func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 
 }
