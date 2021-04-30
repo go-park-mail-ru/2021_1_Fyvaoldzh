@@ -32,6 +32,12 @@ type Dialogue struct {
 	DialogMessages Messages    `json:"messages"`
 }
 
+type EasyDialogueMessageSQL struct {
+	ID    uint64
+	User1 uint64
+	User2 uint64
+}
+
 type DialogueSQL struct {
 	ID             uint64
 	User1          uint64
@@ -82,26 +88,4 @@ func ConvertMessage(old MessageSQL, uid uint64) Message {
 		newMessage.FromMe = false
 	}
 	return newMessage
-}
-
-func ConvertDialogueCard(old DialogueCardSQL, uid uint64) DialogueCard {
-	var newDialogueCard DialogueCard
-	newDialogueCard.ID = old.ID
-	newDialogueCard.LastMessage = ConvertMessage(old.LastMessage, uid)
-	newDialogueCard.Interlocutor = SomeFuncToFindUserByID(old.Uid)
-	return newDialogueCard
-}
-
-func ConvertDialogue(old DialogueSQL, uid uint64) Dialogue {
-	var newDialogue Dialogue
-	newDialogue.ID = old.ID
-	for i := range old.DialogMessages {
-		newDialogue.DialogMessages = append(newDialogue.DialogMessages, ConvertMessage(old.DialogMessages[i], uid))
-	}
-	if old.User1 == uid {
-		newDialogue.Interlocutor = SomeFuncToFindUserByID(old.User2)
-	} else {
-		newDialogue.Interlocutor = SomeFuncToFindUserByID(old.User1)
-	}
-	return newDialogue
 }

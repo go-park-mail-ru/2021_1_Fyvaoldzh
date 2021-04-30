@@ -13,4 +13,5 @@ type Repository interface {
 	IsCorrect(user *models.User) (*models.User, error)
 	IsExistingUserId(userId uint64) error
 	GetUsers(page int) (models.UsersOnEvent, error)
+	GetUserByID(id uint64) (models.UserOnEvent, error)
 }

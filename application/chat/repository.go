@@ -2,20 +2,18 @@ package chat
 
 import (
 	"kudago/application/models"
-	"time"
 )
 
 type Repository interface {
-	AddEvent(newEvent *models.Event) error
-	GetAllEvents(now time.Time, page int) ([]models.EventCardWithDateSQL, error)
-	GetOneEventByID(eventId uint64) (models.EventSQL, error)
-	DeleteById(eventId uint64) error
-	GetTags(eventId uint64) (models.Tags, error)
-	UpdateEventAvatar(eventId uint64, path string) error
-	GetEventsByCategory(typeEvent string, now time.Time, page int) ([]models.EventCardWithDateSQL, error)
-	FindEvents(str string, now time.Time, page int) ([]models.EventCardWithDateSQL, error)
-	RecomendSystem(uid uint64, category string) error
-	GetPreference(uid uint64) (models.Recomend, error)
-	GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error)
-	CategorySearch(str string, category string, now time.Time, page int) ([]models.EventCardWithDateSQL, error)
+	GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error)
+	GetOneDialogue(id uint64, page int) (models.DialogueSQL, error)
+	GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL, error)
+	GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error)
+	DeleteDialogue(id uint64) error
+	SendMessage(newMessage *models.NewMessage, uid uint64) error
+	DeleteMessage(id uint64) error
+	EditMessage(id uint64) error
+	FindFollowers(str string, uid uint64) (models.UsersOnEvent, error)
+	MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error)
+	DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error)
 }

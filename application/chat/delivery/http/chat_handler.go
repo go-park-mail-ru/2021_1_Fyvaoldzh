@@ -197,7 +197,7 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.SendMessage(newMessage, uid) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.SendMessage(newMessage, uid)
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
@@ -312,13 +312,17 @@ func (ch ChatHandler) Search(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.Search(uid, uint64(id), str, page) //Должна быть проверка на то, является ли чел собеседником
+		messages, err := ch.UseCase.Search(uid, id, str, page)
 
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
 		}
 
+		if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
+			ch.Logger.LogError(c, start, requestId, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 		ch.Logger.LogInfo(c, start, requestId)
 		return nil
 	} else {
