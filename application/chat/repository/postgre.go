@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"kudago/application/event"
+	"kudago/application/chat"
 	"kudago/application/models"
-	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"net/http"
 	"time"
@@ -17,331 +16,215 @@ import (
 	"github.com/labstack/echo"
 )
 
-type EventDatabase struct {
+type ChatDatabase struct {
 	pool   *pgxpool.Pool
 	logger logger.Logger
 }
 
-func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository {
-	return &EventDatabase{pool: conn, logger: logger}
+func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
+	return &ChatDatabase{pool: conn, logger: logger}
 }
 
-func (ed EventDatabase) GetAllEvents(now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-		WHERE end_date > $1
-		ORDER BY id DESC
-		LIMIT 6 OFFSET $2`, now, (page-1)*6)
+func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
+	var dialogues models.DialogueCardsSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
+		`SELECT DISTINCT ON(d.id) d.id, d.user_1, d.user_2, m.id, m.from, m.to, m.text, m.date, m.redact, m.read
+	FROM dialogues d JOIN messages m on d.id = m.dialogue_id
+	WHERE user_1 = $1 OR user_2 = $1
+	ORDER BY date DESC
+	LIMIT 6 OFFSET $2`, uid, (page-1)*6)
 
-	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		ed.logger.Debug("no rows in method GetAllEvents")
-		return []models.EventCardWithDateSQL{}, nil
+	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
+		cd.logger.Debug("no rows in method GetAllEvents")
+		return models.DialogueCardsSQL{}, nil
 	}
 
 	if err != nil {
-		ed.logger.Warn(err)
+		cd.logger.Warn(err)
 		return nil, err
 	}
 
-	return events, nil
+	return dialogues, nil
 }
 
-func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-		WHERE category = $1 AND end_date > $2
-		ORDER BY id DESC
-		LIMIT 6 OFFSET $3`, typeEvent, now, (page-1)*6)
-
-	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		ed.logger.Debug("no rows in method GetEventsByCategory")
-		return []models.EventCardWithDateSQL{}, nil
+func (cd ChatDatabase) GetMessages(id uint64) (models.MessagesSQL, error) {
+	var messages models.MessagesSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &messages,
+		`SELECT id, from, to, text, date, redact, read FROM messages
+	WHERE dialogue_id = $1`, id)
+	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
+		cd.logger.Debug("no rows in method GetAllEvents")
+		return models.MessagesSQL{}, nil
 	}
 
 	if err != nil {
-		ed.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, err
+		cd.logger.Warn(err)
+		return nil, err
 	}
 
-	return events, nil
+	return messages, nil
 }
 
-func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error) {
-	var ev []models.EventSQL
-	err := pgxscan.Select(context.Background(), ed.pool, &ev,
-		`SELECT * FROM events WHERE id = $1`, eventId)
-
-	if errors.As(err, &pgx.ErrNoRows) || len(ev) == 0 {
-		ed.logger.Debug("no event with id " + fmt.Sprint(eventId))
-		return models.EventSQL{}, echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(eventId)+" not found"))
+//TODO убрать все это, разделить запросы на изи диалог, сообщение и уровень выше будет все собирать
+//Исправить значения на read!!!!!!!!!!!!!
+func (cd ChatDatabase) GetOneDialogue(id uint64, page int) (models.DialogueSQL, error) {
+	//мб здесь будет ошибка, надо будет создавать массив, проверять первый
+	var dialogue models.DialogueSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogue,
+		`SELECT id, user_1, user_2 FROM dialogues
+	WHERE id = $1`, id)
+	if errors.As(err, &pgx.ErrNoRows) {
+		cd.logger.Debug("no rows in method GetEventsByCategory")
+		return models.DialogueSQL{}, nil
 	}
 
 	if err != nil {
-		ed.logger.Warn(err)
-		return models.EventSQL{}, err
+		cd.logger.Warn(err)
+		return models.DialogueSQL{}, nil
 	}
-
-	return ev[0], nil
+	//надо бы это вынести на уровень выше
+	dialogue.DialogMessages, err = cd.GetMessages(id)
+	if err != nil {
+		cd.logger.Warn(err)
+		return models.DialogueSQL{}, nil
+	}
+	return dialogue, nil
 }
 
-func (ed EventDatabase) GetTags(eventId uint64) (models.Tags, error) {
-	var parameters models.Tags
-	err := pgxscan.Select(context.Background(), ed.pool, &parameters,
-		`SELECT t.id AS id, t.name AS name
-		FROM tags t
-		JOIN event_tag e on e.tag_id = t.id
-        WHERE e.event_id = $1`, eventId)
-
-	if errors.As(err, &pgx.ErrNoRows) || len(parameters) == 0 {
-		ed.logger.Debug("no rows in method GetTags")
-		return models.Tags{}, nil
+func (cd ChatDatabase) GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL, error) {
+	var dialogue models.EasyDialogueMessageSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogue,
+		`SELECT id, user_1, user_2 FROM dialogues
+	WHERE id = $1`, id)
+	if errors.As(err, &pgx.ErrNoRows) {
+		cd.logger.Debug("no rows in method GetEventsByCategory")
+		return models.EasyDialogueMessageSQL{}, nil
 	}
 
 	if err != nil {
-		ed.logger.Warn(err)
-		return models.Tags{}, err
+		cd.logger.Warn(err)
+		return models.EasyDialogueMessageSQL{}, nil
 	}
-
-	return parameters, err
+	return dialogue, nil
 }
 
-func (ed EventDatabase) AddEvent(newEvent *models.Event) error {
-	_, err := ed.pool.Exec(context.Background(),
-		`INSERT INTO events (title, place, subway, street, description, category, start_date, end_date, image) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		newEvent.Title, newEvent.Place, newEvent.Subway, newEvent.Street, newEvent.Description,
-		newEvent.Category, newEvent.StartDate, newEvent.EndDate, newEvent.Image)
-	if err != nil {
-		ed.logger.Warn(err)
-		return err
+func (cd ChatDatabase) GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error) {
+	var message models.EasyDialogueMessageSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &message,
+		`SELECT id, from, to FROM messages
+	WHERE id = $1`, id)
+	if errors.As(err, &pgx.ErrNoRows) {
+		cd.logger.Debug("no rows in method GetEventsByCategory")
+		return models.EasyDialogueMessageSQL{}, nil
 	}
 
-	return nil
+	if err != nil {
+		cd.logger.Warn(err)
+		return models.EasyDialogueMessageSQL{}, nil
+	}
+	return message, nil
 }
 
-func (ed EventDatabase) DeleteById(eventId uint64) error {
-	resp, err := ed.pool.Exec(context.Background(),
-		`DELETE FROM events WHERE id = $1`, eventId)
+func (cd ChatDatabase) DeleteDialogue(id uint64) error {
+	resp, err := cd.pool.Exec(context.Background(),
+		`DELETE FROM dialogues WHERE id = $1`, id)
 
 	if err != nil {
-		ed.logger.Warn(err)
+		cd.logger.Warn(err)
 		return err
 	}
 
 	if resp.RowsAffected() == 0 {
-		return echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(eventId)+" not found"))
+		return echo.NewHTTPError(http.StatusNotFound, errors.New("Dialogue with id "+fmt.Sprint(id)+" not found"))
 	}
 
 	return nil
 }
 
-func (ed EventDatabase) UpdateEventAvatar(eventId uint64, path string) error {
-	_, err := ed.pool.Exec(context.Background(),
-		`UPDATE events SET image = $1 WHERE id = $2`, path, eventId)
+func (cd ChatDatabase) DeleteMessage(id uint64) error {
+	resp, err := cd.pool.Exec(context.Background(),
+		`DELETE FROM messages WHERE id = $1`, id)
 
 	if err != nil {
-		ed.logger.Warn(err)
+		cd.logger.Warn(err)
+		return err
+	}
+
+	if resp.RowsAffected() == 0 {
+		return echo.NewHTTPError(http.StatusNotFound, errors.New("Message with id "+fmt.Sprint(id)+" not found"))
+	}
+
+	return nil
+}
+
+//Подумать насчет проверки валидности переданных значений(чтоб все значения были номральные), ПЛЮС Проверить существует ли диалог с таким id
+func (cd ChatDatabase) SendMessage(newMessage *models.NewMessage, uid uint64, now time.Time) error {
+	// messages (id, id_dialogue, from, to, text, date, redact, read)
+	_, err := cd.pool.Exec(context.Background(),
+		`INSERT INTO messages 
+		VALUES (default, $1, $2, $3, $4, $5, default, default)`,
+		newMessage.DialogueID, uid, newMessage.To, newMessage.Text, now)
+	if err != nil {
+		cd.logger.Warn(err)
 		return err
 	}
 
 	return nil
 }
 
-func (ed EventDatabase) FindEvents(str string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT ON(e.id) e.id, e.title, e.place,
-		e.description, e.start_date, e.end_date FROM
-        events e JOIN event_tag et on e.id = et.event_id
-        JOIN tags t on et.tag_id = t.id
-		WHERE (LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
-		OR LOWER(category) LIKE '%' || $1 || '%' OR LOWER(t.name) LIKE '%' || $1 || '%')
-		AND end_date > $2
-		ORDER BY e.id DESC
-		LIMIT 6 OFFSET $3`, str, now, (page-1)*6)
-
-	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		ed.logger.Debug("no rows in method FindEvents with string " + str)
-		return []models.EventCardWithDateSQL{}, nil
-	}
+func (cd ChatDatabase) EditMessage(id uint64, text string, now time.Time) error {
+	_, err := cd.pool.Exec(context.Background(),
+		`UPDATE messages SET (text = $1, date = $2) WHERE id = $3`, text, now, id)
 
 	if err != nil {
-		ed.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, err
-	}
-
-	return events, nil
-}
-
-func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
-
-	_, err := ed.pool.Exec(context.Background(),
-		`UPDATE user_preference SET `+constants.Category[category]+`=`+constants.Category[category]+`+1 `+`WHERE user_id = $1`, uid)
-
-	if errors.As(err, &pgx.ErrNoRows) {
-		ed.logger.Debug("no rows in method RecomendSystem with id " + fmt.Sprint(uid))
-		return err
-	}
-
-	if err != nil {
-		ed.logger.Warn(err)
+		cd.logger.Warn(err)
 		return err
 	}
 
 	return nil
 }
 
-func (ed EventDatabase) GetSixPreference(recomend models.Recomend) models.Recomend {
-	var sixPreference models.Recomend
-	recomendSumm := recomend.Concert + recomend.Movie + recomend.Show
-	if recomendSumm == 0 {
-		sixPreference.Show = 2
-		sixPreference.Movie = sixPreference.Show
-		sixPreference.Concert = sixPreference.Movie
-		return sixPreference
+func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error) {
+	var messages models.MessagesSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &messages,
+		`SELECT DISTINCT ON(id) id, from, to, text,
+		date, redact, read FROM messages
+		WHERE (LOWER(text) LIKE '%' || $1 || '%'
+		ORDER BY date DESC
+		LIMIT 6 OFFSET $2`, str, (page-1)*6)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
+		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
+		return models.MessagesSQL{}, nil
 	}
-	concertProcent := float64(recomend.Concert) / float64(recomendSumm)
-	showProcent := float64(recomend.Show) / float64(recomendSumm)
-	sixPreference.Concert = uint64(concertProcent * 6)
-	if sixPreference.Concert == 0 {
-		sixPreference.Concert = 1
+
+	if err != nil {
+		cd.logger.Warn(err)
+		return models.MessagesSQL{}, err
 	}
-	if sixPreference.Concert > 4 {
-		sixPreference.Concert = 4
-	}
-	sixPreference.Show = uint64(showProcent * 6)
-	if sixPreference.Show == 0 {
-		sixPreference.Show = 1
-	}
-	if sixPreference.Show > 4 {
-		sixPreference.Show = 4
-	}
-	sixPreference.Movie = 6 - sixPreference.Concert - sixPreference.Show
-	return sixPreference
+
+	return messages, nil
 }
 
-func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
-	var recomend []models.Recomend
-	err := pgxscan.Select(context.Background(), ed.pool, &recomend,
-		`SELECT show, movie, concert
-		FROM user_preference
-		WHERE user_id = $1`, uid)
+func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error) {
+	var messages models.MessagesSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &messages,
+		`SELECT DISTINCT ON(id) id, from, to, text,
+		date, redact, read FROM messages
+		WHERE (LOWER(text) LIKE '%' || $1 || '%'
+		AND dialogue_id = $2
+		ORDER BY date DESC
+		LIMIT 6 OFFSET $3`, str, id, (page-1)*6)
 
-	if errors.As(err, &pgx.ErrNoRows) {
-		ed.logger.Debug("no rows in method GetPreference with id " + fmt.Sprint(uid))
-		return models.Recomend{}, err
+	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
+		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
+		return models.MessagesSQL{}, nil
 	}
 
 	if err != nil {
-		ed.logger.Warn(err)
-		return models.Recomend{}, err
+		cd.logger.Warn(err)
+		return models.MessagesSQL{}, err
 	}
-	//return recomend[0], nil
-	return ed.GetSixPreference(recomend[0]), nil
+
+	return messages, nil
 }
-
-func (ed EventDatabase) CategorySearch(str string, category string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT DISTINCT ON(e.id) e.id, e.title, e.place,
-		e.description, e.start_date, e.end_date FROM
-        events e JOIN event_tag et on e.id = et.event_id
-        JOIN tags t on et.tag_id = t.id
-		WHERE (LOWER(title) LIKE '%' || $1 || '%' OR LOWER(description) LIKE '%' || $1 || '%'
-		OR LOWER(t.name) LIKE '%' || $1 || '%') AND e.category = $2
-		AND end_date > $3
-		ORDER BY e.id DESC
-		LIMIT 6 OFFSET $4`, str, category, now, (page-1)*6)
-
-	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
-		ed.logger.Debug("no rows in method CategorySearch with searchstring " + str)
-		return []models.EventCardWithDateSQL{}, nil
-	}
-
-	if err != nil {
-		ed.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, err
-	}
-
-	return events, nil
-}
-
-func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	recomend, err := ed.GetPreference(uid)
-	if err != nil {
-		ed.logger.Debug(string(err.Error()))
-		return ed.GetAllEvents(now, 1)
-	}
-	var eventsConcert, eventsShow, eventsMovie []models.EventCardWithDateSQL
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsConcert,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = 'Музей' AND end_date > $1
-			ORDER BY id DESC
-			LIMIT $2 OFFSET $3`, now, recomend.Concert, (page-1)*int(recomend.Concert))
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsShow,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = 'Выставка' AND end_date > $1
-			ORDER BY id DESC
-			LIMIT $2 OFFSET $3`, now, recomend.Show, (page-1)*int(recomend.Show))
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsMovie,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = 'Кино' AND end_date > $1
-			ORDER BY id DESC
-			LIMIT $2 OFFSET $3`, now, recomend.Movie, (page-1)*int(recomend.Movie))
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-	eventsConcert = append(eventsConcert, eventsShow...)
-	eventsConcert = append(eventsConcert, eventsMovie...)
-
-	return eventsConcert, nil
-}
-
-/*func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	recomend, err := ed.GetPreference(uid)
-	if err != nil || (recomend.Concert == recomend.Movie && recomend.Movie == recomend.Show && recomend.Show == 0) {
-		ed.logger.Debug(string(err.Error()))
-		return ed.GetAllEvents(now, 1)
-	}
-	var eventsPrefer []models.EventCardWithDateSQL
-	var param string
-	if recomend.Concert >= recomend.Movie && recomend.Concert >= recomend.Show {
-		param = "Музей"
-	}
-	if recomend.Movie >= recomend.Concert && recomend.Movie >= recomend.Show {
-		param = "Кино"
-	}
-	if recomend.Show >= recomend.Concert && recomend.Show >= recomend.Movie {
-		param = "Выставка"
-	}
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsPrefer,
-		`SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category = $1 AND end_date > $2
-			UNION
-			SELECT id, title, description, image, start_date, end_date FROM events
-			WHERE category != $1 AND end_date > $2
-			ORDER BY id DESC
-			LIMIT 6 OFFSET $3`, param, now, (page-1)*6)
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-
-	if len(eventsPrefer) == 0 {
-		ed.logger.Debug("no rows in method GetRecomended")
-		return []models.EventCardWithDateSQL{}, nil
-	}
-
-	return eventsPrefer, nil
-}*/

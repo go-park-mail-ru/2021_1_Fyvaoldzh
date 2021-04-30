@@ -9,6 +9,7 @@ import (
 	"kudago/application/user"
 	"kudago/pkg/logger"
 	"strings"
+	"time"
 )
 
 type Chat struct {
@@ -27,7 +28,11 @@ func (c Chat) ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (model
 	newDialogueCard.ID = old.ID
 	newDialogueCard.LastMessage = models.ConvertMessage(old.LastMessage, uid)
 	var err error
-	newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.Uid)
+	if old.User_1 == uid {
+		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User_2)
+	} else {
+		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User_1)
+	}
 	if err != nil {
 		c.logger.Warn(err)
 		return models.DialogueCard{}, err
@@ -44,16 +49,12 @@ func (c Chat) ConvertDialogue(old models.DialogueSQL, uid uint64) (models.Dialog
 	var err error
 	if old.User1 == uid {
 		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(old.User2)
-		if err != nil {
-			c.logger.Warn(err)
-			return models.Dialogue{}, err
-		}
 	} else {
 		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(old.User1)
-		if err != nil {
-			c.logger.Warn(err)
-			return models.Dialogue{}, err
-		}
+	}
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Dialogue{}, err
 	}
 	return newDialogue, nil
 }
@@ -151,7 +152,7 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 	if err != nil {
 		return err
 	}
-	err = c.repo.SendMessage(newMessage, uid)
+	err = c.repo.SendMessage(newMessage, uid, time.Now())
 	if err != nil {
 		c.logger.Warn(err)
 		return err
@@ -184,7 +185,7 @@ func (c Chat) EditMessage(uid uint64, id uint64, newMessage *models.NewMessage) 
 		return err
 	}
 	if isInterlocutor {
-		err := c.repo.EditMessage(id)
+		err := c.repo.EditMessage(id, newMessage.Text, time.Now())
 		if err != nil {
 			c.logger.Warn(err)
 			return err
