@@ -28,7 +28,7 @@ func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository 
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	var dialogues models.DialogueCardsSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
-		`SELECT DISTINCT ON(d.id) d.id, d.user_1, d.user_2, m.id, m.from, m.to, m.text, m.date, m.redact, m.read
+		`SELECT DISTINCT ON(d.id) d.id, d.user_1, d.user_2, m.id, m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
 	FROM dialogues d JOIN messages m on d.id = m.dialogue_id
 	WHERE user_1 = $1 OR user_2 = $1
 	ORDER BY date DESC
@@ -50,7 +50,7 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 func (cd ChatDatabase) GetMessages(id uint64) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT id, from, to, text, date, redact, read FROM messages
+		`SELECT id, mes_from, mes_to, text, date, redact, read FROM messages
 	WHERE dialogue_id = $1`, id)
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method GetAllEvents")
@@ -111,7 +111,7 @@ func (cd ChatDatabase) GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL
 func (cd ChatDatabase) GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error) {
 	var message models.EasyDialogueMessageSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &message,
-		`SELECT id, from, to FROM messages
+		`SELECT id, mes_from, mes_to FROM messages
 	WHERE id = $1`, id)
 	if errors.As(err, &pgx.ErrNoRows) {
 		cd.logger.Debug("no rows in method GetEventsByCategory")
@@ -157,9 +157,10 @@ func (cd ChatDatabase) DeleteMessage(id uint64) error {
 	return nil
 }
 
+//На создание нового диалога!
 //Подумать насчет проверки валидности переданных значений(чтоб все значения были номральные), ПЛЮС Проверить существует ли диалог с таким id
 func (cd ChatDatabase) SendMessage(newMessage *models.NewMessage, uid uint64, now time.Time) error {
-	// messages (id, id_dialogue, from, to, text, date, redact, read)
+	// messages (id, id_dialogue, mes_from, mes_to, text, date, redact, read)
 	_, err := cd.pool.Exec(context.Background(),
 		`INSERT INTO messages 
 		VALUES (default, $1, $2, $3, $4, $5, default, default)`,
@@ -187,7 +188,7 @@ func (cd ChatDatabase) EditMessage(id uint64, text string, now time.Time) error 
 func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT DISTINCT ON(id) id, from, to, text,
+		`SELECT DISTINCT ON(id) id, mes_from, mes_to, text,
 		date, redact, read FROM messages
 		WHERE (LOWER(text) LIKE '%' || $1 || '%'
 		ORDER BY date DESC
@@ -209,7 +210,7 @@ func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.
 func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT DISTINCT ON(id) id, from, to, text,
+		`SELECT DISTINCT ON(id) id, mes_from, mes_to, text,
 		date, redact, read FROM messages
 		WHERE (LOWER(text) LIKE '%' || $1 || '%'
 		AND dialogue_id = $2
