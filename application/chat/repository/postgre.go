@@ -21,7 +21,7 @@ type ChatDatabase struct {
 	logger logger.Logger
 }
 
-func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
+func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
 	return &ChatDatabase{pool: conn, logger: logger}
 }
 
@@ -159,12 +159,12 @@ func (cd ChatDatabase) DeleteMessage(id uint64) error {
 
 //На создание нового диалога!
 //Подумать насчет проверки валидности переданных значений(чтоб все значения были номральные), ПЛЮС Проверить существует ли диалог с таким id
-func (cd ChatDatabase) SendMessage(newMessage *models.NewMessage, uid uint64, now time.Time) error {
+func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid uint64, now time.Time) error {
 	// messages (id, id_dialogue, mes_from, mes_to, text, date, redact, read)
 	_, err := cd.pool.Exec(context.Background(),
 		`INSERT INTO messages 
 		VALUES (default, $1, $2, $3, $4, $5, default, default)`,
-		newMessage.DialogueID, uid, newMessage.To, newMessage.Text, now)
+		id, uid, newMessage.To, newMessage.Text, now)
 	if err != nil {
 		cd.logger.Warn(err)
 		return err
@@ -228,4 +228,54 @@ func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string,
 	}
 
 	return messages, nil
+}
+
+/*func (cd ChatDatabase) CheckDialogue(userId uint64) error {
+	_, err := ud.pool.Query(context.Background(),
+		`SELECT id FROM users WHERE id = $1`, userId)
+	if err == sql.ErrNoRows {
+		ud.logger.Debug("no rows in method IsExistingUser")
+		return echo.NewHTTPError(http.StatusBadRequest, errors.New("user does not exist"))
+	}
+	if err != nil {
+		ud.logger.Warn(err)
+		return err
+	}
+
+	return nil
+}*/
+
+func (cd ChatDatabase) CheckDialogue(uid1 uint64, uid2 uint64) (bool, uint64, error) {
+	var id []uint64
+	err := pgxscan.Select(context.Background(), cd.pool, &id,
+		`SELECT id FROM dialogues WHERE 
+		(user_1 = $1 AND user_2 = $2) OR (user_1 = $2 AND user_2 = $1)`, uid1, uid2)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(id) == 0 {
+		return false, 0, nil
+	}
+	if err != nil {
+		cd.logger.Warn(err)
+		return false, 0, err
+	}
+	return true, id[0], nil
+}
+
+//Как тут сразу вернуть созданный id?
+func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
+	_, err := cd.pool.Exec(context.Background(),
+		`INSERT INTO dialogues 
+		VALUES (default, $1, $2)`,
+		uid1, uid2)
+	if err != nil {
+		cd.logger.Warn(err)
+		return 0, err
+	}
+	_, id, err := cd.CheckDialogue(uid1, uid2)
+	if err != nil {
+		cd.logger.Warn(err)
+		return 0, err
+	}
+
+	return id, nil
 }

@@ -152,7 +152,19 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 	if err != nil {
 		return err
 	}
-	err = c.repo.SendMessage(newMessage, uid, time.Now())
+
+	isDialogue, id, err := c.repo.CheckDialogue(uid, newMessage.To)
+	if err != nil {
+		return err
+	}
+	if !isDialogue {
+		id, err = c.repo.NewDialogue(uid, newMessage.To)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = c.repo.SendMessage(id, newMessage, uid, time.Now())
 	if err != nil {
 		c.logger.Warn(err)
 		return err

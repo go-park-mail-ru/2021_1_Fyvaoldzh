@@ -3,9 +3,8 @@ package models
 import "time"
 
 type NewMessage struct {
-	DialogueID uint64 `json:"dialogueID"`
-	To         uint64 `json:"to"`
-	Text       string `json:"text"`
+	To   uint64 `json:"to"`
+	Text string `json:"text"`
 }
 
 type Message struct {

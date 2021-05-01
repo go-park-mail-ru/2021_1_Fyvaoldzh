@@ -32,9 +32,9 @@ func CreateChatHandler(e *echo.Echo, uc chat.UseCase, sm infrastructure.SessionT
 	//TODO групповой чат
 	e.GET("/api/v1/dialogues", chatHandler.GetDialogues)
 	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue)
-	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue) //Удаляем диалог для обеих сторон или для одной?
-	e.POST("/api/v1/send/:id", chatHandler.SendMessage)
-	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage) //Удаляем сообщения для обеих сторон или для одной?
+	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue)
+	e.POST("/api/v1/send", chatHandler.SendMessage)
+	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage)
 	e.POST("/api/v1/message/:id", chatHandler.EditMessage)
 	e.GET("/api/v1/dialogues/search", chatHandler.Search) //По фолловерам тоже, если без id
 }

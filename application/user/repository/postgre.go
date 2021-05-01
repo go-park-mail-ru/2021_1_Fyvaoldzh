@@ -177,11 +177,12 @@ func (ud UserDatabase) GetUsers(page int) (models.UsersOnEvent, error) {
 }
 
 func (ud UserDatabase) GetUserByID(id uint64) (models.UserOnEvent, error) {
-	var user models.UserOnEvent
-	err := pgxscan.Select(context.Background(), ud.pool, &user,
+	var users models.UsersOnEvent
+	err := pgxscan.Select(context.Background(), ud.pool, &users,
 		`SELECT id, name, avatar
 		FROM users
 		WHERE id = $1`, id)
+
 	if errors.As(err, &sql.ErrNoRows) {
 		err := errors.New("no user with this id")
 		ud.logger.Warn(err)
@@ -192,5 +193,5 @@ func (ud UserDatabase) GetUserByID(id uint64) (models.UserOnEvent, error) {
 		return models.UserOnEvent{}, err
 	}
 
-	return user, nil
+	return users[0], nil
 }

@@ -2,6 +2,9 @@ package server
 
 import (
 	"context"
+	chhttp "kudago/application/chat/delivery/http"
+	chrepository "kudago/application/chat/repository"
+	chusecase "kudago/application/chat/usecase"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -61,10 +64,12 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 	userRep := repository.NewUserDatabase(pool, logger)
 	eventRep := erepository.NewEventDatabase(pool, logger)
 	subRep := srepository.NewSubscriptionDatabase(pool, logger)
+	chatRep := chrepository.NewChatDatabase(pool, logger)
 
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
 	subUC := susecase.NewSubscription(subRep, logger)
+	chatUC := chusecase.NewChat(chatRep, subRep, userRep, logger)
 
 	sm := tarantool2.NewSessionManager(conn)
 
@@ -73,6 +78,7 @@ func NewServer(l *zap.SugaredLogger) *echo.Echo {
 	http.CreateUserHandler(e, userUC, sm, sanitizer, logger)
 	shttp.CreateSubscriptionsHandler(e, subUC, sm, logger)
 	ehttp.CreateEventHandler(e, eventUC, sm, sanitizer, logger)
+	chhttp.CreateChatHandler(e, chatUC, sm, sanitizer, logger)
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup: constants.CSRFHeader,
