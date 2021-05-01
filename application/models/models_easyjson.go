@@ -2743,8 +2743,22 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels29(in *jlexer.Lexer, out *Dial
 			out.User_1 = uint64(in.Uint64())
 		case "User_2":
 			out.User_2 = uint64(in.Uint64())
-		case "LastMessage":
-			(out.LastMessage).UnmarshalEasyJSON(in)
+		case "ID_mes":
+			out.ID_mes = uint64(in.Uint64())
+		case "From":
+			out.From = uint64(in.Uint64())
+		case "To":
+			out.To = uint64(in.Uint64())
+		case "Text":
+			out.Text = string(in.String())
+		case "Date":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Date).UnmarshalJSON(data))
+			}
+		case "Redact":
+			out.Redact = bool(in.Bool())
+		case "Read":
+			out.Read = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -2775,9 +2789,39 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels29(out *jwriter.Writer, in Dia
 		out.Uint64(uint64(in.User_2))
 	}
 	{
-		const prefix string = ",\"LastMessage\":"
+		const prefix string = ",\"ID_mes\":"
 		out.RawString(prefix)
-		(in.LastMessage).MarshalEasyJSON(out)
+		out.Uint64(uint64(in.ID_mes))
+	}
+	{
+		const prefix string = ",\"From\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.From))
+	}
+	{
+		const prefix string = ",\"To\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.To))
+	}
+	{
+		const prefix string = ",\"Text\":"
+		out.RawString(prefix)
+		out.String(string(in.Text))
+	}
+	{
+		const prefix string = ",\"Date\":"
+		out.RawString(prefix)
+		out.Raw((in.Date).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"Redact\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.Redact))
+	}
+	{
+		const prefix string = ",\"Read\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.Read))
 	}
 	out.RawByte('}')
 }

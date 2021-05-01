@@ -52,10 +52,16 @@ type DialogueCard struct {
 }
 
 type DialogueCardSQL struct {
-	ID          uint64
-	User_1      uint64
-	User_2      uint64
-	LastMessage MessageSQL
+	ID     uint64
+	User_1 uint64
+	User_2 uint64
+	ID_mes uint64
+	From   uint64
+	To     uint64
+	Text   string
+	Date   time.Time
+	Redact bool
+	Read   bool
 }
 
 //easyjson:json
@@ -77,6 +83,21 @@ type DialogueCardsSQL []DialogueCardSQL
 type DialoguesSQL []DialogueSQL
 
 func ConvertMessage(old MessageSQL, uid uint64) Message {
+	var newMessage Message
+	newMessage.ID = old.ID
+	newMessage.Text = old.Text
+	newMessage.Redact = old.Redact
+	newMessage.Read = old.Read
+	newMessage.Date = old.Date.String()
+	if old.From == uid {
+		newMessage.FromMe = true
+	} else {
+		newMessage.FromMe = false
+	}
+	return newMessage
+}
+
+func ConvertMessageFromCard(old DialogueCardSQL, uid uint64) Message {
 	var newMessage Message
 	newMessage.ID = old.ID
 	newMessage.Text = old.Text

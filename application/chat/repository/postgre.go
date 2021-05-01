@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 )
 
 type ChatDatabase struct {
@@ -27,12 +28,15 @@ func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
 
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	var dialogues models.DialogueCardsSQL
+	log.Info(uid)
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
-		`SELECT DISTINCT ON(d.id) d.id, d.user_1, d.user_2, m.id, m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
-	FROM dialogues d JOIN messages m on d.id = m.dialogue_id
+		`SELECT DISTINCT d.id as ID, d.user_1 as User_1, d.user_2 as User_2, m.id as ID_mes,
+		m.mes_from as From, m.mes_to as To, m.text as Text, m.date as Date, m.redact as Redact, m.read as Read
+	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
 	WHERE user_1 = $1 OR user_2 = $1
 	ORDER BY date DESC
 	LIMIT 6 OFFSET $2`, uid, (page-1)*6)
+	log.Info(dialogues)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
 		cd.logger.Debug("no rows in method GetAllEvents")
@@ -50,8 +54,9 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 func (cd ChatDatabase) GetMessages(id uint64) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT id, mes_from, mes_to, text, date, redact, read FROM messages
-	WHERE dialogue_id = $1`, id)
+		`SELECT id as ID, mes_from as From, mes_to as To, text as Text,
+		date as Date, redact as Redact, read as Read FROM messages
+	WHERE id_dialogue = $1`, id)
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method GetAllEvents")
 		return models.MessagesSQL{}, nil
@@ -65,37 +70,12 @@ func (cd ChatDatabase) GetMessages(id uint64) (models.MessagesSQL, error) {
 	return messages, nil
 }
 
-//TODO убрать все это, разделить запросы на изи диалог, сообщение и уровень выше будет все собирать
-//Исправить значения на read!!!!!!!!!!!!!
-func (cd ChatDatabase) GetOneDialogue(id uint64, page int) (models.DialogueSQL, error) {
-	//мб здесь будет ошибка, надо будет создавать массив, проверять первый
-	var dialogue models.DialogueSQL
-	err := pgxscan.Select(context.Background(), cd.pool, &dialogue,
-		`SELECT id, user_1, user_2 FROM dialogues
-	WHERE id = $1`, id)
-	if errors.As(err, &pgx.ErrNoRows) {
-		cd.logger.Debug("no rows in method GetEventsByCategory")
-		return models.DialogueSQL{}, nil
-	}
-
-	if err != nil {
-		cd.logger.Warn(err)
-		return models.DialogueSQL{}, nil
-	}
-	//надо бы это вынести на уровень выше
-	dialogue.DialogMessages, err = cd.GetMessages(id)
-	if err != nil {
-		cd.logger.Warn(err)
-		return models.DialogueSQL{}, nil
-	}
-	return dialogue, nil
-}
-
 func (cd ChatDatabase) GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL, error) {
-	var dialogue models.EasyDialogueMessageSQL
+	var dialogue []models.EasyDialogueMessageSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogue,
-		`SELECT id, user_1, user_2 FROM dialogues
+		`SELECT id as ID, user_1 as User1, user_2 as User2 FROM dialogues
 	WHERE id = $1`, id)
+
 	if errors.As(err, &pgx.ErrNoRows) {
 		cd.logger.Debug("no rows in method GetEventsByCategory")
 		return models.EasyDialogueMessageSQL{}, nil
@@ -105,11 +85,12 @@ func (cd ChatDatabase) GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL
 		cd.logger.Warn(err)
 		return models.EasyDialogueMessageSQL{}, nil
 	}
-	return dialogue, nil
+	return dialogue[0], nil
 }
 
+//Исправить значения на read
 func (cd ChatDatabase) GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error) {
-	var message models.EasyDialogueMessageSQL
+	var message []models.EasyDialogueMessageSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &message,
 		`SELECT id, mes_from, mes_to FROM messages
 	WHERE id = $1`, id)
@@ -122,7 +103,7 @@ func (cd ChatDatabase) GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL,
 		cd.logger.Warn(err)
 		return models.EasyDialogueMessageSQL{}, nil
 	}
-	return message, nil
+	return message[0], nil
 }
 
 func (cd ChatDatabase) DeleteDialogue(id uint64) error {
@@ -157,8 +138,7 @@ func (cd ChatDatabase) DeleteMessage(id uint64) error {
 	return nil
 }
 
-//На создание нового диалога!
-//Подумать насчет проверки валидности переданных значений(чтоб все значения были номральные), ПЛЮС Проверить существует ли диалог с таким id
+//Подумать насчет проверки валидности переданных значений(чтоб все значения были номральные)
 func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid uint64, now time.Time) error {
 	// messages (id, id_dialogue, mes_from, mes_to, text, date, redact, read)
 	_, err := cd.pool.Exec(context.Background(),

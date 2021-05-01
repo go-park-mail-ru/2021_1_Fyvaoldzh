@@ -26,7 +26,7 @@ func NewChat(c chat.Repository, repoSubscription subscription.Repository, repoUs
 func (c Chat) ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (models.DialogueCard, error) {
 	var newDialogueCard models.DialogueCard
 	newDialogueCard.ID = old.ID
-	newDialogueCard.LastMessage = models.ConvertMessage(old.LastMessage, uid)
+	newDialogueCard.LastMessage = models.ConvertMessageFromCard(old, uid)
 	var err error
 	if old.User_1 == uid {
 		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User_2)
@@ -85,25 +85,38 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 }
 
 func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error) {
-	dialogueSQL, err := c.repo.GetOneDialogue(id, page)
+	dialogue, err := c.repo.GetEasyDialogue(id)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
 
-	if dialogueSQL.User1 != uid && dialogueSQL.User2 != uid {
+	if dialogue.User1 != uid && dialogue.User2 != uid {
 		err := errors.New("you are not interlocutor of this dialogue")
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
 
-	dialogue, err := c.ConvertDialogue(dialogueSQL, uid)
+	messages, err := c.repo.GetMessages(id)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
 
-	return dialogue, nil
+	//TODO : Вынести в конверт эту штуку
+	var dialogueSQL models.DialogueSQL
+	dialogueSQL.DialogMessages = messages
+	dialogueSQL.ID = dialogue.ID
+	dialogueSQL.User1 = dialogue.User1
+	dialogueSQL.User2 = dialogue.User2
+
+	resDialogue, err := c.ConvertDialogue(dialogueSQL, uid)
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Dialogue{}, err
+	}
+
+	return resDialogue, nil
 }
 
 func (c Chat) IsInterlocutorDialogue(uid uint64, id uint64) (bool, error) {

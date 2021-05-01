@@ -8,7 +8,6 @@ import (
 type Repository interface {
 	GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error)
 	GetMessages(id uint64) (models.MessagesSQL, error)
-	GetOneDialogue(id uint64, page int) (models.DialogueSQL, error)
 	GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL, error)
 	GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error)
 	DeleteDialogue(id uint64) error
