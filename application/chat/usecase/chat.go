@@ -86,6 +86,7 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
+//ОБЯЗАТЕЛЬНО помечать сообщения read
 func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error) {
 	//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
 	dialogue, err := c.repo.GetEasyDialogue(id)
