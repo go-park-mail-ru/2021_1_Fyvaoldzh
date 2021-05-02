@@ -223,7 +223,7 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.DeleteMessage(uid, uint64(id)) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.DeleteMessage(uid, uint64(id))
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
@@ -237,6 +237,7 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 	}
 }
 
+//TODO: Здесь нет проверки на то, является ли чел хозяином сообщения
 func (ch ChatHandler) EditMessage(c echo.Context) error {
 	defer c.Request().Body.Close()
 

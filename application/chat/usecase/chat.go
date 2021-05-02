@@ -210,7 +210,7 @@ func (c Chat) EditMessage(uid uint64, id uint64, newMessage *models.NewMessage) 
 		return err
 	}
 	if isInterlocutor {
-		err := c.repo.EditMessage(id, newMessage.Text, time.Now())
+		err := c.repo.EditMessage(id, newMessage.Text)
 		if err != nil {
 			c.logger.Warn(err)
 			return err

@@ -28,7 +28,6 @@ func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
 
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	var dialogues models.DialogueCardsSQL
-	log.Info(uid)
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
 		`SELECT DISTINCT d.id as ID, d.user_1 as User_1, d.user_2 as User_2, m.id as ID_mes,
 		m.mes_from as From, m.mes_to as To, m.text as Text, m.date as Date, m.redact as Redact, m.read as Read
@@ -36,7 +35,6 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 	WHERE user_1 = $1 OR user_2 = $1
 	ORDER BY date DESC
 	LIMIT 6 OFFSET $2`, uid, (page-1)*6)
-	log.Info(dialogues)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
 		cd.logger.Debug("no rows in method GetAllEvents")
@@ -92,7 +90,7 @@ func (cd ChatDatabase) GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL
 func (cd ChatDatabase) GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error) {
 	var message []models.EasyDialogueMessageSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &message,
-		`SELECT id, mes_from, mes_to FROM messages
+		`SELECT id as ID, mes_from as User1, mes_to as User2 FROM messages
 	WHERE id = $1`, id)
 	if errors.As(err, &pgx.ErrNoRows) {
 		cd.logger.Debug("no rows in method GetEventsByCategory")
@@ -153,9 +151,10 @@ func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid
 	return nil
 }
 
-func (cd ChatDatabase) EditMessage(id uint64, text string, now time.Time) error {
+//в вк показывается время отправки и (ред.), если на него навести, то будет время редактирования
+func (cd ChatDatabase) EditMessage(id uint64, text string) error {
 	_, err := cd.pool.Exec(context.Background(),
-		`UPDATE messages SET (text = $1, date = $2) WHERE id = $3`, text, now, id)
+		`UPDATE messages SET text = $1, redact = true WHERE id = $3`, text, id)
 
 	if err != nil {
 		cd.logger.Warn(err)
@@ -168,9 +167,9 @@ func (cd ChatDatabase) EditMessage(id uint64, text string, now time.Time) error 
 func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT DISTINCT ON(id) id, mes_from, mes_to, text,
-		date, redact, read FROM messages
-		WHERE (LOWER(text) LIKE '%' || $1 || '%'
+		`SELECT id as ID, mes_from as From, mes_to as To, text as Text,
+		date as Date, redact as Redact, read as Read FROM messages
+		WHERE (LOWER(text) LIKE '%' || $1 || '%')
 		ORDER BY date DESC
 		LIMIT 6 OFFSET $2`, str, (page-1)*6)
 
@@ -189,11 +188,12 @@ func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.
 
 func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
+	log.Info(uid, id, str)
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT DISTINCT ON(id) id, mes_from, mes_to, text,
-		date, redact, read FROM messages
-		WHERE (LOWER(text) LIKE '%' || $1 || '%'
-		AND dialogue_id = $2
+		`SELECT id as ID, mes_from as From, mes_to as To, text as Text,
+		date as Date, redact as Redact, read as Read FROM messages
+		WHERE (LOWER(text) LIKE '%' || $1 || '%')
+		AND id_dialogue = $2
 		ORDER BY date DESC
 		LIMIT 6 OFFSET $3`, str, id, (page-1)*6)
 
