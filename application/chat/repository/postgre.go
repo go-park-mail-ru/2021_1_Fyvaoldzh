@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
 )
 
 type ChatDatabase struct {
@@ -136,7 +135,6 @@ func (cd ChatDatabase) DeleteMessage(id uint64) error {
 	return nil
 }
 
-//Подумать насчет проверки валидности переданных значений(чтоб все значения были номральные)
 func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid uint64, now time.Time) error {
 	// messages (id, id_dialogue, mes_from, mes_to, text, date, redact, read)
 	_, err := cd.pool.Exec(context.Background(),
@@ -188,7 +186,6 @@ func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.
 
 func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
-	log.Info(uid, id, str)
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
 		`SELECT id as ID, mes_from as From, mes_to as To, text as Text,
 		date as Date, redact as Redact, read as Read FROM messages

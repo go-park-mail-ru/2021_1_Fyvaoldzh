@@ -36,7 +36,7 @@ func CreateChatHandler(e *echo.Echo, uc chat.UseCase, sm infrastructure.SessionT
 	e.POST("/api/v1/send", chatHandler.SendMessage)
 	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage)
 	e.POST("/api/v1/message/:id", chatHandler.EditMessage)
-	e.GET("/api/v1/dialogues/search", chatHandler.Search) //По фолловерам тоже, если без id
+	e.GET("/api/v1/dialogues/search", chatHandler.Search)
 }
 
 func (ch ChatHandler) GetUserID(c echo.Context) (uint64, error) {
@@ -68,6 +68,9 @@ func (ch ChatHandler) GetUserID(c echo.Context) (uint64, error) {
 	ch.Logger.LogWarn(c, start, requestId, err)
 	return 0, errors.New("user is not authorized")
 }
+
+//Есть ли возможность как-то шаблонизировать функции ниже, везде одно и то же начало, мб создать функцию, принимающую функцию
+//и в зависимости от метода кидать туда свой метод юзкейса?
 
 func (ch ChatHandler) GetDialogues(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -139,7 +142,7 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		messages, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page) //Должна быть проверка на то, является ли чел собеседником
+		messages, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
 		//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeMessages(mes)
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
@@ -170,7 +173,7 @@ func (ch ChatHandler) DeleteDialogue(c echo.Context) error {
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.DeleteDialogue(uid, uint64(id)) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.DeleteDialogue(uid, uint64(id))
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
@@ -237,26 +240,20 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 	}
 }
 
-//TODO: Здесь нет проверки на то, является ли чел хозяином сообщения
 func (ch ChatHandler) EditMessage(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	newMessage := &models.NewMessage{}
+	redactMessage := &models.RedactMessage{}
 
-	if err := easyjson.UnmarshalFromReader(c.Request().Body, newMessage); err != nil {
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, redactMessage); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.EditMessage(uid, uint64(id), newMessage) //Должна быть проверка на то, является ли чел собеседником
+		err := ch.UseCase.EditMessage(uid, redactMessage)
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
 			return err
@@ -270,6 +267,8 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 	}
 }
 
+//Пришла в голову идея не делать поиск по сообщениям и фолловерам, если id диалога не передан, а фронту кидать запрос сначала на поиск
+//по фолловерам(у Насти уже реализовано, кажется), а затем по сообщениям и отрисовывать, как им удобно, пойдет?
 func (ch ChatHandler) Search(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -295,6 +294,7 @@ func (ch ChatHandler) Search(c echo.Context) error {
 
 	var id int
 	if c.QueryParam("id") == "" {
+		//вот тут костыль прям некрасивый, нет идей, как можно пофиксить?
 		id = -1
 	} else {
 		idatoi, err := strconv.Atoi(c.QueryParam("id"))

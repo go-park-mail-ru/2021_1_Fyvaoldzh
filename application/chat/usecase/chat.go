@@ -23,6 +23,8 @@ func NewChat(c chat.Repository, repoSubscription subscription.Repository, repoUs
 	return &Chat{repo: c, repoSub: repoSubscription, repoUser: repoUser, logger: logger}
 }
 
+//Функции конвертов хотелось бы перенести в модели, но обязательно в них нужно использовать методы userRepository, как быть?
+//Просто сейчас часть конвертов тут, часть в модельках
 func (c Chat) ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (models.DialogueCard, error) {
 	var newDialogueCard models.DialogueCard
 	newDialogueCard.ID = old.ID
@@ -40,17 +42,17 @@ func (c Chat) ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (model
 	return newDialogueCard, nil
 }
 
-func (c Chat) ConvertDialogue(old models.DialogueSQL, uid uint64) (models.Dialogue, error) {
+func (c Chat) ConvertDialogue(dialogue models.EasyDialogueMessageSQL, messages models.MessagesSQL, uid uint64) (models.Dialogue, error) {
 	var newDialogue models.Dialogue
-	newDialogue.ID = old.ID
-	for i := range old.DialogMessages {
-		newDialogue.DialogMessages = append(newDialogue.DialogMessages, models.ConvertMessage(old.DialogMessages[i], uid))
+	newDialogue.ID = dialogue.ID
+	for i := range messages {
+		newDialogue.DialogMessages = append(newDialogue.DialogMessages, models.ConvertMessage(messages[i], uid))
 	}
 	var err error
-	if old.User1 == uid {
-		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(old.User2)
+	if dialogue.User1 == uid {
+		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(dialogue.User2)
 	} else {
-		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(old.User1)
+		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(dialogue.User1)
 	}
 	if err != nil {
 		c.logger.Warn(err)
@@ -85,6 +87,7 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 }
 
 func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error) {
+	//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
 	dialogue, err := c.repo.GetEasyDialogue(id)
 	if err != nil {
 		c.logger.Warn(err)
@@ -103,14 +106,7 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 		return models.Dialogue{}, err
 	}
 
-	//TODO : Вынести в конверт эту штуку
-	var dialogueSQL models.DialogueSQL
-	dialogueSQL.DialogMessages = messages
-	dialogueSQL.ID = dialogue.ID
-	dialogueSQL.User1 = dialogue.User1
-	dialogueSQL.User2 = dialogue.User2
-
-	resDialogue, err := c.ConvertDialogue(dialogueSQL, uid)
+	resDialogue, err := c.ConvertDialogue(dialogue, messages, uid)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
@@ -119,6 +115,7 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 	return resDialogue, nil
 }
 
+//Очень похожие функции, дублирование кода, мб есть смысл как-то вынести, хотя тут не уверен, что возможно
 func (c Chat) IsInterlocutorDialogue(uid uint64, id uint64) (bool, error) {
 	dialogue, err := c.repo.GetEasyDialogue(id)
 	if err != nil {
@@ -143,7 +140,20 @@ func (c Chat) IsInterlocutorMessage(uid uint64, id uint64) (bool, error) {
 	return true, nil
 }
 
+func (c Chat) IsSenderMessage(uid uint64, id uint64) (bool, error) {
+	message, err := c.repo.GetEasyMessage(id)
+	if err != nil {
+		c.logger.Warn(err)
+		return false, err
+	}
+	if uid != message.User1 {
+		return false, nil
+	}
+	return true, nil
+}
+
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
+	//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
 	isInterlocutor, err := c.IsInterlocutorDialogue(uid, id)
 	if err != nil {
 		c.logger.Warn(err)
@@ -186,6 +196,7 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 }
 
 func (c Chat) DeleteMessage(uid uint64, id uint64) error {
+	//Проверить, существует ли такое сообщение вообще, иначе падает поросто реквест еррор с 0 ошибкой
 	isInterlocutor, err := c.IsInterlocutorMessage(uid, id)
 	if err != nil {
 		c.logger.Warn(err)
@@ -202,15 +213,15 @@ func (c Chat) DeleteMessage(uid uint64, id uint64) error {
 	return errors.New("user is not interlocutor")
 }
 
-func (c Chat) EditMessage(uid uint64, id uint64, newMessage *models.NewMessage) error {
-	//нужна проверка на то, что исправляемое сообщение ИМЕННО пользователя, а не собеседника
-	isInterlocutor, err := c.IsInterlocutorMessage(uid, id)
+func (c Chat) EditMessage(uid uint64, newMessage *models.RedactMessage) error {
+	//Проверить, существует ли такое сообщение вообще, иначе падает поросто реквест еррор с 0 ошибкой
+	isInterlocutor, err := c.IsSenderMessage(uid, newMessage.ID)
 	if err != nil {
 		c.logger.Warn(err)
 		return err
 	}
 	if isInterlocutor {
-		err := c.repo.EditMessage(id, newMessage.Text)
+		err := c.repo.EditMessage(newMessage.ID, newMessage.Text)
 		if err != nil {
 			c.logger.Warn(err)
 			return err
@@ -228,14 +239,23 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 		sqlMessages, err = c.repo.MessagesSearch(uid, str, page)
 		if err != nil {
 			c.logger.Warn(err)
-			return models.Messages{}, err
+			return nil, err
 		}
 	} else {
-		//TODO: проверка на собеседника!!!
-		sqlMessages, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
+		//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
+		isInterlocutor, err := c.IsInterlocutorDialogue(uid, uint64(id))
 		if err != nil {
 			c.logger.Warn(err)
-			return models.Messages{}, err
+			return nil, err
+		}
+		if isInterlocutor {
+			sqlMessages, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
+			if err != nil {
+				c.logger.Warn(err)
+				return nil, err
+			}
+		} else {
+			return nil, errors.New("user is not interlocutor")
 		}
 	}
 	var messages models.Messages

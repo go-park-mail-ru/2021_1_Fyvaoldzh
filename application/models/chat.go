@@ -7,6 +7,11 @@ type NewMessage struct {
 	Text string `json:"text"`
 }
 
+type RedactMessage struct {
+	ID   uint64 `json:"id"`
+	Text string `json:"text"`
+}
+
 type Message struct {
 	ID     uint64 `json:"id"`
 	FromMe bool   `json:"fromMe"`
@@ -82,6 +87,7 @@ type DialogueCardsSQL []DialogueCardSQL
 //easyjson:json
 type DialoguesSQL []DialogueSQL
 
+//Возможно тут как-то объединить эти функции, что-то типа template?
 func ConvertMessage(old MessageSQL, uid uint64) Message {
 	var newMessage Message
 	newMessage.ID = old.ID
