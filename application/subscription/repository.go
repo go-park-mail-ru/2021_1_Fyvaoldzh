@@ -9,4 +9,6 @@ type Repository interface {
 	IsAddedEvent(userId uint64, eventId uint64) (bool, error)
 	GetFollowers(id uint64) ([]models.UserCardSQL, error)
 	GetSubscriptions(id uint64) ([]models.UserCardSQL, error)
+	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
+	GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error)
 }

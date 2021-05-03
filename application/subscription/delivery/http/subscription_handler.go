@@ -5,6 +5,7 @@ import (
 	"github.com/mailru/easyjson"
 	clientAuth "kudago/application/microservices/auth/client"
 	clientSub "kudago/application/microservices/subscription/client"
+	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
@@ -43,6 +44,7 @@ func CreateSubscriptionsHandler(e *echo.Echo,
 	e.DELETE("/api/v1/unsubscribe/user/:id", subscriptionHandler.Unsubscribe)
 	e.GET("/api/v1/followers/:id", subscriptionHandler.GetFollowers)
 	e.GET("/api/v1/subscriptions/:id", subscriptionHandler.GetSubscriptions)
+	e.GET("/api/v1/event/is_added/:id", subscriptionHandler.IsAdded)
 }
 
 func (sh SubscriptionHandler) Subscribe(c echo.Context) error {
@@ -249,4 +251,47 @@ func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
 	}
 
 	return err
+}
+
+
+func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	cookie, err := c.Cookie(constants.SessionCookieName)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	var userId uint64
+	var exists bool
+	exists, userId, err = sh.rpcAuth.Check(cookie.Value)
+	if err != nil {
+		sh.Logger.Warn(err)
+		return err
+	}
+	if !exists {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+	}
+
+	eventId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if eventId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	var answer models.IsAddedEvent
+	answer.IsAdded, err = sh.usecase.IsAddedEvent(userId, uint64(eventId))
+	if err != nil {
+		sh.Logger.Warn(err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
+		sh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }

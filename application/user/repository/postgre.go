@@ -177,22 +177,6 @@ func (ud UserDatabase) GetUsers(page int) ([]models.UserCardSQL, error) {
 	return users, nil
 }
 
-func (ud UserDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
-	resp, err := ud.pool.Exec(context.Background(),
-		`UPDATE user_event SET is_planning = $1 WHERE user_id = $2 AND event_id = $3`,
-		false, userId, eventId)
-	if err != nil {
-		ud.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if resp.RowsAffected() == 0 {
-		ud.logger.Warn(errors.New("event does not exist in list"))
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event does not exist in list")
-	}
-
-	return nil
-}
 
 func (ud UserDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
 	var users []uint64
@@ -210,83 +194,10 @@ func (ud UserDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
 	return users, nil
 }
 
-func (ud UserDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), ud.pool, &events,
-		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date
-		FROM events e
-		JOIN user_event ON user_id = $1
-		WHERE event_id = e.id AND is_planning = $2`, id, true)
-	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		ud.logger.Debug("got no rows in method GetPlanningEvents with id " + fmt.Sprint(id))
-		return []models.EventCardWithDateSQL{}, nil
-	}
-	if err != nil {
-		ud.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	return events, nil
-}
-
-func (ud UserDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), ud.pool, &events,
-		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date  
-		FROM events e
-		JOIN user_event ON user_id = $1
-		WHERE event_id = e.id AND is_planning = $2`, id, false)
-	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		return []models.EventCardWithDateSQL{}, nil
-	}
-	if err != nil {
-		ud.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, err
-	}
-
-	return events, nil
-}
-
-func (ud UserDatabase) GetEventFollowers(eventId uint64) (models.UsersOnEvent, error) {
-	var users models.UsersOnEvent
-	err := pgxscan.Select(context.Background(), ud.pool, &users,
-		`SELECT u.id, u.name, u.avatar
-		FROM user_event
-		JOIN users u ON u.id = user_id
-		WHERE event_id = $1`, eventId)
-	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		return models.UsersOnEvent{}, nil
-	}
-	if err != nil {
-		ud.logger.Warn(err)
-		return models.UsersOnEvent{}, err
-	}
-
-	return users, nil
-}
-
-func (ud UserDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool, error) {
-	var id uint64
-	err := ud.pool.
-		QueryRow(context.Background(),
-			`SELECT event_id FROM user_event WHERE event_id = $1 AND user_id = $2`,
-			eventId, userId).Scan(&id)
-
-	if errors.As(err, &sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		ud.logger.Warn(err)
-		return false, err
-	}
-
-	return true, nil
-}
-
 func (ud UserDatabase) FindUsers(str string, page int) ([]models.UserCardSQL, error) {
 	var users []models.UserCardSQL
 	err := pgxscan.Select(context.Background(), ud.pool, &users,
-		`SELECT id, name, avatar, birthday, city
+		`SELECT DISTINCT ON(id) id, name, avatar, birthday, city
 		FROM users
 		WHERE (LOWER(name) LIKE '%' || $1 || '%' OR LOWER(about) LIKE '%' || $1 || '%')
 		LIMIT 10 OFFSET $2`, str, (page-1)*10)

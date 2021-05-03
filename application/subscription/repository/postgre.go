@@ -128,3 +128,42 @@ func (sd SubscriptionDatabase) GetSubscriptions(id uint64) ([]models.UserCardSQL
 
 	return users, nil
 }
+
+
+func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &events,
+		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date
+		FROM events e
+		JOIN user_event ON user_id = $1
+		WHERE event_id = e.id AND is_planning = $2`, id, true)
+	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
+		sd.logger.Debug("got no rows in method GetPlanningEvents with id " + fmt.Sprint(id))
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.EventCardWithDateSQL{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return events, nil
+}
+
+func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &events,
+		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date  
+		FROM events e
+		JOIN user_event ON user_id = $1
+		WHERE event_id = e.id AND is_planning = $2`, id, false)
+	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.EventCardWithDateSQL{}, err
+	}
+
+	return events, nil
+}
+
