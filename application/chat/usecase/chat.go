@@ -91,7 +91,7 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 		return models.Dialogue{}, err
 	}
 
-	messages, err := c.repo.GetMessages(id, page)
+	messages, err := c.repo.GetMessages(dialogue.ID, page)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err

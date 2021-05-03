@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"github.com/mailru/easyjson"
 )
 
@@ -83,6 +84,7 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 	}
 	ch.sanitizer.SanitizeDialogue(&dialogue)
 
+	log.Info(dialogue.DialogMessages)
 	if _, err = easyjson.MarshalToWriter(dialogue, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

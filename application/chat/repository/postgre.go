@@ -57,6 +57,7 @@ func (cd ChatDatabase) GetMessages(id uint64, page int) (models.MessagesSQL, err
 		date, redact, read FROM messages
 	WHERE id_dialogue = $1
 	LIMIT $2 OFFSET $3`, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method GetMessages")
 		return models.MessagesSQL{}, nil
