@@ -226,6 +226,22 @@ func (cd ChatDatabase) CheckDialogue(uid1 uint64, uid2 uint64) (bool, uint64, er
 	return true, id[0], nil
 }
 
+func (cd ChatDatabase) CheckMessage(uid1 uint64, uid2 uint64) (bool, uint64, error) {
+	var id []uint64
+	err := pgxscan.Select(context.Background(), cd.pool, &id,
+		`SELECT id FROM messages WHERE 
+		(mes_from = $1 AND mes_to = $2) OR (mes_from = $2 AND mes_to = $1)`, uid1, uid2)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(id) == 0 {
+		return false, 0, nil
+	}
+	if err != nil {
+		cd.logger.Warn(err)
+		return false, 0, err
+	}
+	return true, id[0], nil
+}
+
 func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
 	var id uint64
 	err := cd.pool.QueryRow(context.Background(),
