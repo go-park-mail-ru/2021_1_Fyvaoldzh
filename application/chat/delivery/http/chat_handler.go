@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
 	"github.com/mailru/easyjson"
 )
 
@@ -33,36 +32,22 @@ func CreateChatHandler(e *echo.Echo, uc chat.UseCase, rpcA client.AuthClient,
 	chatHandler := ChatHandler{UseCase: uc, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 
 	//TODO групповой чат
-	e.GET("/api/v1/dialogues", chatHandler.GetDialogues, auth.GetSession)
-	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue, auth.GetSession)
-	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue, auth.GetSession)
-	e.POST("/api/v1/send", chatHandler.SendMessage, auth.GetSession)
-	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage, auth.GetSession)
-	e.POST("/api/v1/message/:id", chatHandler.EditMessage, auth.GetSession)
-	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession)
+	e.GET("/api/v1/dialogues", chatHandler.GetDialogues, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue, auth.GetSession, middleware.GetPage)    //Здесь id собеседника, по просьбе Димы
+	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue, auth.GetSession, middleware.GetPage) //Везде дальше и здесь id сообщения/диалога
+	e.POST("/api/v1/send", chatHandler.SendMessage, auth.GetSession, middleware.GetPage)
+	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage, auth.GetSession, middleware.GetPage)
+	e.POST("/api/v1/message/:id", chatHandler.EditMessage, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession, middleware.GetPage)
 }
-
-//Есть ли возможность как-то шаблонизировать функции ниже, везде одно и то же начало, мб создать функцию, принимающую функцию
-//и в зависимости от метода кидать туда свой метод юзкейса?
 
 func (ch ChatHandler) GetDialogues(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	pageParam := c.QueryParam("page")
-	if pageParam == "" {
-		pageParam = "1"
-	}
-	page, err := strconv.Atoi(pageParam)
-	if err != nil {
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if page == 0 {
-		page = 1
-	}
 
+	page := c.Get(constants.PageKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
 	dialogues, err := ch.UseCase.GetAllDialogues(uid, page)
@@ -86,6 +71,9 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
 
+	page := c.Get(constants.PageKey).(int)
+	uid := c.Get(constants.UserIdKey).(uint64)
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
@@ -96,22 +84,6 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
-
-	pageParam := c.QueryParam("page")
-	if pageParam == "" {
-		pageParam = "1"
-	}
-	page, err := strconv.Atoi(pageParam)
-	if err != nil {
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if page == 0 {
-		page = 1
-	}
-
-	uid := c.Get(constants.UserIdKey).(uint64)
-	log.Info(uid)
 
 	messages, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
 	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
@@ -234,42 +206,24 @@ func (ch ChatHandler) Search(c echo.Context) error {
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
 
+	page := c.Get(constants.PageKey).(int)
+	uid := c.Get(constants.UserIdKey).(uint64)
 	str := c.QueryParam("find")
 
-	pageParam := c.QueryParam("page")
-	if pageParam == "" {
-		pageParam = "1"
+	idParam := c.QueryParam("id")
+	if idParam == "" {
+		idParam = "0"
 	}
-	page, err := strconv.Atoi(pageParam)
+	id, err := strconv.Atoi(idParam)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	if page == 0 {
-		page = 1
+	if id < 0 {
+		err := errors.New("id cannot be less than zero")
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
 	}
-
-	var id int
-	if c.QueryParam("id") == "" {
-		//вот тут костыль прям некрасивый, нет идей, как можно пофиксить?
-		id = -1
-	} else {
-		idatoi, err := strconv.Atoi(c.QueryParam("id"))
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
-		if idatoi < 0 {
-			err := errors.New("id cannot be less than zero")
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		} else {
-			id = idatoi
-		}
-	}
-
-	uid := c.Get(constants.UserIdKey).(uint64)
 
 	messages, err := ch.UseCase.Search(uid, id, str, page)
 	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?

@@ -97,13 +97,18 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 	if err != nil {
 		return models.Dialogue{}, err
 	}
+	interlocutor, err := c.repoUser.GetUserByID(id)
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Dialogue{}, err
+	}
 
 	isDialogue, d_id, err := c.repo.CheckDialogue(uid, id)
 	if err != nil {
 		return models.Dialogue{}, err
 	}
 	if !isDialogue {
-		return models.Dialogue{}, nil
+		return models.Dialogue{Interlocutor: interlocutor, DialogMessages: models.Messages{}}, nil
 	}
 
 	dialogue, err := c.repo.GetEasyDialogue(d_id)
@@ -124,16 +129,6 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 		return models.Dialogue{}, err
 	}
 
-	var interlocutor models.UserOnEvent
-	if dialogue.User1 == uid {
-		interlocutor, err = c.repoUser.GetUserByID(dialogue.User2)
-	} else {
-		interlocutor, err = c.repoUser.GetUserByID(dialogue.User1)
-	}
-	if err != nil {
-		c.logger.Warn(err)
-		return models.Dialogue{}, err
-	}
 	resDialogue := models.ConvertDialogue(dialogue, messages, uid, interlocutor)
 
 	return resDialogue, nil
@@ -246,7 +241,7 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 
 	var sqlMessages []models.MessageSQL
 	var err error
-	if id == -1 {
+	if id == 0 {
 		sqlMessages, err = c.repo.MessagesSearch(uid, str, page)
 		if err != nil {
 			c.logger.Warn(err)
