@@ -69,6 +69,11 @@ type DialogueCardSQL struct {
 	Read   bool
 }
 
+type Mailing struct {
+	EventID uint64   `json:"event"`
+	To      []uint64 `json:"to"`
+}
+
 //easyjson:json
 type Messages []Message
 

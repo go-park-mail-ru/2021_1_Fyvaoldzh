@@ -38,6 +38,7 @@ func CreateChatHandler(e *echo.Echo, uc chat.UseCase, rpcA client.AuthClient,
 	e.POST("/api/v1/send", chatHandler.SendMessage, auth.GetSession)
 	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage, auth.GetSession, middleware.GetId)
 	e.POST("/api/v1/message", chatHandler.EditMessage, auth.GetSession)
+	e.POST("/api/v1/message/mailing", chatHandler.Mailing, auth.GetSession)
 	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession, middleware.GetPage)
 }
 
@@ -178,6 +179,37 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 	uid := c.Get(constants.UserIdKey).(uint64)
 
 	err := ch.UseCase.EditMessage(uid, redactMessage)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
+}
+
+func (ch ChatHandler) Mailing(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+
+	mailing := &models.Mailing{}
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, mailing); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
+	}
+	for _, id := range mailing.To {
+		if id <= 0 {
+			err := errors.New("user id cannot be less than zero")
+			ch.Logger.LogError(c, start, requestId, err)
+			return echo.NewHTTPError(http.StatusTeapot, err)
+		}
+	}
+
+	uid := c.Get(constants.UserIdKey).(uint64)
+
+	err := ch.UseCase.Mailing(uid, mailing)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err

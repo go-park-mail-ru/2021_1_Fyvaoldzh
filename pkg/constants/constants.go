@@ -23,6 +23,8 @@ const (
 	CookiePath              = "/"
 	EventsPerPage           = 6
 	ChatPerPage             = 20
+	MailingText             = " приглашает Вас на мероприятие "
+	MailingAddress          = "qdaqda.ru:3000/event"
 )
 
 var Category = map[string]string{

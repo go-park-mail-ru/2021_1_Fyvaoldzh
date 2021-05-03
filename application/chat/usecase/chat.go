@@ -4,61 +4,27 @@ import (
 	"errors"
 	"fmt"
 	"kudago/application/chat"
+	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/application/user"
+	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"strings"
 	"time"
 )
 
 type Chat struct {
-	repo     chat.Repository
-	repoSub  subscription.Repository
-	repoUser user.Repository
-	logger   logger.Logger
+	repo      chat.Repository
+	repoSub   subscription.Repository
+	repoUser  user.Repository
+	repoEvent event.Repository
+	logger    logger.Logger
 }
 
-func NewChat(c chat.Repository, repoSubscription subscription.Repository, repoUser user.Repository, logger logger.Logger) chat.UseCase {
-	return &Chat{repo: c, repoSub: repoSubscription, repoUser: repoUser, logger: logger}
-}
-
-//Функции конвертов хотелось бы перенести в модели, но обязательно в них нужно использовать методы userRepository, как быть?
-//Просто сейчас часть конвертов тут, часть в модельках
-func (c Chat) ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (models.DialogueCard, error) {
-	var newDialogueCard models.DialogueCard
-	newDialogueCard.ID = old.ID
-	newDialogueCard.LastMessage = models.ConvertMessageFromCard(old, uid)
-	var err error
-	if old.User1 == uid {
-		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User2)
-	} else {
-		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User1)
-	}
-	if err != nil {
-		c.logger.Warn(err)
-		return models.DialogueCard{}, err
-	}
-	return newDialogueCard, nil
-}
-
-func (c Chat) ConvertDialogue(dialogue models.EasyDialogueMessageSQL, messages models.MessagesSQL, uid uint64) (models.Dialogue, error) {
-	var newDialogue models.Dialogue
-	newDialogue.ID = dialogue.ID
-	for i := range messages {
-		newDialogue.DialogMessages = append(newDialogue.DialogMessages, models.ConvertMessage(messages[i], uid))
-	}
-	var err error
-	if dialogue.User1 == uid {
-		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(dialogue.User2)
-	} else {
-		newDialogue.Interlocutor, err = c.repoUser.GetUserByID(dialogue.User1)
-	}
-	if err != nil {
-		c.logger.Warn(err)
-		return models.Dialogue{}, err
-	}
-	return newDialogue, nil
+func NewChat(c chat.Repository, repoSubscription subscription.Repository,
+	repoUser user.Repository, repoEvent event.Repository, logger logger.Logger) chat.UseCase {
+	return &Chat{repo: c, repoSub: repoSubscription, repoUser: repoUser, repoEvent: repoEvent, logger: logger}
 }
 
 func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error) {
@@ -236,6 +202,35 @@ func (c Chat) EditMessage(uid uint64, newMessage *models.RedactMessage) error {
 	}
 	return errors.New("user is not interlocutor")
 }
+
+func (c Chat) AutoMailingConstructor(to uint64, from, eventName, eventID string) models.NewMessage {
+	var mailingMessage models.NewMessage
+	mailingMessage.To = to
+	mailingMessage.Text = from + constants.MailingText + `"` + eventName + `" ` + constants.MailingAddress + eventID
+
+	return mailingMessage
+}
+
+func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
+	sender, err := c.repoUser.GetUserByID(uid)
+	if err != nil {
+		return err
+	}
+	event, err := c.repoEvent.GetOneEventByID(mailing.EventID)
+	if err != nil {
+		return err
+	}
+
+	for _, id := range mailing.To {
+		message := c.AutoMailingConstructor(id, sender.Name, event.Title, fmt.Sprint(event.ID))
+		err := c.SendMessage(&message, uid)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages, error) {
 	str = strings.ToLower(str)
 

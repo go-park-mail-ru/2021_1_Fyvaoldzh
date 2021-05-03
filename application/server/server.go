@@ -88,8 +88,7 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
 	subscriptionUC := subusecase.NewSubscription(subRep, logger)
-
-	chatUC := chusecase.NewChat(chatRep, subRep, userRep, logger)
+	chatUC := chusecase.NewChat(chatRep, subRep, userRep, eventRep, logger)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
