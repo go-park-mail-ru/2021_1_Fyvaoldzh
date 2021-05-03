@@ -6,4 +6,4 @@ go build -o main cmd/main.go
 
 nohup ./auth > auth.out &
 nohup ./sub > sub.out &
-nohup ./main > main.out
+nohup ./main > main.out &
