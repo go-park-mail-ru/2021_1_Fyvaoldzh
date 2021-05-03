@@ -31,6 +31,8 @@ type LoginAnswer struct {
 
 	UserId uint64 `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	Value  string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Flag   bool   `protobuf:"varint,3,opt,name=flag,proto3" json:"flag,omitempty"`
+	Msg    string `protobuf:"bytes,4,opt,name=msg,proto3" json:"msg,omitempty"`
 }
 
 func (x *LoginAnswer) Reset() {
@@ -79,57 +81,16 @@ func (x *LoginAnswer) GetValue() string {
 	return ""
 }
 
-type UserData struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	UserId uint64 `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	Value  string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-}
-
-func (x *UserData) Reset() {
-	*x = UserData{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *UserData) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserData) ProtoMessage() {}
-
-func (x *UserData) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserData.ProtoReflect.Descriptor instead.
-func (*UserData) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *UserData) GetUserId() uint64 {
+func (x *LoginAnswer) GetFlag() bool {
 	if x != nil {
-		return x.UserId
+		return x.Flag
 	}
-	return 0
+	return false
 }
 
-func (x *UserData) GetValue() string {
+func (x *LoginAnswer) GetMsg() string {
 	if x != nil {
-		return x.Value
+		return x.Msg
 	}
 	return ""
 }
@@ -146,7 +107,7 @@ type CheckAnswer struct {
 func (x *CheckAnswer) Reset() {
 	*x = CheckAnswer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[2]
+		mi := &file_auth_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -159,7 +120,7 @@ func (x *CheckAnswer) String() string {
 func (*CheckAnswer) ProtoMessage() {}
 
 func (x *CheckAnswer) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[2]
+	mi := &file_auth_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -172,7 +133,7 @@ func (x *CheckAnswer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckAnswer.ProtoReflect.Descriptor instead.
 func (*CheckAnswer) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{2}
+	return file_auth_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CheckAnswer) GetAnswer() bool {
@@ -202,7 +163,7 @@ type User struct {
 func (x *User) Reset() {
 	*x = User{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[3]
+		mi := &file_auth_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -215,7 +176,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[3]
+	mi := &file_auth_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -228,7 +189,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{3}
+	return file_auth_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *User) GetLogin() string {
@@ -263,7 +224,7 @@ type Session struct {
 func (x *Session) Reset() {
 	*x = Session{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[4]
+		mi := &file_auth_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -276,7 +237,7 @@ func (x *Session) String() string {
 func (*Session) ProtoMessage() {}
 
 func (x *Session) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[4]
+	mi := &file_auth_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +250,7 @@ func (x *Session) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Session.ProtoReflect.Descriptor instead.
 func (*Session) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{4}
+	return file_auth_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Session) GetValue() string {
@@ -299,32 +260,32 @@ func (x *Session) GetValue() string {
 	return ""
 }
 
-type SessionPair struct {
+type LogoutAnswer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	UserId uint64 `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
-	Value  string `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	Flag bool   `protobuf:"varint,1,opt,name=flag,proto3" json:"flag,omitempty"`
+	Msg  string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 }
 
-func (x *SessionPair) Reset() {
-	*x = SessionPair{}
+func (x *LogoutAnswer) Reset() {
+	*x = LogoutAnswer{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[5]
+		mi := &file_auth_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
 }
 
-func (x *SessionPair) String() string {
+func (x *LogoutAnswer) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SessionPair) ProtoMessage() {}
+func (*LogoutAnswer) ProtoMessage() {}
 
-func (x *SessionPair) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[5]
+func (x *LogoutAnswer) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -335,147 +296,58 @@ func (x *SessionPair) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SessionPair.ProtoReflect.Descriptor instead.
-func (*SessionPair) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{5}
+// Deprecated: Use LogoutAnswer.ProtoReflect.Descriptor instead.
+func (*LogoutAnswer) Descriptor() ([]byte, []int) {
+	return file_auth_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *SessionPair) GetUserId() uint64 {
+func (x *LogoutAnswer) GetFlag() bool {
 	if x != nil {
-		return x.UserId
+		return x.Flag
 	}
-	return 0
+	return false
 }
 
-func (x *SessionPair) GetValue() string {
+func (x *LogoutAnswer) GetMsg() string {
 	if x != nil {
-		return x.Value
+		return x.Msg
 	}
 	return ""
-}
-
-type UserId struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	UserId uint64 `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
-}
-
-func (x *UserId) Reset() {
-	*x = UserId{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *UserId) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*UserId) ProtoMessage() {}
-
-func (x *UserId) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use UserId.ProtoReflect.Descriptor instead.
-func (*UserId) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *UserId) GetUserId() uint64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-type Empty struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *Empty) Reset() {
-	*x = Empty{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_auth_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Empty) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Empty) ProtoMessage() {}
-
-func (x *Empty) ProtoReflect() protoreflect.Message {
-	mi := &file_auth_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
-func (*Empty) Descriptor() ([]byte, []int) {
-	return file_auth_proto_rawDescGZIP(), []int{7}
 }
 
 var File_auth_proto protoreflect.FileDescriptor
 
 var file_auth_proto_rawDesc = []byte{
-	0x0a, 0x0a, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x3b, 0x0a, 0x0b,
+	0x0a, 0x0a, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x61, 0x0a, 0x0b,
 	0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x75,
 	0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65,
 	0x72, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x38, 0x0a, 0x08, 0x55, 0x73, 0x65,
-	0x72, 0x44, 0x61, 0x74, 0x61, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x14, 0x0a,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x22, 0x3d, 0x0a, 0x0b, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x6e, 0x73, 0x77,
-	0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x08, 0x52, 0x06, 0x61, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73,
-	0x65, 0x72, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72,
-	0x49, 0x64, 0x22, 0x4e, 0x0a, 0x04, 0x55, 0x73, 0x65, 0x72, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x6f,
-	0x67, 0x69, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e,
-	0x12, 0x1a, 0x0a, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x14, 0x0a, 0x05,
-	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c,
-	0x75, 0x65, 0x22, 0x1f, 0x0a, 0x07, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x14, 0x0a,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x22, 0x3b, 0x0a, 0x0b, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x50, 0x61,
-	0x69, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61,
-	0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
-	0x22, 0x20, 0x0a, 0x06, 0x55, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73,
-	0x65, 0x72, 0x49, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72,
-	0x49, 0x64, 0x22, 0x07, 0x0a, 0x05, 0x45, 0x6d, 0x70, 0x74, 0x79, 0x32, 0x67, 0x0a, 0x04, 0x41,
-	0x75, 0x74, 0x68, 0x12, 0x1e, 0x0a, 0x05, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x05, 0x2e, 0x55,
-	0x73, 0x65, 0x72, 0x1a, 0x0c, 0x2e, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65,
-	0x72, 0x22, 0x00, 0x12, 0x21, 0x0a, 0x05, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x12, 0x08, 0x2e, 0x53,
-	0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x1a, 0x0c, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x6e,
-	0x73, 0x77, 0x65, 0x72, 0x22, 0x00, 0x12, 0x1c, 0x0a, 0x06, 0x4c, 0x6f, 0x67, 0x6f, 0x75, 0x74,
-	0x12, 0x08, 0x2e, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x1a, 0x06, 0x2e, 0x45, 0x6d, 0x70,
-	0x74, 0x79, 0x22, 0x00, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x66, 0x6c, 0x61,
+	0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x66, 0x6c, 0x61, 0x67, 0x12, 0x10, 0x0a,
+	0x03, 0x6d, 0x73, 0x67, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6d, 0x73, 0x67, 0x22,
+	0x3d, 0x0a, 0x0b, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12, 0x16,
+	0x0a, 0x06, 0x61, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x06,
+	0x61, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x4e,
+	0x0a, 0x04, 0x55, 0x73, 0x65, 0x72, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x6c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x1a, 0x0a, 0x08,
+	0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
+	0x70, 0x61, 0x73, 0x73, 0x77, 0x6f, 0x72, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75,
+	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x1f,
+	0x0a, 0x07, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x22,
+	0x34, 0x0a, 0x0c, 0x4c, 0x6f, 0x67, 0x6f, 0x75, 0x74, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12,
+	0x12, 0x0a, 0x04, 0x66, 0x6c, 0x61, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x66,
+	0x6c, 0x61, 0x67, 0x12, 0x10, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x03, 0x6d, 0x73, 0x67, 0x32, 0x6e, 0x0a, 0x04, 0x41, 0x75, 0x74, 0x68, 0x12, 0x1e, 0x0a,
+	0x05, 0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x12, 0x05, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x1a, 0x0c, 0x2e,
+	0x4c, 0x6f, 0x67, 0x69, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x22, 0x00, 0x12, 0x21, 0x0a,
+	0x05, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x12, 0x08, 0x2e, 0x53, 0x65, 0x73, 0x73, 0x69, 0x6f, 0x6e,
+	0x1a, 0x0c, 0x2e, 0x43, 0x68, 0x65, 0x63, 0x6b, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x22, 0x00,
+	0x12, 0x23, 0x0a, 0x06, 0x4c, 0x6f, 0x67, 0x6f, 0x75, 0x74, 0x12, 0x08, 0x2e, 0x53, 0x65, 0x73,
+	0x73, 0x69, 0x6f, 0x6e, 0x1a, 0x0d, 0x2e, 0x4c, 0x6f, 0x67, 0x6f, 0x75, 0x74, 0x41, 0x6e, 0x73,
+	0x77, 0x65, 0x72, 0x22, 0x00, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -490,24 +362,21 @@ func file_auth_proto_rawDescGZIP() []byte {
 	return file_auth_proto_rawDescData
 }
 
-var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_auth_proto_goTypes = []interface{}{
-	(*LoginAnswer)(nil), // 0: LoginAnswer
-	(*UserData)(nil),    // 1: UserData
-	(*CheckAnswer)(nil), // 2: CheckAnswer
-	(*User)(nil),        // 3: User
-	(*Session)(nil),     // 4: Session
-	(*SessionPair)(nil), // 5: SessionPair
-	(*UserId)(nil),      // 6: UserId
-	(*Empty)(nil),       // 7: Empty
+	(*LoginAnswer)(nil),  // 0: LoginAnswer
+	(*CheckAnswer)(nil),  // 1: CheckAnswer
+	(*User)(nil),         // 2: User
+	(*Session)(nil),      // 3: Session
+	(*LogoutAnswer)(nil), // 4: LogoutAnswer
 }
 var file_auth_proto_depIdxs = []int32{
-	3, // 0: Auth.Login:input_type -> User
-	4, // 1: Auth.Check:input_type -> Session
-	4, // 2: Auth.Logout:input_type -> Session
+	2, // 0: Auth.Login:input_type -> User
+	3, // 1: Auth.Check:input_type -> Session
+	3, // 2: Auth.Logout:input_type -> Session
 	0, // 3: Auth.Login:output_type -> LoginAnswer
-	2, // 4: Auth.Check:output_type -> CheckAnswer
-	7, // 5: Auth.Logout:output_type -> Empty
+	1, // 4: Auth.Check:output_type -> CheckAnswer
+	4, // 5: Auth.Logout:output_type -> LogoutAnswer
 	3, // [3:6] is the sub-list for method output_type
 	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -534,18 +403,6 @@ func file_auth_proto_init() {
 			}
 		}
 		file_auth_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UserData); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_auth_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckAnswer); i {
 			case 0:
 				return &v.state
@@ -557,7 +414,7 @@ func file_auth_proto_init() {
 				return nil
 			}
 		}
-		file_auth_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_auth_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*User); i {
 			case 0:
 				return &v.state
@@ -569,7 +426,7 @@ func file_auth_proto_init() {
 				return nil
 			}
 		}
-		file_auth_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_auth_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Session); i {
 			case 0:
 				return &v.state
@@ -581,32 +438,8 @@ func file_auth_proto_init() {
 				return nil
 			}
 		}
-		file_auth_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SessionPair); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_auth_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UserId); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_auth_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Empty); i {
+		file_auth_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LogoutAnswer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -624,7 +457,7 @@ func file_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_auth_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -652,7 +485,7 @@ const _ = grpc.SupportPackageIsVersion6
 type AuthClient interface {
 	Login(ctx context.Context, in *User, opts ...grpc.CallOption) (*LoginAnswer, error)
 	Check(ctx context.Context, in *Session, opts ...grpc.CallOption) (*CheckAnswer, error)
-	Logout(ctx context.Context, in *Session, opts ...grpc.CallOption) (*Empty, error)
+	Logout(ctx context.Context, in *Session, opts ...grpc.CallOption) (*LogoutAnswer, error)
 }
 
 type authClient struct {
@@ -681,8 +514,8 @@ func (c *authClient) Check(ctx context.Context, in *Session, opts ...grpc.CallOp
 	return out, nil
 }
 
-func (c *authClient) Logout(ctx context.Context, in *Session, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *authClient) Logout(ctx context.Context, in *Session, opts ...grpc.CallOption) (*LogoutAnswer, error) {
+	out := new(LogoutAnswer)
 	err := c.cc.Invoke(ctx, "/Auth/Logout", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -694,7 +527,7 @@ func (c *authClient) Logout(ctx context.Context, in *Session, opts ...grpc.CallO
 type AuthServer interface {
 	Login(context.Context, *User) (*LoginAnswer, error)
 	Check(context.Context, *Session) (*CheckAnswer, error)
-	Logout(context.Context, *Session) (*Empty, error)
+	Logout(context.Context, *Session) (*LogoutAnswer, error)
 }
 
 // UnimplementedAuthServer can be embedded to have forward compatible implementations.
@@ -707,7 +540,7 @@ func (*UnimplementedAuthServer) Login(context.Context, *User) (*LoginAnswer, err
 func (*UnimplementedAuthServer) Check(context.Context, *Session) (*CheckAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
 }
-func (*UnimplementedAuthServer) Logout(context.Context, *Session) (*Empty, error) {
+func (*UnimplementedAuthServer) Logout(context.Context, *Session) (*LogoutAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
 }
 

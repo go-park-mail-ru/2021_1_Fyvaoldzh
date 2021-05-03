@@ -43,7 +43,7 @@ func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint6
 		return err
 	}
 	if answer.Flag {
-		return echo.NewHTTPError(http.StatusBadRequest, "subscription is already added")
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return nil

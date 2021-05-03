@@ -88,3 +88,13 @@ func (cs *CustomSanitizer) SanitizeTags(tags models.Tags) models.Tags {
 	}
 	return newTags
 }
+
+func (cs *CustomSanitizer) SanitizeActions(actions models.ActionCards) models.ActionCards {
+	var newActions models.ActionCards
+	for _, elem := range actions {
+		elem.Name1 = cs.sanitizer.Sanitize(elem.Name1)
+		elem.Name2 = cs.sanitizer.Sanitize(elem.Name2)
+		newActions = append(newActions, elem)
+	}
+	return newActions
+}

@@ -8,6 +8,7 @@ import (
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/logger"
+	"log"
 	"net/http"
 
 	"github.com/georgysavva/scany/pgxscan"
@@ -85,7 +86,7 @@ func (ud UserDatabase) IsCorrect(user *models.User) (*models.User, error) {
 			`SELECT id, password FROM users WHERE login = $1`,
 			user.Login).Scan(&gotUser.Id, &gotUser.Password)
 	if errors.As(err, &pgx.ErrNoRows) {
-		ud.logger.Debug("no rows in method IsCorrect")
+		ud.logger.Debug("no rows in method GetUser")
 		return &gotUser, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 	if err != nil {
@@ -177,7 +178,6 @@ func (ud UserDatabase) GetUsers(page int) ([]models.UserCardSQL, error) {
 	return users, nil
 }
 
-
 func (ud UserDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
 	var users []uint64
 	err := pgxscan.Select(context.Background(), ud.pool, &users, `SELECT subscriber_id
@@ -230,4 +230,31 @@ func (ud UserDatabase) GetUserByID(id uint64) (models.UserOnEvent, error) {
 	}
 
 	return users[0], nil
+}
+
+func (ud UserDatabase) GetActions(id uint64) (models.ActionCards, error) {
+	var actions models.ActionCards
+	err := pgxscan.Select(context.Background(), ud.pool, &actions,
+		`SELECT user_id as Id1, u.name as Name1, event_id as Id2, e.title as Name2, time as Time, 'user_event' as Type
+		FROM actions_user_event
+		JOIN users u on actions_user_event.user_id = u.id
+		JOIN events e on actions_user_event.event_id = e.id
+		JOIN subscriptions s2 on user_id = s2.subscribed_to_id AND subscriber_id = $1
+		UNION ALL
+		select a_s.subscriber_id, u1.name, a_s.subscribed_to_id, u2.name, a_s.time, 'subscription'
+		FROM actions_subscription a_s
+		JOIN subscriptions s on s.subscriber_id = $1 AND s.subscribed_to_id = a_s.subscriber_id
+		JOIN users u1 on a_s.subscriber_id = u1.id
+		JOIN users u2 on a_s.subscribed_to_id = u2.id
+		ORDER BY Time`, id)
+	log.Println(actions)
+	if errors.As(err, &sql.ErrNoRows) {
+		return models.ActionCards{}, nil
+	}
+	if err != nil {
+		ud.logger.Warn(err)
+		return models.ActionCards{}, err
+	}
+
+	return actions, nil
 }

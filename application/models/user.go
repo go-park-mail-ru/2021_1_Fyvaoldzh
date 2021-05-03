@@ -58,26 +58,26 @@ type UsersOnEvent []UserOnEvent
 
 type OtherUserProfile struct {
 	Uid       uint64
-	Name      string     `json:"name"`
-	Age       uint8      `json:"age"`
-	City      string     `json:"city"`
-	About     string     `json:"about"`
-	Avatar    string     `json:"avatar"`
-	Followers uint64   `json:"followers"`
+	Name      string `json:"name"`
+	Age       uint8  `json:"age"`
+	City      string `json:"city"`
+	About     string `json:"about"`
+	Avatar    string `json:"avatar"`
+	Followers uint64 `json:"followers"`
 }
 
 type UserOwnProfile struct {
 	Uid         uint64
-	Name        string     `json:"name"`
-	Login       string     `json:"login"`
-	Birthday    string     `json:"birthday"`
-	City        string     `json:"city"`
-	Email       string     `json:"email"`
-	Followers   uint64   `json:"followers"`
-	About       string     `json:"about"`
-	Avatar      string     `json:"avatar"`
-	OldPassword string     `json:"old_password"`
-	NewPassword string     `json:"new_password"`
+	Name        string `json:"name"`
+	Login       string `json:"login"`
+	Birthday    string `json:"birthday"`
+	City        string `json:"city"`
+	Email       string `json:"email"`
+	Followers   uint64 `json:"followers"`
+	About       string `json:"about"`
+	Avatar      string `json:"avatar"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
 }
 
 type UserDataSQL struct {
@@ -135,3 +135,15 @@ type RegData struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
+
+type ActionCard struct {
+	Id1   uint64 `json:"id_1"`
+	Name1 string `json:"name_1"`
+	Id2   string `json:"id_2"`
+	Name2 string `json:"name_2"`
+	Time  string `json:"time"`
+	Type  string `json:"type"`
+}
+
+//easyjson:json
+type ActionCards []ActionCard

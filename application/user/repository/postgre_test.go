@@ -141,7 +141,7 @@ func TestUserDatabase_IsCorrect(t *testing.T) {
 		conn: conn,
 		logger: l,
 	}
-	gotUser, err := ud.IsCorrect(testUserBack)
+	gotUser, err := ud.GetUser(testUserBack)
 	if err != nil {
 		t.Error(err.Error())
 	}

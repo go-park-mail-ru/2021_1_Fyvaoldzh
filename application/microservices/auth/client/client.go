@@ -2,7 +2,7 @@ package client
 
 /*
 protoc --go_out=plugins=grpc:. *.proto
- */
+*/
 
 import (
 	"context"
@@ -36,23 +36,15 @@ func (a *AuthClient) Login(login string, password string, value string) (uint64,
 	usr := &proto.User{
 		Login:    login,
 		Password: password,
-		Value: value,
-	}
-
-	if value != "" {
-		flag, _, err := a.Check(value)
-		if err != nil {
-			return 0, "", err
-		}
-		if flag {
-			return 0, "", echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
-		}
-
+		Value:    value,
 	}
 
 	answer, err := a.client.Login(context.Background(), usr)
 	if err != nil {
 		return 0, "", err
+	}
+	if answer.Flag {
+		return 0, "", echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return answer.UserId, answer.Value, nil
@@ -61,23 +53,23 @@ func (a *AuthClient) Login(login string, password string, value string) (uint64,
 func (a *AuthClient) Check(value string) (bool, uint64, error) {
 	sessionValue := &proto.Session{Value: value}
 
-	checkAnswer, err := a.client.Check(context.Background(), sessionValue)
+	answer, err := a.client.Check(context.Background(), sessionValue)
 	if err != nil {
 		return false, 0, err
 	}
 
-	return checkAnswer.Answer, checkAnswer.UserId, err
+	return answer.Answer, answer.UserId, err
 }
 
 func (a *AuthClient) Logout(value string) error {
 	sessionValue := &proto.Session{Value: value}
 
-	_, err := a.client.Logout(context.Background(), sessionValue)
+	answer, err := a.client.Logout(context.Background(), sessionValue)
 	if err != nil {
-		if err.Error() == "rpc error: code = InvalidArgument desc = user is not authorized" {
-			return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-		}
 		return err
+	}
+	if answer.Flag {
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return nil

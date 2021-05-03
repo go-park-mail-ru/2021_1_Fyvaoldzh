@@ -26,6 +26,7 @@ type UserUseCase struct {
 	Logger  logger.Logger
 }
 
+
 func NewUser(u user.Repository, repoSubscription subscription.Repository, logger logger.Logger) user.UseCase {
 	return &UserUseCase{repo: u, repoSub: repoSubscription, Logger: logger}
 }
@@ -257,4 +258,8 @@ func (uc UserUseCase) FindUsers(str string, page int) (models.UserCards, error) 
 		cards = append(cards, newCard)
 	}
 	return cards, nil
+}
+
+func (uc UserUseCase) GetActions(id uint64) (models.ActionCards, error) {
+	return uc.repo.GetActions(id)
 }

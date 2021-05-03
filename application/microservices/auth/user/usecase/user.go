@@ -1,49 +1,34 @@
 package usecase
 
 import (
-	"errors"
-	"github.com/labstack/echo"
-	"kudago/application/microservices/auth/session"
 	"kudago/application/microservices/auth/user"
 	"kudago/pkg/generator"
 	"kudago/pkg/logger"
-	"net/http"
 )
 
 type UserUseCase struct {
 	repo    user.Repository
-	repoSession session.Repository
 	logger  logger.Logger
 }
 
-func NewUserUseCase(u user.Repository, repoS session.Repository, logger logger.Logger) user.UseCase {
-	return &UserUseCase{repo: u, repoSession: repoS, logger: logger}
+func NewUserUseCase(u user.Repository,  logger logger.Logger) user.UseCase {
+	return &UserUseCase{repo: u, logger: logger}
 }
 
-func (uc UserUseCase) Login(login string, password string) (uint64, error) {
-	return uc.CheckUser(login , password )
-}
-
-func (uc UserUseCase) CheckUser(login string, password string) (uint64, error) {
-	gotUser, err := uc.repo.IsCorrect(login)
+func (uc UserUseCase) CheckUser(login string, password string) (uint64, bool, error) {
+	gotUser, flag, err := uc.repo.GetUser(login)
 	if err != nil {
 		uc.logger.Warn(err)
-		return 0, err
+		return 0, false, err
+	}
+	if flag {
+		return 0, true, nil
 	}
 
 	if !generator.CheckHashedPassword(gotUser.Password, password) {
-		uc.logger.Warn(errors.New("incorrect data"))
-		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+		return 0, true, nil
 	}
 
-	return gotUser.Id, nil
+	return gotUser.Id, false, nil
 }
 
-func (uc UserUseCase) Logout(value string) error {
-	err := uc.repoSession.DeleteSession(value)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}

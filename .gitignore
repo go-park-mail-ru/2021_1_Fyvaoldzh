@@ -7,6 +7,9 @@
 *.txt
 *.raw
 *.lua
+auth
+main
+sub
 
 
 

@@ -46,6 +46,8 @@ func CreateUserHandler(e *echo.Echo,
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 	e.GET("/api/v1/users", userHandler.GetUsers)
 	e.GET("/api/v1/find", userHandler.FindUsers)
+	//ручка не доделана !!!
+	e.GET("/api/v1/actions", userHandler.GetActions)
 }
 
 func (uh *UserHandler) Login(c echo.Context) error {
@@ -392,6 +394,41 @@ func (uh UserHandler) FindUsers(c echo.Context) error {
 	}
 
 	if _, err := easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
+		uh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}
+
+func (uh *UserHandler) GetActions(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	cookie, err := c.Cookie("SID")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+	}
+
+	var uid uint64
+	var exists bool
+	exists, uid, err = uh.rpcAuth.Check(cookie.Value)
+	if err != nil {
+		uh.Logger.Warn(err)
+		return err
+	}
+
+	if !exists {
+		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
+	}
+
+	actions, err := uh.UseCase.GetActions(uid)
+	if err != nil {
+		uh.Logger.Warn(err)
+		return err
+	}
+
+	actions = uh.sanitizer.SanitizeActions(actions)
+	if _, err = easyjson.MarshalToWriter(actions, c.Response().Writer); err != nil {
 		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

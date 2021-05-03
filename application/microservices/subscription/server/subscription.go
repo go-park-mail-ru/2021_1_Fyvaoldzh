@@ -14,7 +14,7 @@ func NewSubscriptionServer(usecase subscription.UseCase) *SubscriptionServer {
 	return &SubscriptionServer{usecase: usecase}
 }
 
-func (s *SubscriptionServer) Subscribe(ctx context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
+func (s *SubscriptionServer) Subscribe(c context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
 	subscriberId := users.SubscriberId
 	subscribedToId := users.SubscribedToId
 

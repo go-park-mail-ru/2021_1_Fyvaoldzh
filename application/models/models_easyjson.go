@@ -3251,3 +3251,170 @@ func (v *Dialogue) UnmarshalJSON(data []byte) error {
 func (v *Dialogue) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels35(l, v)
 }
+func easyjsonD2b7633eDecodeKudagoApplicationModels36(in *jlexer.Lexer, out *ActionCards) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(ActionCards, 0, 0)
+			} else {
+				*out = ActionCards{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v34 ActionCard
+			(v34).UnmarshalEasyJSON(in)
+			*out = append(*out, v34)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeKudagoApplicationModels36(out *jwriter.Writer, in ActionCards) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v35, v36 := range in {
+			if v35 > 0 {
+				out.RawByte(',')
+			}
+			(v36).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v ActionCards) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeKudagoApplicationModels36(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v ActionCards) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeKudagoApplicationModels36(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *ActionCards) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeKudagoApplicationModels36(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *ActionCards) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeKudagoApplicationModels36(l, v)
+}
+func easyjsonD2b7633eDecodeKudagoApplicationModels37(in *jlexer.Lexer, out *ActionCard) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "id_1":
+			out.Id1 = uint64(in.Uint64())
+		case "name_1":
+			out.Name1 = string(in.String())
+		case "id_2":
+			out.Id2 = string(in.String())
+		case "name_2":
+			out.Name2 = string(in.String())
+		case "time":
+			out.Time = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeKudagoApplicationModels37(out *jwriter.Writer, in ActionCard) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"id_1\":"
+		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.Id1))
+	}
+	{
+		const prefix string = ",\"name_1\":"
+		out.RawString(prefix)
+		out.String(string(in.Name1))
+	}
+	{
+		const prefix string = ",\"id_2\":"
+		out.RawString(prefix)
+		out.String(string(in.Id2))
+	}
+	{
+		const prefix string = ",\"name_2\":"
+		out.RawString(prefix)
+		out.String(string(in.Name2))
+	}
+	{
+		const prefix string = ",\"time\":"
+		out.RawString(prefix)
+		out.String(string(in.Time))
+	}
+	{
+		const prefix string = ",\"type\":"
+		out.RawString(prefix)
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v ActionCard) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeKudagoApplicationModels37(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v ActionCard) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeKudagoApplicationModels37(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *ActionCard) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeKudagoApplicationModels37(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *ActionCard) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeKudagoApplicationModels37(l, v)
+}

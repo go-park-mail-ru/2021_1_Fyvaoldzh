@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"kudago/application/microservices/subscription/subscription"
 	"kudago/pkg/logger"
+	"time"
 )
 
 type SubscriptionDatabase struct {
@@ -99,7 +100,7 @@ func (sd SubscriptionDatabase) RemoveEvent(userId uint64, eventId uint64) error 
 	return nil
 }
 
-func (sd SubscriptionDatabase) CheckEvent(userId uint64, eventId uint64) (bool, error) {
+func (sd SubscriptionDatabase) CheckEventAdded(userId uint64, eventId uint64) (bool, error) {
 	var id1, id2 uint64
 	err := sd.pool.
 		QueryRow(context.Background(),
@@ -117,3 +118,70 @@ func (sd SubscriptionDatabase) CheckEvent(userId uint64, eventId uint64) (bool, 
 	return true, nil
 }
 
+func (sd SubscriptionDatabase) AddUserEventAction(userId uint64, eventId uint64) error {
+	t := time.Now()
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO actions_user_event (user_id, event_id, time) VALUES ($1, $2, $3)`,
+		userId, eventId, t)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) RemoveUserEventAction(userId uint64, eventId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM actions_user_event WHERE user_id = $1 AND event_id = $2`,
+		userId, eventId)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) AddSubscriptionAction(subscriberId uint64, subscribedToId uint64) error {
+	t := time.Now()
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO actions_subscription (subscriber_id, subscribed_to_id, time) VALUES ($1, $2, $3)`,
+		subscriberId, subscribedToId, t)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) RemoveSubscriptionAction(userId uint64, eventId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM actions_subscription WHERE subscriber_id = $1 AND subscribed_to_id = $2`,
+		userId, eventId)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) CheckEventInList(eventId uint64) (bool, error) {
+	var id uint64
+	err := sd.pool.
+		QueryRow(context.Background(),
+			`SELECT id
+			FROM events WHERE id = $1`,
+			eventId).Scan(&id)
+	if errors.As(err, &sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return false, status.Error(codes.Internal, err.Error())
+	}
+
+	return true, nil
+}

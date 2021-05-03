@@ -110,7 +110,7 @@ func (mr *MockRepositoryMockRecorder) GetUsers(page interface{}) *gomock.Call {
 // IsCorrect mocks base method.
 func (m *MockRepository) IsCorrect(user *models.User) (*models.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsCorrect", user)
+	ret := m.ctrl.Call(m, "GetUser", user)
 	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -119,7 +119,7 @@ func (m *MockRepository) IsCorrect(user *models.User) (*models.User, error) {
 // IsCorrect indicates an expected call of IsCorrect.
 func (mr *MockRepositoryMockRecorder) IsCorrect(user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCorrect", reflect.TypeOf((*MockRepository)(nil).IsCorrect), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockRepository)(nil).IsCorrect), user)
 }
 
 // IsExisting mocks base method.

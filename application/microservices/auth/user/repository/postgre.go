@@ -21,19 +21,19 @@ func NewUserDatabase(conn *pgxpool.Pool, logger logger.Logger) user.Repository {
 	return &UserDatabase{pool: conn, logger: logger}
 }
 
-func (ud UserDatabase) IsCorrect(login string) (*models.User, error) {
+func (ud UserDatabase) GetUser(login string) (*models.User, bool, error) {
 	var gotUser models.User
 	err := ud.pool.
 		QueryRow(context.Background(),
 			`SELECT id, password FROM users WHERE login = $1`,
 			login).Scan(&gotUser.Id, &gotUser.Password)
 	if errors.As(err, &pgx.ErrNoRows) {
-		return &gotUser, status.Error(codes.InvalidArgument, "incorrect data")
+		return &gotUser, true, nil
 	}
 	if err != nil {
 		ud.logger.Warn(err)
-		return &gotUser, status.Error(codes.Internal, err.Error())
+		return &gotUser, false, status.Error(codes.Internal, err.Error())
 	}
 
-	return &gotUser, nil
+	return &gotUser, false, nil
 }

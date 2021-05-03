@@ -46,7 +46,7 @@ func NewServer(port string, logger *logger.Logger) *Server {
 
 	sRepo := srepo.NewSessionRepository(conn, *logger)
 	uRepo := urepo.NewUserDatabase(pool, *logger)
-	uUseCase := users.NewUserUseCase(uRepo, sRepo, *logger)
+	uUseCase := users.NewUserUseCase(uRepo, *logger)
 	s := sessions.NewSessionUseCase(sRepo, uUseCase, *logger)
 
 	return &Server{
