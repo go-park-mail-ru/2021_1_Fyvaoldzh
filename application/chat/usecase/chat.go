@@ -30,10 +30,10 @@ func (c Chat) ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (model
 	newDialogueCard.ID = old.ID
 	newDialogueCard.LastMessage = models.ConvertMessageFromCard(old, uid)
 	var err error
-	if old.User_1 == uid {
-		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User_2)
+	if old.User1 == uid {
+		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User2)
 	} else {
-		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User_1)
+		newDialogueCard.Interlocutor, err = c.repoUser.GetUserByID(old.User1)
 	}
 	if err != nil {
 		c.logger.Warn(err)
@@ -71,12 +71,17 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	var dialogueCards models.DialogueCards
 
 	for i := range dialogues {
-		dialogueCard, err := c.ConvertDialogueCard(dialogues[i], uid)
+		var interlocutor models.UserOnEvent
+		if dialogues[i].User1 == uid {
+			interlocutor, err = c.repoUser.GetUserByID(dialogues[i].User2)
+		} else {
+			interlocutor, err = c.repoUser.GetUserByID(dialogues[i].User1)
+		}
 		if err != nil {
 			c.logger.Warn(err)
-			return models.DialogueCards{}, err
+			return nil, err
 		}
-		dialogueCards = append(dialogueCards, dialogueCard)
+		dialogueCards = append(dialogueCards, models.ConvertDialogueCard(dialogues[i], uid, interlocutor))
 	}
 	if len(dialogueCards) == 0 {
 		c.logger.Debug("page" + fmt.Sprint(page) + "is empty")
@@ -101,41 +106,34 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 		return models.Dialogue{}, err
 	}
 
-	messages, err := c.repo.GetMessages(id)
+	messages, err := c.repo.GetMessages(id, page)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
 
-	resDialogue, err := c.ConvertDialogue(dialogue, messages, uid)
+	var interlocutor models.UserOnEvent
+	if dialogue.User1 == uid {
+		interlocutor, err = c.repoUser.GetUserByID(dialogue.User2)
+	} else {
+		interlocutor, err = c.repoUser.GetUserByID(dialogue.User1)
+	}
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
+	resDialogue := models.ConvertDialogue(dialogue, messages, uid, interlocutor)
 
 	return resDialogue, nil
 }
 
-//Очень похожие функции, дублирование кода, мб есть смысл как-то вынести, хотя тут не уверен, что возможно
-func (c Chat) IsInterlocutorDialogue(uid uint64, id uint64) (bool, error) {
-	dialogue, err := c.repo.GetEasyDialogue(id)
+func (c Chat) IsInterlocutor(uid uint64, id uint64, f func(id uint64) (models.EasyDialogueMessageSQL, error)) (bool, error) {
+	dialogue, err := f(id)
 	if err != nil {
 		c.logger.Warn(err)
 		return false, err
 	}
 	if uid != dialogue.User1 && uid != dialogue.User2 {
-		return false, nil
-	}
-	return true, nil
-}
-
-func (c Chat) IsInterlocutorMessage(uid uint64, id uint64) (bool, error) {
-	message, err := c.repo.GetEasyMessage(id)
-	if err != nil {
-		c.logger.Warn(err)
-		return false, err
-	}
-	if uid != message.User1 && uid != message.User2 {
 		return false, nil
 	}
 	return true, nil
@@ -155,7 +153,7 @@ func (c Chat) IsSenderMessage(uid uint64, id uint64) (bool, error) {
 
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
 	//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
-	isInterlocutor, err := c.IsInterlocutorDialogue(uid, id)
+	isInterlocutor, err := c.IsInterlocutor(uid, id, c.repo.GetEasyDialogue)
 	if err != nil {
 		c.logger.Warn(err)
 		return err
@@ -198,7 +196,7 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 
 func (c Chat) DeleteMessage(uid uint64, id uint64) error {
 	//Проверить, существует ли такое сообщение вообще, иначе падает поросто реквест еррор с 0 ошибкой
-	isInterlocutor, err := c.IsInterlocutorMessage(uid, id)
+	isInterlocutor, err := c.IsInterlocutor(uid, id, c.repo.GetEasyMessage)
 	if err != nil {
 		c.logger.Warn(err)
 		return err
@@ -244,7 +242,7 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 		}
 	} else {
 		//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
-		isInterlocutor, err := c.IsInterlocutorDialogue(uid, uint64(id))
+		isInterlocutor, err := c.IsInterlocutor(uid, uint64(id), c.repo.GetEasyDialogue)
 		if err != nil {
 			c.logger.Warn(err)
 			return nil, err

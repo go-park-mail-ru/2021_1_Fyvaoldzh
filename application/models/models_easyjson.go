@@ -2981,12 +2981,12 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels33(in *jlexer.Lexer, out *Dial
 		switch key {
 		case "ID":
 			out.ID = uint64(in.Uint64())
-		case "User_1":
-			out.User_1 = uint64(in.Uint64())
-		case "User_2":
-			out.User_2 = uint64(in.Uint64())
-		case "ID_mes":
-			out.ID_mes = uint64(in.Uint64())
+		case "User1":
+			out.User1 = uint64(in.Uint64())
+		case "User2":
+			out.User2 = uint64(in.Uint64())
+		case "IDMes":
+			out.IDMes = uint64(in.Uint64())
 		case "From":
 			out.From = uint64(in.Uint64())
 		case "To":
@@ -3021,19 +3021,19 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels33(out *jwriter.Writer, in Dia
 		out.Uint64(uint64(in.ID))
 	}
 	{
-		const prefix string = ",\"User_1\":"
+		const prefix string = ",\"User1\":"
 		out.RawString(prefix)
-		out.Uint64(uint64(in.User_1))
+		out.Uint64(uint64(in.User1))
 	}
 	{
-		const prefix string = ",\"User_2\":"
+		const prefix string = ",\"User2\":"
 		out.RawString(prefix)
-		out.Uint64(uint64(in.User_2))
+		out.Uint64(uint64(in.User2))
 	}
 	{
-		const prefix string = ",\"ID_mes\":"
+		const prefix string = ",\"IDMes\":"
 		out.RawString(prefix)
-		out.Uint64(uint64(in.ID_mes))
+		out.Uint64(uint64(in.IDMes))
 	}
 	{
 		const prefix string = ",\"From\":"

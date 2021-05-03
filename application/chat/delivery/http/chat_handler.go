@@ -77,41 +77,37 @@ func (ch ChatHandler) GetDialogues(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
+	pageParam := c.QueryParam("page")
+	if pageParam == "" {
+		pageParam = "1"
 	}
-
-	if uid, err := ch.GetUserID(c); err == nil {
-		dialogues, err := ch.UseCase.GetAllDialogues(uid, page)
-		//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		if _, err = easyjson.MarshalToWriter(dialogues, c.Response().Writer); err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	page, err := strconv.Atoi(pageParam)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	if page == 0 {
+		page = 1
+	}
+
+	uid, err := ch.GetUserID(c)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	dialogues, err := ch.UseCase.GetAllDialogues(uid, page)
+	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(dialogues, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
 func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
@@ -119,46 +115,44 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
 
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
+	pageParam := c.QueryParam("page")
+	if pageParam == "" {
+		pageParam = "1"
 	}
-
-	if uid, err := ch.GetUserID(c); err == nil {
-		messages, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
-		//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeMessages(mes)
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	page, err := strconv.Atoi(pageParam)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	if page == 0 {
+		page = 1
+	}
+
+	uid, err := ch.GetUserID(c)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	messages, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
+	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
 func (ch ChatHandler) DeleteDialogue(c echo.Context) error {
@@ -172,19 +166,19 @@ func (ch ChatHandler) DeleteDialogue(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.DeleteDialogue(uid, uint64(id))
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	uid, err := ch.GetUserID(c)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	err = ch.UseCase.DeleteDialogue(uid, uint64(id))
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
 func (ch ChatHandler) SendMessage(c echo.Context) error {
@@ -199,19 +193,25 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
-	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.SendMessage(newMessage, uid)
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
+	if newMessage.To <= 0 {
+		err := errors.New("user id cannot be less than zero")
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusTeapot, err)
+	}
 
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	uid, err := ch.GetUserID(c)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	err = ch.UseCase.SendMessage(newMessage, uid)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
 func (ch ChatHandler) DeleteMessage(c echo.Context) error {
@@ -225,19 +225,19 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.DeleteMessage(uid, uint64(id))
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	uid, err := ch.GetUserID(c)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	err = ch.UseCase.DeleteMessage(uid, uint64(id))
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
 func (ch ChatHandler) EditMessage(c echo.Context) error {
@@ -252,44 +252,40 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
-	if uid, err := ch.GetUserID(c); err == nil {
-		err := ch.UseCase.EditMessage(uid, redactMessage)
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	uid, err := ch.GetUserID(c)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	err = ch.UseCase.EditMessage(uid, redactMessage)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
-//Пришла в голову идея не делать поиск по сообщениям и фолловерам, если id диалога не передан, а фронту кидать запрос сначала на поиск
-//по фолловерам(у Насти уже реализовано, кажется), а затем по сообщениям и отрисовывать, как им удобно, пойдет?
 func (ch ChatHandler) Search(c echo.Context) error {
 	defer c.Request().Body.Close()
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	str := c.QueryParam("find")
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
 
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
+	str := c.QueryParam("find")
+
+	pageParam := c.QueryParam("page")
+	if pageParam == "" {
+		pageParam = "1"
+	}
+	page, err := strconv.Atoi(pageParam)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if page == 0 {
+		page = 1
 	}
 
 	var id int
@@ -312,22 +308,22 @@ func (ch ChatHandler) Search(c echo.Context) error {
 		}
 	}
 
-	if uid, err := ch.GetUserID(c); err == nil {
-		messages, err := ch.UseCase.Search(uid, id, str, page)
-
-		if err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
-			ch.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		ch.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	uid, err := ch.GetUserID(c)
+	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	messages, err := ch.UseCase.Search(uid, id, str, page)
+	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	return nil
 }

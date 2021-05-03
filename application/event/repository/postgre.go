@@ -32,7 +32,7 @@ func (ed EventDatabase) GetAllEvents(now time.Time, page int) ([]models.EventCar
 		`SELECT id, title, place, description, start_date, end_date FROM events
 		WHERE end_date > $1
 		ORDER BY id DESC
-		LIMIT 6 OFFSET $2`, now, (page-1)*6)
+		LIMIT $2 OFFSET $3`, now, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method GetAllEvents")
@@ -53,7 +53,7 @@ func (ed EventDatabase) GetEventsByCategory(typeEvent string, now time.Time, pag
 		`SELECT id, title, place, description, start_date, end_date FROM events
 		WHERE category = $1 AND end_date > $2
 		ORDER BY id DESC
-		LIMIT 6 OFFSET $3`, typeEvent, now, (page-1)*6)
+		LIMIT $3 OFFSET $4`, typeEvent, now, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method GetEventsByCategory")
@@ -160,7 +160,7 @@ func (ed EventDatabase) FindEvents(str string, now time.Time, page int) ([]model
 		OR LOWER(category) LIKE '%' || $1 || '%' OR LOWER(t.name) LIKE '%' || $1 || '%')
 		AND end_date > $2
 		ORDER BY e.id DESC
-		LIMIT 6 OFFSET $3`, str, now, (page-1)*6)
+		LIMIT $3 OFFSET $4`, str, now, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method FindEvents with string " + str)
@@ -193,6 +193,7 @@ func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
 	return nil
 }
 
+//Вынести на уровень выше
 func (ed EventDatabase) GetSixPreference(recomend models.Recomend) models.Recomend {
 	var sixPreference models.Recomend
 	recomendSumm := recomend.Concert + recomend.Movie + recomend.Show
@@ -253,7 +254,7 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 		OR LOWER(t.name) LIKE '%' || $1 || '%') AND e.category = $2
 		AND end_date > $3
 		ORDER BY e.id DESC
-		LIMIT 6 OFFSET $4`, str, category, now, (page-1)*6)
+		LIMIT $4 OFFSET $5`, str, category, now, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method CategorySearch with searchstring " + str)

@@ -23,8 +23,8 @@ type Message struct {
 
 type MessageSQL struct {
 	ID     uint64
-	From   uint64
-	To     uint64
+	From   uint64 `db:"mes_from"`
+	To     uint64 `db:"mes_to"`
 	Text   string
 	Date   time.Time
 	Redact bool
@@ -58,11 +58,11 @@ type DialogueCard struct {
 
 type DialogueCardSQL struct {
 	ID     uint64
-	User_1 uint64
-	User_2 uint64
-	ID_mes uint64
-	From   uint64
-	To     uint64
+	User1  uint64 `db:"user_1"`
+	User2  uint64 `db:"user_2"`
+	IDMes  uint64 `db:"idmes"`
+	From   uint64 `db:"mes_from"`
+	To     uint64 `db:"mes_to"`
 	Text   string
 	Date   time.Time
 	Redact bool
@@ -116,4 +116,23 @@ func ConvertMessageFromCard(old DialogueCardSQL, uid uint64) Message {
 		newMessage.FromMe = false
 	}
 	return newMessage
+}
+
+func ConvertDialogueCard(old DialogueCardSQL, uid uint64, interlocutor UserOnEvent) DialogueCard {
+	var newDialogueCard DialogueCard
+	newDialogueCard.ID = old.ID
+	newDialogueCard.LastMessage = ConvertMessageFromCard(old, uid)
+	newDialogueCard.Interlocutor = interlocutor
+	return newDialogueCard
+}
+
+func ConvertDialogue(dialogue EasyDialogueMessageSQL, messages MessagesSQL, uid uint64, interlocutor UserOnEvent) Dialogue {
+	var newDialogue Dialogue
+	newDialogue.ID = dialogue.ID
+	for i := range messages {
+		newDialogue.DialogMessages = append(newDialogue.DialogMessages, ConvertMessage(messages[i], uid))
+	}
+	newDialogue.Interlocutor = interlocutor
+
+	return newDialogue
 }

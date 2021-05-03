@@ -7,8 +7,7 @@ import "kudago/application/models"
 type UseCase interface {
 	ConvertDialogueCard(old models.DialogueCardSQL, uid uint64) (models.DialogueCard, error)
 	ConvertDialogue(dialogue models.EasyDialogueMessageSQL, messages models.MessagesSQL, uid uint64) (models.Dialogue, error)
-	IsInterlocutorDialogue(uid uint64, id uint64) (bool, error)
-	IsInterlocutorMessage(uid uint64, id uint64) (bool, error)
+	IsInterlocutor(uid uint64, id uint64, f func(id uint64) (models.EasyDialogueMessageSQL, error)) (bool, error)
 	IsSenderMessage(uid uint64, id uint64) (bool, error)
 	GetAllDialogues(uid uint64, page int) (models.DialogueCards, error)
 	GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error)
