@@ -155,7 +155,7 @@ func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid
 //в вк показывается время отправки и (ред.), если на него навести, то будет время редактирования
 func (cd ChatDatabase) EditMessage(id uint64, text string) error {
 	_, err := cd.pool.Exec(context.Background(),
-		`UPDATE messages SET text = $1, redact = true WHERE id = $3`, text, id)
+		`UPDATE messages SET text = $1, redact = true WHERE id = $2`, text, id)
 
 	if err != nil {
 		cd.logger.Warn(err)

@@ -33,11 +33,11 @@ func CreateChatHandler(e *echo.Echo, uc chat.UseCase, rpcA client.AuthClient,
 
 	//TODO групповой чат
 	e.GET("/api/v1/dialogues", chatHandler.GetDialogues, auth.GetSession, middleware.GetPage)
-	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue, auth.GetSession, middleware.GetPage)    //Здесь id собеседника, по просьбе Димы
-	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue, auth.GetSession, middleware.GetPage) //Везде дальше и здесь id сообщения/диалога
-	e.POST("/api/v1/send", chatHandler.SendMessage, auth.GetSession, middleware.GetPage)
-	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage, auth.GetSession, middleware.GetPage)
-	e.POST("/api/v1/message/:id", chatHandler.EditMessage, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue, auth.GetSession, middleware.GetPage, middleware.GetId) //Здесь id собеседника, по просьбе Димы
+	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue, auth.GetSession, middleware.GetId)                  //Везде дальше и здесь id сообщения/диалога
+	e.POST("/api/v1/send", chatHandler.SendMessage, auth.GetSession)
+	e.DELETE("/api/v1/message/:id", chatHandler.DeleteMessage, auth.GetSession, middleware.GetId)
+	e.POST("/api/v1/message", chatHandler.EditMessage, auth.GetSession)
 	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession, middleware.GetPage)
 }
 
@@ -73,17 +73,7 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 
 	page := c.Get(constants.PageKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
-
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if id <= 0 {
-		err := errors.New("user id cannot be less than zero")
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusTeapot, err)
-	}
+	id := c.Get(constants.IdKey).(int)
 
 	dialogue, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
 	if err != nil {
@@ -105,15 +95,11 @@ func (ch ChatHandler) DeleteDialogue(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
 
+	id := c.Get(constants.IdKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.UseCase.DeleteDialogue(uid, uint64(id))
+	err := ch.UseCase.DeleteDialogue(uid, uint64(id))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -158,15 +144,11 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		ch.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
 
+	id := c.Get(constants.IdKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.UseCase.DeleteMessage(uid, uint64(id))
+	err := ch.UseCase.DeleteMessage(uid, uint64(id))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -186,6 +168,11 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, redactMessage); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
+	}
+	if redactMessage.ID <= 0 {
+		err := errors.New("message id cannot be less than zero")
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 
 	uid := c.Get(constants.UserIdKey).(uint64)

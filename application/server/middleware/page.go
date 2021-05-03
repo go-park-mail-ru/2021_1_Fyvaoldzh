@@ -28,3 +28,20 @@ func GetPage(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(ctx)
 	}
 }
+
+func GetId(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		id, err := strconv.Atoi(ctx.Param("id"))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusTeapot, errors.New("id must be a number"))
+		}
+		if id <= 0 {
+			err := errors.New("id cannot be less than zero")
+			return echo.NewHTTPError(http.StatusTeapot, err)
+		}
+
+		ctx.Set(constants.IdKey, id)
+
+		return next(ctx)
+	}
+}
