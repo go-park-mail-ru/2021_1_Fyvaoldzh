@@ -96,7 +96,7 @@ func (ud UserDatabase) IsCorrect(user *models.User) (*models.User, error) {
 	return &gotUser, nil
 }
 
-func (ud UserDatabase) Update(id uint64, us *models.UserData) error {
+func (ud UserDatabase) Update(id uint64, us *models.UserDataSQL) error {
 	_, err := ud.pool.Exec(context.Background(),
 		`UPDATE users SET "name" = $1, "email" = $2, "city" = $3, "about" = $4,
 			"birthday" = $5, "password" = $6 WHERE id = $7`,
@@ -110,17 +110,17 @@ func (ud UserDatabase) Update(id uint64, us *models.UserData) error {
 	return nil
 }
 
-func (ud UserDatabase) GetByIdOwn(id uint64) (*models.UserData, error) {
-	var usr []*models.UserData
+func (ud UserDatabase) GetByIdOwn(id uint64) (*models.UserDataSQL, error) {
+	var usr []*models.UserDataSQL
 	err := pgxscan.Select(context.Background(), ud.pool, &usr, `SELECT id, name, login, birthday, city, email, about, password, avatar 
 		FROM users WHERE id = $1`, id)
 
 	if len(usr) == 0 {
-		return &models.UserData{}, echo.NewHTTPError(http.StatusBadRequest, "user does not exist")
+		return &models.UserDataSQL{}, echo.NewHTTPError(http.StatusBadRequest, "user does not exist")
 	}
 	if err != nil {
 		ud.logger.Warn(err)
-		return &models.UserData{}, err
+		return &models.UserDataSQL{}, err
 	}
 
 	return usr[0], nil
@@ -183,7 +183,7 @@ func (ud UserDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
 	err := pgxscan.Select(context.Background(), ud.pool, &users, `SELECT subscriber_id
 		FROM subscriptions WHERE subscribed_to_id = $1`, id)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		ud.logger.Debug("got no rows in method GetUserFollowers with id " + fmt.Sprint(id))
+		ud.logger.Debug("got no rows in method CountUserFollowers with id " + fmt.Sprint(id))
 		return []uint64{}, nil
 	}
 	if err != nil {

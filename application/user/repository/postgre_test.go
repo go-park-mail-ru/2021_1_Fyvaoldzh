@@ -189,7 +189,7 @@ var testUserBack = &models.User{
 	Password: password,
 }
 
-var testUserData = &models.UserData{
+var testUserData = &models.UserDataSQL{
 	Id:    userId,
 	Login: login,
 }

@@ -78,10 +78,10 @@ func (mr *MockRepositoryMockRecorder) ChangeAvatar(id, path interface{}) *gomock
 }
 
 // GetByIdOwn mocks base method.
-func (m *MockRepository) GetByIdOwn(id uint64) (*models.UserData, error) {
+func (m *MockRepository) GetByIdOwn(id uint64) (*models.UserDataSQL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByIdOwn", id)
-	ret0, _ := ret[0].(*models.UserData)
+	ret0, _ := ret[0].(*models.UserDataSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -167,7 +167,7 @@ func (mr *MockRepositoryMockRecorder) IsExistingUserId(userId interface{}) *gomo
 }
 
 // Update mocks base method.
-func (m *MockRepository) Update(id uint64, upUser *models.UserData) error {
+func (m *MockRepository) Update(id uint64, upUser *models.UserDataSQL) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", id, upUser)
 	ret0, _ := ret[0].(error)

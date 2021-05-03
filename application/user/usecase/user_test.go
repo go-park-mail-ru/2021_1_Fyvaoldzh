@@ -97,12 +97,12 @@ var testUserBadBack = &models.User{
 	Password: badBackPassword,
 }
 
-var testUserData = &models.UserData{
+var testUserData = &models.UserDataSQL{
 	Id:    userId,
 	Login: login,
 }
 
-var testUserDataWithAvatar = &models.UserData{
+var testUserDataWithAvatar = &models.UserDataSQL{
 	Id:     userId,
 	Login:  login,
 	Avatar: sql.NullString{String: imageName, Valid: true},
@@ -133,7 +133,7 @@ var testOwnUserProfileToUpdate = &models.UserOwnProfile{
 	Avatar:   avatar,
 }
 
-var testNewUserData = &models.UserData{
+var testNewUserData = &models.UserDataSQL{
 	Id:       userId,
 	Name:     sql.NullString{String: name, Valid: true},
 	Login:    login,
@@ -312,7 +312,7 @@ func TestUserUseCase_GetOtherProfileOK(t *testing.T) {
 func TestUserUseCase_GetOtherProfileDBErrorGetByID(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOtherProfile(userId)
 
@@ -392,7 +392,7 @@ func TestUserUseCase_GetOwnProfileOK(t *testing.T) {
 func TestUserUseCase_GetOwnProfileDBErrorGetByID(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOwnProfile(userId)
 
@@ -469,7 +469,7 @@ func TestUserUseCase_UpdateOK(t *testing.T) {
 func TestUserUseCase_UpdateBDErrorGetByIdOwn(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
 
@@ -521,7 +521,7 @@ func TestUserUseCase_GetAvatar(t *testing.T) {
 func TestUserUseCase_GetAvatarDBErrorGetByIdOwn(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetAvatar(userId)
 

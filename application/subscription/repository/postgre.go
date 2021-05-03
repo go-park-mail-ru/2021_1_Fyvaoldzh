@@ -24,20 +24,16 @@ func NewSubscriptionDatabase(conn *pgxpool.Pool, logger logger.Logger) subscript
 	return &SubscriptionDatabase{pool: conn, logger: logger}
 }
 
-func (sd SubscriptionDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
-	var users []uint64
-	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
-		FROM subscriptions WHERE subscribed_to_id = $1`, id)
-	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		sd.logger.Debug("got no rows in method GetUserFollowers with id " + fmt.Sprint(id))
-		return []uint64{}, nil
-	}
+func (sd SubscriptionDatabase) CountUserFollowers(id uint64) (uint64, error) {
+	var num uint64
+	err := sd.pool.QueryRow(context.Background(), `SELECT COUNT(subscriber_id)
+		FROM subscriptions WHERE subscribed_to_id = $1`, id).Scan(&num)
 	if err != nil {
 		sd.logger.Warn(err)
-		return []uint64{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return 0, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return users, nil
+	return num, nil
 }
 
 func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
@@ -138,7 +134,6 @@ func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardW
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, true)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		sd.logger.Debug("got no rows in method GetPlanningEvents with id " + fmt.Sprint(id))
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {

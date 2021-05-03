@@ -24,8 +24,6 @@ func (cs *CustomSanitizer) SanitizeOwnProfile(profile *models.UserOwnProfile) {
 	profile.City = cs.sanitizer.Sanitize(profile.City)
 	profile.Email = cs.sanitizer.Sanitize(profile.Email)
 	profile.About = cs.sanitizer.Sanitize(profile.About)
-	profile.Planning = cs.SanitizeEventCards(profile.Planning)
-	profile.Visited = cs.SanitizeEventCards(profile.Visited)
 }
 
 func (cs *CustomSanitizer) SanitizeOtherProfile(profile *models.OtherUserProfile) {
@@ -33,8 +31,6 @@ func (cs *CustomSanitizer) SanitizeOtherProfile(profile *models.OtherUserProfile
 	profile.Avatar = cs.sanitizer.Sanitize(profile.Avatar)
 	profile.City = cs.sanitizer.Sanitize(profile.City)
 	profile.About = cs.sanitizer.Sanitize(profile.About)
-	profile.Planning = cs.SanitizeEventCards(profile.Planning)
-	profile.Visited = cs.SanitizeEventCards(profile.Visited)
 }
 
 func (cs *CustomSanitizer) SanitizeEventCards(events models.EventCards) models.EventCards {

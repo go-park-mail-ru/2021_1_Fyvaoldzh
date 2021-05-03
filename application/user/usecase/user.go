@@ -23,12 +23,11 @@ import (
 type UserUseCase struct {
 	repo    user.Repository
 	repoSub subscription.Repository
-	logger  logger.Logger
+	Logger  logger.Logger
 }
 
-
 func NewUser(u user.Repository, repoSubscription subscription.Repository, logger logger.Logger) user.UseCase {
-	return &UserUseCase{repo: u, repoSub: repoSubscription, logger: logger}
+	return &UserUseCase{repo: u, repoSub: repoSubscription, Logger: logger}
 }
 
 func (uc UserUseCase) Login(user *models.User) (uint64, error) {
@@ -38,12 +37,12 @@ func (uc UserUseCase) Login(user *models.User) (uint64, error) {
 func (uc UserUseCase) CheckUser(u *models.User) (uint64, error) {
 	gotUser, err := uc.repo.IsCorrect(u)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return 0, err
 	}
 
 	if !generator.CheckHashedPassword(gotUser.Password, u.Password) {
-		uc.logger.Warn(errors.New("incorrect data"))
+		uc.Logger.Warn(errors.New("incorrect data"))
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -56,22 +55,22 @@ func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 
 	flag, err := uc.repo.IsExisting(usr.Login)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return 0, err
 	}
 	if flag {
-		uc.logger.Warn(errors.New("user with this login does exist"))
+		uc.Logger.Warn(errors.New("user with this login does exist"))
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "user with this login does exist")
 	}
 
 	id, err := uc.repo.Add(usr)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return 0, err
 	}
 	err = uc.repo.AddToPreferences(id)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return 0, err
 	}
 
@@ -82,93 +81,33 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 	usr, err := uc.repo.GetByIdOwn(id)
 
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return &models.OtherUserProfile{}, err
 	}
 
 	other := models.ConvertToOther(*usr)
-	var newEvents []models.EventCard
 
-	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
+	other.Followers, err = uc.repoSub.CountUserFollowers(id)
 	if err != nil {
-		uc.logger.Warn(err)
-		return &models.OtherUserProfile{}, err
-	}
-
-	for _, elem := range oldEvents {
-		if elem.EndDate.Before(time.Now()) {
-			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
-			if err != nil {
-				uc.logger.Warn(err)
-				return &models.OtherUserProfile{}, err
-			}
-		} else {
-			newEvents = append(newEvents, models.ConvertDateCard(elem))
-		}
-	}
-	other.Planning = newEvents
-
-	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
-	if err != nil {
-		uc.logger.Warn(err)
-		return &models.OtherUserProfile{}, err
-	}
-	for _, elem := range visitedEventsSQL {
-		other.Visited = append(other.Visited, models.ConvertDateCard(elem))
-	}
-
-	other.Followers, err = uc.repoSub.GetUserFollowers(id)
-	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return &models.OtherUserProfile{}, err
 	}
 
 	return other, err
-
 }
 
 func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	usr, err := uc.repo.GetByIdOwn(id)
-
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return &models.UserOwnProfile{}, err
 	}
 
 	own := models.ConvertToOwn(*usr)
-	var newEvents []models.EventCard
 
-	oldEvents, err := uc.repoSub.GetPlanningEvents(id)
+	own.Followers, err = uc.repoSub.CountUserFollowers(id)
 	if err != nil {
-		uc.logger.Warn(err)
-		return &models.UserOwnProfile{}, err
-	}
-
-	for _, elem := range oldEvents {
-		if elem.EndDate.Before(time.Now()) {
-			err := uc.repoSub.UpdateEventStatus(id, elem.ID)
-			if err != nil {
-				uc.logger.Warn(err)
-				return &models.UserOwnProfile{}, err
-			}
-		} else {
-			newEvents = append(newEvents, models.ConvertDateCard(elem))
-		}
-	}
-	own.Planning = newEvents
-
-	visitedEventsSQL, err := uc.repoSub.GetVisitedEvents(id)
-	if err != nil {
-		uc.logger.Warn(err)
-		return &models.UserOwnProfile{}, err
-	}
-	for _, elem := range visitedEventsSQL {
-		own.Visited = append(own.Visited, models.ConvertDateCard(elem))
-	}
-
-	own.Followers, err = uc.repoSub.GetUserFollowers(id)
-	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return &models.UserOwnProfile{}, err
 	}
 
@@ -178,7 +117,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	changeUser, err := uc.repo.GetByIdOwn(uid)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return err
 	}
 
@@ -189,7 +128,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 
 	if len(ud.OldPassword) != 0 {
 		if !generator.CheckHashedPassword(changeUser.Password.String, ud.OldPassword) {
-			uc.logger.Warn(errors.New("passwords are not same"))
+			uc.Logger.Warn(errors.New("passwords are not same"))
 			return echo.NewHTTPError(http.StatusBadRequest, "passwords are not same")
 		}
 		changeUser.Password.String = generator.HashPassword(ud.NewPassword)
@@ -199,11 +138,11 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	if len(ud.Email) != 0 {
 		flag, err := uc.repo.IsExistingEmail(ud.Email)
 		if err != nil {
-			uc.logger.Warn(err)
+			uc.Logger.Warn(err)
 			return err
 		}
 		if flag {
-			uc.logger.Warn(errors.New("this email does exist"))
+			uc.Logger.Warn(errors.New("this email does exist"))
 			return echo.NewHTTPError(http.StatusBadRequest, "this email does exist")
 		}
 		changeUser.Email.String = ud.Email
@@ -218,7 +157,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	if len(ud.Birthday) != 0 {
 		dt, err := time.Parse(constants.TimeFormat, ud.Birthday)
 		if err != nil {
-			uc.logger.Warn(err)
+			uc.Logger.Warn(err)
 			return err
 		}
 		changeUser.Birthday.Time = dt
@@ -233,7 +172,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	err = uc.repo.Update(uid, changeUser)
 
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return err
 	}
 
@@ -244,20 +183,20 @@ func (uc UserUseCase) UploadAvatar(uid uint64, src multipart.File, filename stri
 	fileName := constants.UserPicDir + fmt.Sprint(uid) + generator.RandStringRunes(6) + filename
 	dst, err := os.Create(fileName)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer dst.Close()
 
 	if _, err = io.Copy(dst, src); err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	err = uc.repo.ChangeAvatar(uid, fileName)
 
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return err
 	}
 
@@ -267,14 +206,14 @@ func (uc UserUseCase) UploadAvatar(uid uint64, src multipart.File, filename stri
 func (uc UserUseCase) GetAvatar(uid uint64) ([]byte, error) {
 	usr, err := uc.repo.GetByIdOwn(uid)
 	if err != nil {
-		uc.logger.Warn(err)
+		uc.Logger.Warn(err)
 		return []byte{}, err
 	}
 
 	if usr.Avatar.Valid {
 		file, err := ioutil.ReadFile(usr.Avatar.String)
 		if err != nil {
-			uc.logger.Warn(err)
+			uc.Logger.Warn(err)
 			return []byte{}, echo.NewHTTPError(http.StatusInternalServerError, "Cannot open file")
 		}
 		return file, nil
@@ -290,12 +229,12 @@ func (uc UserUseCase) GetUsers(page int) (models.UserCards, error) {
 		return models.UserCards{}, err
 	}
 	for _, elem := range users {
-		followers, err := uc.repoSub.GetUserFollowers(elem.Id)
+		followers, err := uc.repoSub.CountUserFollowers(elem.Id)
 		if err != nil {
 			return models.UserCards{}, err
 		}
 		newCard := *models.ConvertUserCard(elem)
-		newCard.Followers = uint64(len(followers))
+		newCard.Followers = followers
 		cards = append(cards, newCard)
 	}
 	return cards, nil
@@ -309,12 +248,12 @@ func (uc UserUseCase) FindUsers(str string, page int) (models.UserCards, error) 
 		return models.UserCards{}, err
 	}
 	for _, elem := range users {
-		followers, err := uc.repoSub.GetUserFollowers(elem.Id)
+		followers, err := uc.repoSub.CountUserFollowers(elem.Id)
 		if err != nil {
 			return models.UserCards{}, err
 		}
 		newCard := *models.ConvertUserCard(elem)
-		newCard.Followers = uint64(len(followers))
+		newCard.Followers = followers
 		cards = append(cards, newCard)
 	}
 	return cards, nil

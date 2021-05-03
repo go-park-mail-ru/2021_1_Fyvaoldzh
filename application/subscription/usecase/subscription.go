@@ -6,6 +6,7 @@ import (
 	"kudago/application/subscription"
 	"kudago/pkg/logger"
 	"net/http"
+	"time"
 )
 
 type Subscription struct {
@@ -53,4 +54,43 @@ func (s Subscription) GetSubscriptions(id uint64) (models.UserCards, error) {
 	}
 
 	return userCards, nil
+}
+
+
+func (s Subscription) GetPlanningEvents(id uint64) (models.EventCards, error) {
+	sqlEvents, err := s.repo.GetPlanningEvents(id)
+	if err != nil {
+		s.Logger.Warn(err)
+		return models.EventCards{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var newEvents []models.EventCard
+	for _, elem := range sqlEvents {
+		if elem.EndDate.Before(time.Now()) {
+			err := s.repo.UpdateEventStatus(id, elem.ID)
+			if err != nil {
+				s.Logger.Warn(err)
+				return models.EventCards{}, err
+			}
+		} else {
+			newEvents = append(newEvents, models.ConvertDateCard(elem))
+		}
+	}
+
+	return newEvents, nil
+}
+
+func (s Subscription) GetVisitedEvents(id uint64) (models.EventCards, error) {
+	var events models.EventCards
+	sqlEvents, err := s.repo.GetVisitedEvents(id)
+	if err != nil {
+		s.Logger.Warn(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	for _, elem := range sqlEvents {
+		events = append(events, models.ConvertDateCard(elem))
+	}
+
+	return events, nil
 }

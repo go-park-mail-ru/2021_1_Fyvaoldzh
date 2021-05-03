@@ -115,33 +115,8 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels1(in *jlexer.Lexer, out *UserO
 			out.City = string(in.String())
 		case "email":
 			out.Email = string(in.String())
-		case "visited":
-			(out.Visited).UnmarshalEasyJSON(in)
-		case "planning":
-			(out.Planning).UnmarshalEasyJSON(in)
 		case "followers":
-			if in.IsNull() {
-				in.Skip()
-				out.Followers = nil
-			} else {
-				in.Delim('[')
-				if out.Followers == nil {
-					if !in.IsDelim(']') {
-						out.Followers = make([]uint64, 0, 8)
-					} else {
-						out.Followers = []uint64{}
-					}
-				} else {
-					out.Followers = (out.Followers)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v4 uint64
-					v4 = uint64(in.Uint64())
-					out.Followers = append(out.Followers, v4)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
+			out.Followers = uint64(in.Uint64())
 		case "about":
 			out.About = string(in.String())
 		case "avatar":
@@ -195,30 +170,9 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels1(out *jwriter.Writer, in User
 		out.String(string(in.Email))
 	}
 	{
-		const prefix string = ",\"visited\":"
-		out.RawString(prefix)
-		(in.Visited).MarshalEasyJSON(out)
-	}
-	{
-		const prefix string = ",\"planning\":"
-		out.RawString(prefix)
-		(in.Planning).MarshalEasyJSON(out)
-	}
-	{
 		const prefix string = ",\"followers\":"
 		out.RawString(prefix)
-		if in.Followers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
-			out.RawString("null")
-		} else {
-			out.RawByte('[')
-			for v5, v6 := range in.Followers {
-				if v5 > 0 {
-					out.RawByte(',')
-				}
-				out.Uint64(uint64(v6))
-			}
-			out.RawByte(']')
-		}
+		out.Uint64(uint64(in.Followers))
 	}
 	{
 		const prefix string = ",\"about\":"
@@ -419,7 +373,7 @@ func (v *UserEvents) UnmarshalJSON(data []byte) error {
 func (v *UserEvents) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels3(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels4(in *jlexer.Lexer, out *UserData) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels4(in *jlexer.Lexer, out *UserDataSQL) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -466,7 +420,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels4(in *jlexer.Lexer, out *UserD
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels4(out *jwriter.Writer, in UserData) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels4(out *jwriter.Writer, in UserDataSQL) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -519,26 +473,26 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels4(out *jwriter.Writer, in User
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v UserData) MarshalJSON() ([]byte, error) {
+func (v UserDataSQL) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjsonD2b7633eEncodeKudagoApplicationModels4(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v UserData) MarshalEasyJSON(w *jwriter.Writer) {
+func (v UserDataSQL) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjsonD2b7633eEncodeKudagoApplicationModels4(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *UserData) UnmarshalJSON(data []byte) error {
+func (v *UserDataSQL) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjsonD2b7633eDecodeKudagoApplicationModels4(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *UserData) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *UserDataSQL) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels4(l, v)
 }
 func easyjsonD2b7633eDecodeDatabaseSql1(in *jlexer.Lexer, out *sql.NullTime) {
@@ -658,9 +612,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels5(in *jlexer.Lexer, out *UserC
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v7 UserCard
-			(v7).UnmarshalEasyJSON(in)
-			*out = append(*out, v7)
+			var v4 UserCard
+			(v4).UnmarshalEasyJSON(in)
+			*out = append(*out, v4)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -674,11 +628,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels5(out *jwriter.Writer, in User
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v8, v9 := range in {
-			if v8 > 0 {
+		for v5, v6 := range in {
+			if v5 > 0 {
 				out.RawByte(',')
 			}
-			(v9).MarshalEasyJSON(out)
+			(v6).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -999,9 +953,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels9(in *jlexer.Lexer, out *Tags)
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v10 Tag
-			(v10).UnmarshalEasyJSON(in)
-			*out = append(*out, v10)
+			var v7 Tag
+			(v7).UnmarshalEasyJSON(in)
+			*out = append(*out, v7)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -1015,11 +969,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels9(out *jwriter.Writer, in Tags
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v11, v12 := range in {
-			if v11 > 0 {
+		for v8, v9 := range in {
+			if v8 > 0 {
 				out.RawByte(',')
 			}
-			(v12).MarshalEasyJSON(out)
+			(v9).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -1392,33 +1346,8 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels14(in *jlexer.Lexer, out *Othe
 			out.About = string(in.String())
 		case "avatar":
 			out.Avatar = string(in.String())
-		case "visited":
-			(out.Visited).UnmarshalEasyJSON(in)
-		case "planning":
-			(out.Planning).UnmarshalEasyJSON(in)
 		case "followers":
-			if in.IsNull() {
-				in.Skip()
-				out.Followers = nil
-			} else {
-				in.Delim('[')
-				if out.Followers == nil {
-					if !in.IsDelim(']') {
-						out.Followers = make([]uint64, 0, 8)
-					} else {
-						out.Followers = []uint64{}
-					}
-				} else {
-					out.Followers = (out.Followers)[:0]
-				}
-				for !in.IsDelim(']') {
-					var v13 uint64
-					v13 = uint64(in.Uint64())
-					out.Followers = append(out.Followers, v13)
-					in.WantComma()
-				}
-				in.Delim(']')
-			}
+			out.Followers = uint64(in.Uint64())
 		default:
 			in.SkipRecursive()
 		}
@@ -1464,30 +1393,9 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels14(out *jwriter.Writer, in Oth
 		out.String(string(in.Avatar))
 	}
 	{
-		const prefix string = ",\"visited\":"
-		out.RawString(prefix)
-		(in.Visited).MarshalEasyJSON(out)
-	}
-	{
-		const prefix string = ",\"planning\":"
-		out.RawString(prefix)
-		(in.Planning).MarshalEasyJSON(out)
-	}
-	{
 		const prefix string = ",\"followers\":"
 		out.RawString(prefix)
-		if in.Followers == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
-			out.RawString("null")
-		} else {
-			out.RawByte('[')
-			for v14, v15 := range in.Followers {
-				if v14 > 0 {
-					out.RawByte(',')
-				}
-				out.Uint64(uint64(v15))
-			}
-			out.RawByte(']')
-		}
+		out.Uint64(uint64(in.Followers))
 	}
 	out.RawByte('}')
 }
@@ -1605,9 +1513,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels16(in *jlexer.Lexer, out *Mess
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v16 MessageSQL
-			(v16).UnmarshalEasyJSON(in)
-			*out = append(*out, v16)
+			var v10 MessageSQL
+			(v10).UnmarshalEasyJSON(in)
+			*out = append(*out, v10)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -1621,11 +1529,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels16(out *jwriter.Writer, in Mes
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v17, v18 := range in {
-			if v17 > 0 {
+		for v11, v12 := range in {
+			if v11 > 0 {
 				out.RawByte(',')
 			}
-			(v18).MarshalEasyJSON(out)
+			(v12).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -1671,9 +1579,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels17(in *jlexer.Lexer, out *Mess
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v19 Message
-			(v19).UnmarshalEasyJSON(in)
-			*out = append(*out, v19)
+			var v13 Message
+			(v13).UnmarshalEasyJSON(in)
+			*out = append(*out, v13)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -1687,11 +1595,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels17(out *jwriter.Writer, in Mes
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v20, v21 := range in {
-			if v20 > 0 {
+		for v14, v15 := range in {
+			if v14 > 0 {
 				out.RawByte(',')
 			}
-			(v21).MarshalEasyJSON(out)
+			(v15).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -2028,9 +1936,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels21(in *jlexer.Lexer, out *Even
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v22 Event
-			(v22).UnmarshalEasyJSON(in)
-			*out = append(*out, v22)
+			var v16 Event
+			(v16).UnmarshalEasyJSON(in)
+			*out = append(*out, v16)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -2044,11 +1952,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels21(out *jwriter.Writer, in Eve
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v23, v24 := range in {
-			if v23 > 0 {
+		for v17, v18 := range in {
+			if v17 > 0 {
 				out.RawByte(',')
 			}
-			(v24).MarshalEasyJSON(out)
+			(v18).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -2223,9 +2131,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels23(in *jlexer.Lexer, out *Even
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v25 EventCard
-			(v25).UnmarshalEasyJSON(in)
-			*out = append(*out, v25)
+			var v19 EventCard
+			(v19).UnmarshalEasyJSON(in)
+			*out = append(*out, v19)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -2239,11 +2147,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels23(out *jwriter.Writer, in Eve
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v26, v27 := range in {
-			if v26 > 0 {
+		for v20, v21 := range in {
+			if v20 > 0 {
 				out.RawByte(',')
 			}
-			(v27).MarshalEasyJSON(out)
+			(v21).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -2718,9 +2626,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels28(in *jlexer.Lexer, out *Dial
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v28 DialogueSQL
-			(v28).UnmarshalEasyJSON(in)
-			*out = append(*out, v28)
+			var v22 DialogueSQL
+			(v22).UnmarshalEasyJSON(in)
+			*out = append(*out, v22)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -2734,11 +2642,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels28(out *jwriter.Writer, in Dia
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v29, v30 := range in {
-			if v29 > 0 {
+		for v23, v24 := range in {
+			if v23 > 0 {
 				out.RawByte(',')
 			}
-			(v30).MarshalEasyJSON(out)
+			(v24).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -2784,9 +2692,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels29(in *jlexer.Lexer, out *Dial
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v31 Dialogue
-			(v31).UnmarshalEasyJSON(in)
-			*out = append(*out, v31)
+			var v25 Dialogue
+			(v25).UnmarshalEasyJSON(in)
+			*out = append(*out, v25)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -2800,11 +2708,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels29(out *jwriter.Writer, in Dia
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v32, v33 := range in {
-			if v32 > 0 {
+		for v26, v27 := range in {
+			if v26 > 0 {
 				out.RawByte(',')
 			}
-			(v33).MarshalEasyJSON(out)
+			(v27).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -2937,9 +2845,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels31(in *jlexer.Lexer, out *Dial
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v34 DialogueCardSQL
-			(v34).UnmarshalEasyJSON(in)
-			*out = append(*out, v34)
+			var v28 DialogueCardSQL
+			(v28).UnmarshalEasyJSON(in)
+			*out = append(*out, v28)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -2953,11 +2861,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels31(out *jwriter.Writer, in Dia
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v35, v36 := range in {
-			if v35 > 0 {
+		for v29, v30 := range in {
+			if v29 > 0 {
 				out.RawByte(',')
 			}
-			(v36).MarshalEasyJSON(out)
+			(v30).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}
@@ -3003,9 +2911,9 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels32(in *jlexer.Lexer, out *Dial
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v37 DialogueCard
-			(v37).UnmarshalEasyJSON(in)
-			*out = append(*out, v37)
+			var v31 DialogueCard
+			(v31).UnmarshalEasyJSON(in)
+			*out = append(*out, v31)
 			in.WantComma()
 		}
 		in.Delim(']')
@@ -3019,11 +2927,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels32(out *jwriter.Writer, in Dia
 		out.RawString("null")
 	} else {
 		out.RawByte('[')
-		for v38, v39 := range in {
-			if v38 > 0 {
+		for v32, v33 := range in {
+			if v32 > 0 {
 				out.RawByte(',')
 			}
-			(v39).MarshalEasyJSON(out)
+			(v33).MarshalEasyJSON(out)
 		}
 		out.RawByte(']')
 	}

@@ -31,11 +31,11 @@ func CreateSubscriptionsHandler(e *echo.Echo,
 	sz *custom_sanitizer.CustomSanitizer,
 	logger logger.Logger) {
 	subscriptionHandler := SubscriptionHandler{
-		rpcAuth: rpcA,
-		rpcSub:  rpcS,
-		usecase: uc,
+		rpcAuth:   rpcA,
+		rpcSub:    rpcS,
+		usecase:   uc,
 		sanitizer: sz,
-		Logger: logger}
+		Logger:    logger}
 
 	e.POST("/api/v1/add/planning/:id", subscriptionHandler.AddPlanningEvent)
 	e.POST("/api/v1/add/visited/:id", subscriptionHandler.AddVisitedEvent)
@@ -45,6 +45,9 @@ func CreateSubscriptionsHandler(e *echo.Echo,
 	e.GET("/api/v1/followers/:id", subscriptionHandler.GetFollowers)
 	e.GET("/api/v1/subscriptions/:id", subscriptionHandler.GetSubscriptions)
 	e.GET("/api/v1/event/is_added/:id", subscriptionHandler.IsAdded)
+
+	e.GET("/api/v1/get/planning/:id", subscriptionHandler.GetPlanningEvents)
+	e.GET("/api/v1/get/visited/:id", subscriptionHandler.GetVisitedEvents)
 }
 
 func (sh SubscriptionHandler) Subscribe(c echo.Context) error {
@@ -253,7 +256,6 @@ func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
 	return err
 }
 
-
 func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
 	defer c.Request().Body.Close()
 
@@ -293,5 +295,53 @@ func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	return nil
+}
+
+func (sh SubscriptionHandler) GetPlanningEvents(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if userId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	events, err := sh.usecase.GetPlanningEvents(uint64(userId))
+	if err != nil {
+		return err
+	}
+
+	events = sh.sanitizer.SanitizeEventCards(events)
+	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+		sh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return nil
+}
+
+func (sh SubscriptionHandler) GetVisitedEvents(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if userId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	events, err := sh.usecase.GetVisitedEvents(uint64(userId))
+	if err != nil {
+		return err
+	}
+
+	events = sh.sanitizer.SanitizeEventCards(events)
+	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+		sh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 	return nil
 }

@@ -63,9 +63,7 @@ type OtherUserProfile struct {
 	City      string     `json:"city"`
 	About     string     `json:"about"`
 	Avatar    string     `json:"avatar"`
-	Visited   EventCards `json:"visited"`
-	Planning  EventCards `json:"planning"`
-	Followers []uint64   `json:"followers"`
+	Followers uint64   `json:"followers"`
 }
 
 type UserOwnProfile struct {
@@ -75,16 +73,14 @@ type UserOwnProfile struct {
 	Birthday    string     `json:"birthday"`
 	City        string     `json:"city"`
 	Email       string     `json:"email"`
-	Visited     EventCards `json:"visited"`
-	Planning    EventCards `json:"planning"`
-	Followers   []uint64   `json:"followers"`
+	Followers   uint64   `json:"followers"`
 	About       string     `json:"about"`
 	Avatar      string     `json:"avatar"`
 	OldPassword string     `json:"old_password"`
 	NewPassword string     `json:"new_password"`
 }
 
-type UserData struct {
+type UserDataSQL struct {
 	Id       uint64
 	Name     sql.NullString
 	Login    string
@@ -101,7 +97,7 @@ type UserEvents struct {
 	Eid uint64
 }
 
-func ConvertToOwn(own UserData) *UserOwnProfile {
+func ConvertToOwn(own UserDataSQL) *UserOwnProfile {
 	var usr UserOwnProfile
 	usr.Uid = own.Id
 	usr.About = own.About.String
@@ -117,7 +113,7 @@ func ConvertToOwn(own UserData) *UserOwnProfile {
 	return &usr
 }
 
-func ConvertToOther(own UserData) *OtherUserProfile {
+func ConvertToOther(own UserDataSQL) *OtherUserProfile {
 	var usr OtherUserProfile
 	usr.Uid = own.Id
 	usr.About = own.About.String
