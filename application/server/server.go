@@ -22,6 +22,8 @@ import (
 
 	"github.com/microcosm-cc/bluemonday"
 
+	middleware1 "kudago/application/server/middleware"
+
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
@@ -33,8 +35,8 @@ import (
 
 type Server struct {
 	rpcAuth *clientAuth.AuthClient
-	rpcSub *clientSub.SubscriptionClient
-	e *echo.Echo
+	rpcSub  *clientSub.SubscriptionClient
+	e       *echo.Echo
 }
 
 func NewServer(l *zap.SugaredLogger) *Server {
@@ -86,16 +88,16 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
 	subscriptionUC := subusecase.NewSubscription(subRep, logger)
-
-	chatUC := chusecase.NewChat(chatRep, subRep, userRep, logger)
+	chatUC := chusecase.NewChat(chatRep, subRep, userRep, eventRep, logger)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
+
+	auth := middleware1.NewAuth(rpcAuth)
 
 	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
 	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger)
 	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger)
-	chhttp.CreateChatHandler(e, chatUC, *rpcAuth, sanitizer, logger)
-
+	chhttp.CreateChatHandler(e, chatUC, *rpcAuth, sanitizer, logger, auth)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,

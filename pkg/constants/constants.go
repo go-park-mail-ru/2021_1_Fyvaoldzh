@@ -4,6 +4,9 @@ const (
 	Localhost               = "127.0.0.1"
 	CookieLength            = uint8(32)
 	SessionCookieName       = "SID"
+	UserIdKey               = "user_id"
+	PageKey                 = "page"
+	IdKey                   = "id"
 	CSRFHeader              = "header:X-XSRF-TOKEN"
 	DBConnect               = "user=postgre dbname=qdago password=fyvaoldzh host=localhost port=5432 sslmode=disable pool_max_conns=10"
 	TimeFormat              = "2006-01-02"
@@ -18,6 +21,10 @@ const (
 	EventsPicDir            = "public/events/"
 	SaltLength              = 8
 	CookiePath              = "/"
+	EventsPerPage           = 6
+	ChatPerPage             = 20
+	MailingText             = " приглашает Вас на мероприятие "
+	MailingAddress          = "qdaqda.ru:3000/event"
 )
 
 var Category = map[string]string{

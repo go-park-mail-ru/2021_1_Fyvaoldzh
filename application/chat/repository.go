@@ -7,7 +7,7 @@ import (
 
 type Repository interface {
 	GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error)
-	GetMessages(id uint64) (models.MessagesSQL, error)
+	GetMessages(id uint64, page int) (models.MessagesSQL, error)
 	GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL, error)
 	GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error)
 	DeleteDialogue(id uint64) error
@@ -17,5 +17,6 @@ type Repository interface {
 	MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error)
 	DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error)
 	CheckDialogue(uid1 uint64, uid2 uint64) (bool, uint64, error)
+	CheckMessage(uid1 uint64, uid2 uint64) (bool, uint64, error)
 	NewDialogue(uid1 uint64, uid2 uint64) (uint64, error)
 }
