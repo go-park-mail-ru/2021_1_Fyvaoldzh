@@ -9,6 +9,7 @@ import (
 	clientSub "kudago/application/microservices/subscription/client"
 	shttp "kudago/application/subscription/delivery/http"
 	srepository "kudago/application/subscription/repository"
+	subusecase "kudago/application/subscription/usecase"
 	"kudago/application/user/delivery/http"
 	"kudago/application/user/repository"
 	"kudago/application/user/usecase"
@@ -80,12 +81,13 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
+	subscriptionUC := subusecase.NewSubscription(subRep, logger)
 
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
 	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
-	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, logger)
+	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger)
 	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{

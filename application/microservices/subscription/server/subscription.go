@@ -10,66 +10,66 @@ type SubscriptionServer struct {
 	usecase subscription.UseCase
 }
 
-func NewSubscriptionServer(usecase subscription.UseCase) *SubscriptionServer{
+func NewSubscriptionServer(usecase subscription.UseCase) *SubscriptionServer {
 	return &SubscriptionServer{usecase: usecase}
 }
 
-func (s *SubscriptionServer) Subscribe(ctx context.Context, users *proto.Users) (*proto.Nothing, error) {
+func (s *SubscriptionServer) Subscribe(ctx context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
 	subscriberId := users.SubscriberId
 	subscribedToId := users.SubscribedToId
 
-	err := s.usecase.SubscribeUser(subscriberId, subscribedToId)
+	flag, msg, err := s.usecase.SubscribeUser(subscriberId, subscribedToId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Nothing{}, nil
+	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) Unsubscribe(ctx context.Context, users *proto.Users) (*proto.Nothing, error) {
+func (s *SubscriptionServer) Unsubscribe(ctx context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
 	subscriberId := users.SubscriberId
 	subscribedToId := users.SubscribedToId
 
-	err := s.usecase.UnsubscribeUser(subscriberId, subscribedToId)
+	flag, msg, err := s.usecase.UnsubscribeUser(subscriberId, subscribedToId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Nothing{}, nil
+	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) AddPlanningEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.Nothing, error) {
+func (s *SubscriptionServer) AddPlanningEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
 	userId := userEvent.UserId
 	eventId := userEvent.EventId
 
-	err := s.usecase.AddPlanning(userId, eventId)
+	flag, msg, err := s.usecase.AddPlanning(userId, eventId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Nothing{}, nil
+	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) AddVisitedEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.Nothing, error) {
+func (s *SubscriptionServer) AddVisitedEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
 	userId := userEvent.UserId
 	eventId := userEvent.EventId
 
-	err := s.usecase.AddVisited(userId, eventId)
+	flag, msg, err := s.usecase.AddVisited(userId, eventId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Nothing{}, nil
+	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) RemoveEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.Nothing, error) {
+func (s *SubscriptionServer) RemoveEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
 	userId := userEvent.UserId
 	eventId := userEvent.EventId
 
-	err := s.usecase.RemoveEvent(userId, eventId)
+	flag, msg, err := s.usecase.RemoveEvent(userId, eventId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.Nothing{}, nil
+	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }

@@ -74,7 +74,7 @@ func (a *AuthClient) Logout(value string) error {
 
 	_, err := a.client.Logout(context.Background(), sessionValue)
 	if err != nil {
-		if err.Error() == "rpc error: code = Unauthenticated desc = code=401, message=user is not authorized" {
+		if err.Error() == "rpc error: code = InvalidArgument desc = user is not authorized" {
 			return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
 		}
 		return err

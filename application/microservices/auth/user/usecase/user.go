@@ -7,7 +7,6 @@ import (
 	"kudago/application/microservices/auth/user"
 	"kudago/pkg/generator"
 	"kudago/pkg/logger"
-	"log"
 	"net/http"
 )
 
@@ -32,7 +31,6 @@ func (uc UserUseCase) CheckUser(login string, password string) (uint64, error) {
 		return 0, err
 	}
 
-	log.Println(gotUser.Password, password)
 	if !generator.CheckHashedPassword(gotUser.Password, password) {
 		uc.logger.Warn(errors.New("incorrect data"))
 		return 0, echo.NewHTTPError(http.StatusBadRequest, "incorrect data")

@@ -17,4 +17,5 @@ type UseCase interface {
 	GetUsers(page int) (models.UserCards, error)
 	UpdateEventStatus(userId uint64, eventId uint64) error
 	IsAddedEvent(userId uint64, eventId uint64) (bool, error)
+	FindUsers(str string, page int) (models.UserCards, error)
 }

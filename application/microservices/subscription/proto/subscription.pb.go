@@ -134,14 +134,17 @@ func (x *UserEvent) GetEventId() uint64 {
 	return 0
 }
 
-type Nothing struct {
+type SubscriptionAnswer struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Flag bool   `protobuf:"varint,1,opt,name=flag,proto3" json:"flag,omitempty"`
+	Msg  string `protobuf:"bytes,2,opt,name=msg,proto3" json:"msg,omitempty"`
 }
 
-func (x *Nothing) Reset() {
-	*x = Nothing{}
+func (x *SubscriptionAnswer) Reset() {
+	*x = SubscriptionAnswer{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_subscription_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -149,13 +152,13 @@ func (x *Nothing) Reset() {
 	}
 }
 
-func (x *Nothing) String() string {
+func (x *SubscriptionAnswer) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Nothing) ProtoMessage() {}
+func (*SubscriptionAnswer) ProtoMessage() {}
 
-func (x *Nothing) ProtoReflect() protoreflect.Message {
+func (x *SubscriptionAnswer) ProtoReflect() protoreflect.Message {
 	mi := &file_subscription_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -167,9 +170,23 @@ func (x *Nothing) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Nothing.ProtoReflect.Descriptor instead.
-func (*Nothing) Descriptor() ([]byte, []int) {
+// Deprecated: Use SubscriptionAnswer.ProtoReflect.Descriptor instead.
+func (*SubscriptionAnswer) Descriptor() ([]byte, []int) {
 	return file_subscription_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SubscriptionAnswer) GetFlag() bool {
+	if x != nil {
+		return x.Flag
+	}
+	return false
+}
+
+func (x *SubscriptionAnswer) GetMsg() string {
+	if x != nil {
+		return x.Msg
+	}
+	return ""
 }
 
 var File_subscription_proto protoreflect.FileDescriptor
@@ -185,22 +202,29 @@ var file_subscription_proto_rawDesc = []byte{
 	0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x16, 0x0a, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x12, 0x18,
 	0x0a, 0x07, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x04, 0x52,
-	0x07, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22, 0x09, 0x0a, 0x07, 0x4e, 0x6f, 0x74, 0x68,
-	0x69, 0x6e, 0x67, 0x32, 0xd0, 0x01, 0x0a, 0x0c, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70,
-	0x74, 0x69, 0x6f, 0x6e, 0x12, 0x1f, 0x0a, 0x09, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62,
-	0x65, 0x12, 0x06, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x73, 0x1a, 0x08, 0x2e, 0x4e, 0x6f, 0x74, 0x68,
-	0x69, 0x6e, 0x67, 0x22, 0x00, 0x12, 0x21, 0x0a, 0x0b, 0x55, 0x6e, 0x73, 0x75, 0x62, 0x73, 0x63,
-	0x72, 0x69, 0x62, 0x65, 0x12, 0x06, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x73, 0x1a, 0x08, 0x2e, 0x4e,
-	0x6f, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x22, 0x00, 0x12, 0x2a, 0x0a, 0x10, 0x41, 0x64, 0x64, 0x50,
-	0x6c, 0x61, 0x6e, 0x6e, 0x69, 0x6e, 0x67, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0a, 0x2e, 0x55,
-	0x73, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x1a, 0x08, 0x2e, 0x4e, 0x6f, 0x74, 0x68, 0x69,
-	0x6e, 0x67, 0x22, 0x00, 0x12, 0x29, 0x0a, 0x0f, 0x41, 0x64, 0x64, 0x56, 0x69, 0x73, 0x69, 0x74,
-	0x65, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0a, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x45, 0x76,
-	0x65, 0x6e, 0x74, 0x1a, 0x08, 0x2e, 0x4e, 0x6f, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x22, 0x00, 0x12,
-	0x25, 0x0a, 0x0b, 0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0a,
-	0x2e, 0x55, 0x73, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x1a, 0x08, 0x2e, 0x4e, 0x6f, 0x74,
-	0x68, 0x69, 0x6e, 0x67, 0x22, 0x00, 0x42, 0x0a, 0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x07, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x22, 0x3a, 0x0a, 0x12, 0x53, 0x75, 0x62, 0x73,
+	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x12, 0x12,
+	0x0a, 0x04, 0x66, 0x6c, 0x61, 0x67, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x04, 0x66, 0x6c,
+	0x61, 0x67, 0x12, 0x10, 0x0a, 0x03, 0x6d, 0x73, 0x67, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x03, 0x6d, 0x73, 0x67, 0x32, 0x87, 0x02, 0x0a, 0x0c, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2a, 0x0a, 0x09, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
+	0x62, 0x65, 0x12, 0x06, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x73, 0x1a, 0x13, 0x2e, 0x53, 0x75, 0x62,
+	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x22,
+	0x00, 0x12, 0x2c, 0x0a, 0x0b, 0x55, 0x6e, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65,
+	0x12, 0x06, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x73, 0x1a, 0x13, 0x2e, 0x53, 0x75, 0x62, 0x73, 0x63,
+	0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x22, 0x00, 0x12,
+	0x35, 0x0a, 0x10, 0x41, 0x64, 0x64, 0x50, 0x6c, 0x61, 0x6e, 0x6e, 0x69, 0x6e, 0x67, 0x45, 0x76,
+	0x65, 0x6e, 0x74, 0x12, 0x0a, 0x2e, 0x55, 0x73, 0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x1a,
+	0x13, 0x2e, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6e,
+	0x73, 0x77, 0x65, 0x72, 0x22, 0x00, 0x12, 0x34, 0x0a, 0x0f, 0x41, 0x64, 0x64, 0x56, 0x69, 0x73,
+	0x69, 0x74, 0x65, 0x64, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0a, 0x2e, 0x55, 0x73, 0x65, 0x72,
+	0x45, 0x76, 0x65, 0x6e, 0x74, 0x1a, 0x13, 0x2e, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x22, 0x00, 0x12, 0x30, 0x0a, 0x0b,
+	0x52, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x12, 0x0a, 0x2e, 0x55, 0x73,
+	0x65, 0x72, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x1a, 0x13, 0x2e, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72,
+	0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x6e, 0x73, 0x77, 0x65, 0x72, 0x22, 0x00, 0x42, 0x0a,
+	0x5a, 0x08, 0x2e, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x33,
 }
 
 var (
@@ -217,9 +241,9 @@ func file_subscription_proto_rawDescGZIP() []byte {
 
 var file_subscription_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_subscription_proto_goTypes = []interface{}{
-	(*Users)(nil),     // 0: Users
-	(*UserEvent)(nil), // 1: UserEvent
-	(*Nothing)(nil),   // 2: Nothing
+	(*Users)(nil),              // 0: Users
+	(*UserEvent)(nil),          // 1: UserEvent
+	(*SubscriptionAnswer)(nil), // 2: SubscriptionAnswer
 }
 var file_subscription_proto_depIdxs = []int32{
 	0, // 0: Subscription.Subscribe:input_type -> Users
@@ -227,11 +251,11 @@ var file_subscription_proto_depIdxs = []int32{
 	1, // 2: Subscription.AddPlanningEvent:input_type -> UserEvent
 	1, // 3: Subscription.AddVisitedEvent:input_type -> UserEvent
 	1, // 4: Subscription.RemoveEvent:input_type -> UserEvent
-	2, // 5: Subscription.Subscribe:output_type -> Nothing
-	2, // 6: Subscription.Unsubscribe:output_type -> Nothing
-	2, // 7: Subscription.AddPlanningEvent:output_type -> Nothing
-	2, // 8: Subscription.AddVisitedEvent:output_type -> Nothing
-	2, // 9: Subscription.RemoveEvent:output_type -> Nothing
+	2, // 5: Subscription.Subscribe:output_type -> SubscriptionAnswer
+	2, // 6: Subscription.Unsubscribe:output_type -> SubscriptionAnswer
+	2, // 7: Subscription.AddPlanningEvent:output_type -> SubscriptionAnswer
+	2, // 8: Subscription.AddVisitedEvent:output_type -> SubscriptionAnswer
+	2, // 9: Subscription.RemoveEvent:output_type -> SubscriptionAnswer
 	5, // [5:10] is the sub-list for method output_type
 	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -270,7 +294,7 @@ func file_subscription_proto_init() {
 			}
 		}
 		file_subscription_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Nothing); i {
+			switch v := v.(*SubscriptionAnswer); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -314,11 +338,11 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type SubscriptionClient interface {
-	Subscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*Nothing, error)
-	Unsubscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*Nothing, error)
-	AddPlanningEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*Nothing, error)
-	AddVisitedEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*Nothing, error)
-	RemoveEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*Nothing, error)
+	Subscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*SubscriptionAnswer, error)
+	Unsubscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*SubscriptionAnswer, error)
+	AddPlanningEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*SubscriptionAnswer, error)
+	AddVisitedEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*SubscriptionAnswer, error)
+	RemoveEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*SubscriptionAnswer, error)
 }
 
 type subscriptionClient struct {
@@ -329,8 +353,8 @@ func NewSubscriptionClient(cc grpc.ClientConnInterface) SubscriptionClient {
 	return &subscriptionClient{cc}
 }
 
-func (c *subscriptionClient) Subscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*Nothing, error) {
-	out := new(Nothing)
+func (c *subscriptionClient) Subscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*SubscriptionAnswer, error) {
+	out := new(SubscriptionAnswer)
 	err := c.cc.Invoke(ctx, "/Subscription/Subscribe", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -338,8 +362,8 @@ func (c *subscriptionClient) Subscribe(ctx context.Context, in *Users, opts ...g
 	return out, nil
 }
 
-func (c *subscriptionClient) Unsubscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*Nothing, error) {
-	out := new(Nothing)
+func (c *subscriptionClient) Unsubscribe(ctx context.Context, in *Users, opts ...grpc.CallOption) (*SubscriptionAnswer, error) {
+	out := new(SubscriptionAnswer)
 	err := c.cc.Invoke(ctx, "/Subscription/Unsubscribe", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -347,8 +371,8 @@ func (c *subscriptionClient) Unsubscribe(ctx context.Context, in *Users, opts ..
 	return out, nil
 }
 
-func (c *subscriptionClient) AddPlanningEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*Nothing, error) {
-	out := new(Nothing)
+func (c *subscriptionClient) AddPlanningEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*SubscriptionAnswer, error) {
+	out := new(SubscriptionAnswer)
 	err := c.cc.Invoke(ctx, "/Subscription/AddPlanningEvent", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -356,8 +380,8 @@ func (c *subscriptionClient) AddPlanningEvent(ctx context.Context, in *UserEvent
 	return out, nil
 }
 
-func (c *subscriptionClient) AddVisitedEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*Nothing, error) {
-	out := new(Nothing)
+func (c *subscriptionClient) AddVisitedEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*SubscriptionAnswer, error) {
+	out := new(SubscriptionAnswer)
 	err := c.cc.Invoke(ctx, "/Subscription/AddVisitedEvent", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -365,8 +389,8 @@ func (c *subscriptionClient) AddVisitedEvent(ctx context.Context, in *UserEvent,
 	return out, nil
 }
 
-func (c *subscriptionClient) RemoveEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*Nothing, error) {
-	out := new(Nothing)
+func (c *subscriptionClient) RemoveEvent(ctx context.Context, in *UserEvent, opts ...grpc.CallOption) (*SubscriptionAnswer, error) {
+	out := new(SubscriptionAnswer)
 	err := c.cc.Invoke(ctx, "/Subscription/RemoveEvent", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -376,30 +400,30 @@ func (c *subscriptionClient) RemoveEvent(ctx context.Context, in *UserEvent, opt
 
 // SubscriptionServer is the server API for Subscription service.
 type SubscriptionServer interface {
-	Subscribe(context.Context, *Users) (*Nothing, error)
-	Unsubscribe(context.Context, *Users) (*Nothing, error)
-	AddPlanningEvent(context.Context, *UserEvent) (*Nothing, error)
-	AddVisitedEvent(context.Context, *UserEvent) (*Nothing, error)
-	RemoveEvent(context.Context, *UserEvent) (*Nothing, error)
+	Subscribe(context.Context, *Users) (*SubscriptionAnswer, error)
+	Unsubscribe(context.Context, *Users) (*SubscriptionAnswer, error)
+	AddPlanningEvent(context.Context, *UserEvent) (*SubscriptionAnswer, error)
+	AddVisitedEvent(context.Context, *UserEvent) (*SubscriptionAnswer, error)
+	RemoveEvent(context.Context, *UserEvent) (*SubscriptionAnswer, error)
 }
 
 // UnimplementedSubscriptionServer can be embedded to have forward compatible implementations.
 type UnimplementedSubscriptionServer struct {
 }
 
-func (*UnimplementedSubscriptionServer) Subscribe(context.Context, *Users) (*Nothing, error) {
+func (*UnimplementedSubscriptionServer) Subscribe(context.Context, *Users) (*SubscriptionAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
 }
-func (*UnimplementedSubscriptionServer) Unsubscribe(context.Context, *Users) (*Nothing, error) {
+func (*UnimplementedSubscriptionServer) Unsubscribe(context.Context, *Users) (*SubscriptionAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
 }
-func (*UnimplementedSubscriptionServer) AddPlanningEvent(context.Context, *UserEvent) (*Nothing, error) {
+func (*UnimplementedSubscriptionServer) AddPlanningEvent(context.Context, *UserEvent) (*SubscriptionAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddPlanningEvent not implemented")
 }
-func (*UnimplementedSubscriptionServer) AddVisitedEvent(context.Context, *UserEvent) (*Nothing, error) {
+func (*UnimplementedSubscriptionServer) AddVisitedEvent(context.Context, *UserEvent) (*SubscriptionAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddVisitedEvent not implemented")
 }
-func (*UnimplementedSubscriptionServer) RemoveEvent(context.Context, *UserEvent) (*Nothing, error) {
+func (*UnimplementedSubscriptionServer) RemoveEvent(context.Context, *UserEvent) (*SubscriptionAnswer, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveEvent not implemented")
 }
 

@@ -1,24 +1,28 @@
 package repository
 
 import (
-	"github.com/labstack/echo"
+	"errors"
 	"github.com/tarantool/go-tarantool"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"kudago/application/microservices/auth/session"
 	"kudago/pkg/constants"
-	"net/http"
+	"kudago/pkg/logger"
 )
 
 type SessionRepository struct {
 	Conn *tarantool.Connection
+	lg logger.Logger
 }
 
-func NewSessionRepository(c *tarantool.Connection) session.Repository {
-	return &SessionRepository{Conn: c}
+func NewSessionRepository(c *tarantool.Connection, l logger.Logger) session.Repository {
+	return &SessionRepository{Conn: c, lg: l}
 }
 
 func (s SessionRepository) InsertSession(userId uint64, value string) error {
 	_, err := s.Conn.Insert(constants.TarantoolSpaceName, []interface{}{value, userId})
 	if err != nil {
+		s.lg.Warn(err)
 		return err
 	}
 
@@ -30,6 +34,7 @@ func (s SessionRepository) CheckSession(value string) (bool, uint64, error) {
 	resp, err := s.Conn.Select(constants.TarantoolSpaceName,
 		"primary", 0, 1, tarantool.IterEq, []interface{}{value})
 	if err != nil {
+		s.lg.Warn(err)
 		return false, 0, err
 	}
 
@@ -37,12 +42,12 @@ func (s SessionRepository) CheckSession(value string) (bool, uint64, error) {
 		data := resp.Data[0]
 		d, ok := data.([]interface{})
 		if !ok {
-			return false, 0, echo.NewHTTPError(http.StatusBadRequest, "cast error")
+			return false, 0, errors.New("cast error")
 		}
 
 		sid, ok := d[1].(uint64)
 		if !ok {
-			return false, 0, echo.NewHTTPError(http.StatusBadRequest, "cast error")
+			return false, 0, errors.New("cast error")
 		}
 
 		return true, sid, nil
@@ -54,7 +59,8 @@ func (s SessionRepository) CheckSession(value string) (bool, uint64, error) {
 func (s SessionRepository) DeleteSession(value string) error {
 	_, err := s.Conn.Delete(constants.TarantoolSpaceName, "primary", []interface{}{value})
 	if err != nil {
-		return err
+		s.lg.Warn(err)
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc/status"
 	"kudago/application/microservices/auth/proto"
 	"kudago/application/microservices/auth/session"
+	"log"
 )
 
 type AuthServer struct {
@@ -52,13 +53,9 @@ func (a *AuthServer) Check(ctx context.Context, s *proto.Session) (*proto.CheckA
 func (a *AuthServer) Logout(ctx context.Context, s *proto.Session) (*proto.Empty, error) {
 	err := a.usecase.Logout(s.Value)
 	if err != nil {
-		if err.Error() == "code=401, message=user is not authorized"{
-			return nil, status.Error(codes.Unauthenticated, err.Error())
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		log.Println(err)
+		return &proto.Empty{}, err
 	}
-
 
 	return &proto.Empty{}, nil
 }

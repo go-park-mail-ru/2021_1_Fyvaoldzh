@@ -42,26 +42,27 @@ func CreateUserHandler(e *echo.Echo, uc user.UseCase,
 	e.POST("/api/v1/upload_avatar", userHandler.UploadAvatar)
 	e.GET("/api/v1/avatar/:id", userHandler.GetAvatar)
 	e.GET("/api/v1/users", userHandler.GetUsers)
+	e.GET("/api/v1/find", userHandler.FindUsers)
 	e.GET("/api/v1/event/is_added/:id", userHandler.IsAdded)
 }
 
 func (uh *UserHandler) Login(c echo.Context) error {
 	defer c.Request().Body.Close()
-	start := time.Now()
-	requestId := fmt.Sprintf("%016x", rand.Int())
+	//start := time.Now()
+	//requestId := fmt.Sprintf("%016x", rand.Int())
 	u := &models.User{}
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 
 	// если убрать куки нил, то упадет с no cookie
 	if err != nil && cookie != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return err
 	}
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, u)
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -72,25 +73,24 @@ func (uh *UserHandler) Login(c echo.Context) error {
 		_, value, err = uh.rpcAuth.Login(u.Login, u.Password, "")
 	}
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return err
 	}
 
 	cookie = generator.CreateCookieWithValue(value)
 	c.SetCookie(cookie)
 
-	uh.Logger.LogInfo(c, start, requestId)
 	return nil
 }
 
 func (uh *UserHandler) Logout(c echo.Context) error {
 	defer c.Request().Body.Close()
-	start := time.Now()
-	requestId := fmt.Sprintf("%016x", rand.Int())
+	//start := time.Now()
+	//requestId := fmt.Sprintf("%016x", rand.Int())
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
 	}
 
@@ -100,7 +100,7 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 
 	err = uh.rpcAuth.Logout(cookie.Value)
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return err
 	}
 
@@ -112,19 +112,19 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 
 func (uh *UserHandler) Register(c echo.Context) error {
 	defer c.Request().Body.Close()
-	start := time.Now()
-	requestId := fmt.Sprintf("%016x", rand.Int())
+	//start := time.Now()
+	//requestId := fmt.Sprintf("%016x", rand.Int())
 
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, "error getting cookie")
 	}
 
 	if cookie != nil {
 		exists, _, err := uh.rpcAuth.Check(cookie.Value)
 		if err != nil {
-			uh.Logger.LogError(c, start, requestId, err)
+			uh.Logger.Warn(err)
 			return err
 		}
 
@@ -137,20 +137,20 @@ func (uh *UserHandler) Register(c echo.Context) error {
 
 	err = easyjson.UnmarshalFromReader(c.Request().Body, newData)
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	oldPassword := newData.Password
 	_, err = uh.UseCase.Add(newData)
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return err
 	}
 
 	_, value, err := uh.rpcAuth.Login(newData.Login, oldPassword, "")
 	if err != nil {
-		uh.Logger.LogError(c, start, requestId, err)
+		uh.Logger.Warn(err)
 		return err
 	}
 
@@ -397,6 +397,43 @@ func (uh *UserHandler) IsAdded(c echo.Context) error {
 	}
 
 	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
+		uh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
+}
+
+
+func (uh UserHandler) FindUsers(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	//start := time.Now()
+	//requestId := fmt.Sprintf("%016x", rand.Int())
+	str := c.QueryParam("search")
+	var page int
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		if pageatoi == 0 {
+			page = 1
+		} else {
+			page = pageatoi
+		}
+	}
+
+	users, err := uh.UseCase.FindUsers(str, page)
+	users = uh.sanitizer.SanitizeUserCards(users)
+	if err != nil {
+		return err
+	}
+
+	if _, err := easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

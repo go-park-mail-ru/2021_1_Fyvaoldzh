@@ -1,6 +1,8 @@
 package user
 
-import "kudago/application/models"
+import (
+	"kudago/application/models"
+)
 
 type Repository interface {
 	Add(user *models.RegData) (uint64, error)
@@ -16,7 +18,7 @@ type Repository interface {
 	UpdateEventStatus(userId uint64, eventId uint64) error
 	GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error)
 	GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error)
-	GetFollowers(id uint64) ([]uint64, error)
 	GetEventFollowers(eventId uint64) (models.UsersOnEvent, error)
 	IsAddedEvent(userId uint64, eventId uint64) (bool, error)
+	FindUsers(str string, page int) ([]models.UserCardSQL, error)
 }

@@ -14,6 +14,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo"
@@ -24,6 +25,7 @@ type UserUseCase struct {
 	repoSub subscription.Repository
 	logger  logger.Logger
 }
+
 
 func NewUser(u user.Repository, repoSubscription subscription.Repository, logger logger.Logger) user.UseCase {
 	return &UserUseCase{repo: u, repoSub: repoSubscription, logger: logger}
@@ -115,7 +117,7 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 		other.Visited = append(other.Visited, models.ConvertDateCard(elem))
 	}
 
-	other.Followers, err = uc.repo.GetFollowers(id)
+	other.Followers, err = uc.repoSub.GetUserFollowers(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.OtherUserProfile{}, err
@@ -164,7 +166,7 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 		own.Visited = append(own.Visited, models.ConvertDateCard(elem))
 	}
 
-	own.Followers, err = uc.repo.GetFollowers(id)
+	own.Followers, err = uc.repoSub.GetUserFollowers(id)
 	if err != nil {
 		uc.logger.Warn(err)
 		return &models.UserOwnProfile{}, err
@@ -288,7 +290,7 @@ func (uc UserUseCase) GetUsers(page int) (models.UserCards, error) {
 		return models.UserCards{}, err
 	}
 	for _, elem := range users {
-		followers, err := uc.repo.GetFollowers(elem.Id)
+		followers, err := uc.repoSub.GetUserFollowers(elem.Id)
 		if err != nil {
 			return models.UserCards{}, err
 		}
@@ -305,4 +307,23 @@ func (uc UserUseCase) UpdateEventStatus(userId uint64, eventId uint64) error {
 
 func (uc UserUseCase) IsAddedEvent(userId uint64, eventId uint64) (bool, error) {
 	return uc.repo.IsAddedEvent(userId, eventId)
+}
+
+func (uc UserUseCase) FindUsers(str string, page int) (models.UserCards, error) {
+	var cards models.UserCards
+	str = strings.ToLower(str)
+	users, err := uc.repo.FindUsers(str, page)
+	if err != nil {
+		return models.UserCards{}, err
+	}
+	for _, elem := range users {
+		followers, err := uc.repoSub.GetUserFollowers(elem.Id)
+		if err != nil {
+			return models.UserCards{}, err
+		}
+		newCard := *models.ConvertUserCard(elem)
+		newCard.Followers = uint64(len(followers))
+		cards = append(cards, newCard)
+	}
+	return cards, nil
 }

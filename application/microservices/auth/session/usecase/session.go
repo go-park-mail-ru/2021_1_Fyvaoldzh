@@ -1,13 +1,13 @@
 package usecase
 
 import (
-	"github.com/labstack/echo"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"kudago/application/microservices/auth/session"
 	"kudago/application/microservices/auth/user"
 	"kudago/pkg/constants"
 	"kudago/pkg/generator"
 	"kudago/pkg/logger"
-	"net/http"
 )
 
 type SessionUseCase struct {
@@ -40,10 +40,11 @@ func (s SessionUseCase) Check(value string) (bool, uint64, error) {
 func (s SessionUseCase) Logout(value string) error {
 	flag, _, err := s.Check(value)
 	if err != nil {
-		return err
+		return status.Error(codes.Internal, err.Error())
 	}
 	if !flag {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
+		return status.Error(codes.InvalidArgument, "user is not authorized")
 	}
+
 	return s.repo.DeleteSession(value)
 }

@@ -6,10 +6,12 @@ protoc --go_out=plugins=grpc:. *.proto
 
 import (
 	"context"
+	"github.com/labstack/echo"
 	"google.golang.org/grpc"
 	"kudago/application/microservices/subscription/proto"
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
+	"net/http"
 )
 
 type SubscriptionClient struct {
@@ -32,13 +34,16 @@ func NewSubscriptionClient(port string, logger logger.Logger) (*SubscriptionClie
 
 func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint64) error {
 	users := &proto.Users{
-		SubscriberId: subscriberId,
+		SubscriberId:   subscriberId,
 		SubscribedToId: subscribedToId,
 	}
 
-	_, err := s.client.Subscribe(context.Background(), users)
+	answer, err := s.client.Subscribe(context.Background(), users)
 	if err != nil {
 		return err
+	}
+	if answer.Flag {
+		return echo.NewHTTPError(http.StatusBadRequest, "subscription is already added")
 	}
 
 	return nil
@@ -46,13 +51,16 @@ func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint6
 
 func (s *SubscriptionClient) Unsubscribe(subscriberId uint64, subscribedToId uint64) error {
 	users := &proto.Users{
-		SubscriberId: subscriberId,
+		SubscriberId:   subscriberId,
 		SubscribedToId: subscribedToId,
 	}
 
-	_, err := s.client.Unsubscribe(context.Background(), users)
+	answer, err := s.client.Unsubscribe(context.Background(), users)
 	if err != nil {
 		return err
+	}
+	if answer.Flag {
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return nil
@@ -60,13 +68,16 @@ func (s *SubscriptionClient) Unsubscribe(subscriberId uint64, subscribedToId uin
 
 func (s *SubscriptionClient) AddPlanningEvent(userId uint64, eventId uint64) error {
 	userEvent := &proto.UserEvent{
-		UserId: userId,
+		UserId:  userId,
 		EventId: eventId,
 	}
 
-	_, err := s.client.AddPlanningEvent(context.Background(), userEvent)
+	answer, err := s.client.AddPlanningEvent(context.Background(), userEvent)
 	if err != nil {
 		return err
+	}
+	if answer.Flag {
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return nil
@@ -74,13 +85,16 @@ func (s *SubscriptionClient) AddPlanningEvent(userId uint64, eventId uint64) err
 
 func (s *SubscriptionClient) RemoveEvent(userId uint64, eventId uint64) error {
 	userEvent := &proto.UserEvent{
-		UserId: userId,
+		UserId:  userId,
 		EventId: eventId,
 	}
 
-	_, err := s.client.RemoveEvent(context.Background(), userEvent)
+	answer, err := s.client.RemoveEvent(context.Background(), userEvent)
 	if err != nil {
 		return err
+	}
+	if answer.Flag {
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return nil
@@ -88,13 +102,16 @@ func (s *SubscriptionClient) RemoveEvent(userId uint64, eventId uint64) error {
 
 func (s *SubscriptionClient) AddVisitedEvent(userId uint64, eventId uint64) error {
 	userEvent := &proto.UserEvent{
-		UserId: userId,
+		UserId:  userId,
 		EventId: eventId,
 	}
 
-	_, err := s.client.AddVisitedEvent(context.Background(), userEvent)
+	answer, err := s.client.AddVisitedEvent(context.Background(), userEvent)
 	if err != nil {
 		return err
+	}
+	if answer.Flag {
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
 	}
 
 	return nil

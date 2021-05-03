@@ -3,11 +3,11 @@ syntax = "proto3";
 option go_package = "../proto";
 
 service Subscription {
-  rpc Subscribe(Users) returns (Nothing) {}
-  rpc Unsubscribe(Users) returns (Nothing) {}
-  rpc AddPlanningEvent(UserEvent) returns (Nothing) {}
-  rpc AddVisitedEvent(UserEvent) returns (Nothing) {}
-  rpc RemoveEvent(UserEvent) returns (Nothing) {}
+  rpc Subscribe(Users) returns (SubscriptionAnswer) {}
+  rpc Unsubscribe(Users) returns (SubscriptionAnswer) {}
+  rpc AddPlanningEvent(UserEvent) returns (SubscriptionAnswer) {}
+  rpc AddVisitedEvent(UserEvent) returns (SubscriptionAnswer) {}
+  rpc RemoveEvent(UserEvent) returns (SubscriptionAnswer) {}
 }
 
 message Users {
@@ -20,5 +20,7 @@ message UserEvent {
   uint64 eventId = 2;
 }
 
-message Nothing {
+message SubscriptionAnswer {
+  bool flag = 1;
+  string msg = 2;
 }

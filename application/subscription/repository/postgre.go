@@ -24,12 +24,12 @@ func NewSubscriptionDatabase(conn *pgxpool.Pool, logger logger.Logger) subscript
 	return &SubscriptionDatabase{pool: conn, logger: logger}
 }
 
-func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
+func (sd SubscriptionDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
 	var users []uint64
 	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
 		FROM subscriptions WHERE subscribed_to_id = $1`, id)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		sd.logger.Debug("got no rows in method GetFollowers with id " + fmt.Sprint(id))
+		sd.logger.Debug("got no rows in method GetUserFollowers with id " + fmt.Sprint(id))
 		return []uint64{}, nil
 	}
 	if err != nil {
@@ -93,4 +93,38 @@ func (sd SubscriptionDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool
 	}
 
 	return true, nil
+}
+
+func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]models.UserCardSQL, error) {
+	var users []models.UserCardSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &users,
+		`SELECT u.id, u.name, u.avatar, u.birthday, u.city
+		FROM users u
+		JOIN subscriptions s ON subscribed_to_id = $1 AND u.id = s.subscriber_id`, id)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return []models.UserCardSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.UserCardSQL{}, err
+	}
+
+	return users, nil
+}
+
+func (sd SubscriptionDatabase) GetSubscriptions(id uint64) ([]models.UserCardSQL, error) {
+	var users []models.UserCardSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &users,
+		`SELECT u.id, u.name, u.avatar, u.birthday, u.city
+		FROM users u
+		JOIN subscriptions s ON subscriber_id = $1 AND u.id = s.subscribed_to_id`, id)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return []models.UserCardSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.UserCardSQL{}, err
+	}
+
+	return users, nil
 }

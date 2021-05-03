@@ -194,12 +194,12 @@ func (ud UserDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
 	return nil
 }
 
-func (ud UserDatabase) GetFollowers(id uint64) ([]uint64, error) {
+func (ud UserDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
 	var users []uint64
 	err := pgxscan.Select(context.Background(), ud.pool, &users, `SELECT subscriber_id
 		FROM subscriptions WHERE subscribed_to_id = $1`, id)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		ud.logger.Debug("got no rows in method GetFollowers with id " + fmt.Sprint(id))
+		ud.logger.Debug("got no rows in method GetUserFollowers with id " + fmt.Sprint(id))
 		return []uint64{}, nil
 	}
 	if err != nil {
@@ -237,7 +237,6 @@ func (ud UserDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQ
 		JOIN user_event ON user_id = $1
 		WHERE event_id = e.id AND is_planning = $2`, id, false)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		ud.logger.Debug("got no rows in method GetVisitedEvents with id " + fmt.Sprint(id))
 		return []models.EventCardWithDateSQL{}, nil
 	}
 	if err != nil {
@@ -256,7 +255,6 @@ func (ud UserDatabase) GetEventFollowers(eventId uint64) (models.UsersOnEvent, e
 		JOIN users u ON u.id = user_id
 		WHERE event_id = $1`, eventId)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		ud.logger.Debug("got no rows in method GetEventFollowers with id " + fmt.Sprint(eventId))
 		return models.UsersOnEvent{}, nil
 	}
 	if err != nil {
@@ -275,7 +273,6 @@ func (ud UserDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool, error)
 			eventId, userId).Scan(&id)
 
 	if errors.As(err, &sql.ErrNoRows) {
-		ud.logger.Debug("no rows in method IsAddedEvent")
 		return false, nil
 	}
 	if err != nil {
@@ -284,4 +281,22 @@ func (ud UserDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool, error)
 	}
 
 	return true, nil
+}
+
+func (ud UserDatabase) FindUsers(str string, page int) ([]models.UserCardSQL, error) {
+	var users []models.UserCardSQL
+	err := pgxscan.Select(context.Background(), ud.pool, &users,
+		`SELECT id, name, avatar, birthday, city
+		FROM users
+		WHERE (LOWER(name) LIKE '%' || $1 || '%' OR LOWER(about) LIKE '%' || $1 || '%')
+		LIMIT 10 OFFSET $2`, str, (page-1)*10)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return []models.UserCardSQL{}, nil
+	}
+	if err != nil {
+		ud.logger.Warn(err)
+		return []models.UserCardSQL{}, err
+	}
+
+	return users, nil
 }

@@ -2,9 +2,12 @@ package http
 
 import (
 	"errors"
+	"github.com/mailru/easyjson"
 	clientAuth "kudago/application/microservices/auth/client"
 	clientSub "kudago/application/microservices/subscription/client"
+	"kudago/application/subscription"
 	"kudago/pkg/constants"
+	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
 	"net/http"
 	"strconv"
@@ -13,25 +16,34 @@ import (
 )
 
 type SubscriptionHandler struct {
-	rpcAuth clientAuth.AuthClient
-	rpcSub  clientSub.SubscriptionClient
-	Logger  logger.Logger
+	rpcAuth   clientAuth.AuthClient
+	rpcSub    clientSub.SubscriptionClient
+	usecase   subscription.UseCase
+	sanitizer *custom_sanitizer.CustomSanitizer
+	Logger    logger.Logger
 }
 
-func CreateSubscriptionsHandler(e *echo.Echo, rpcA clientAuth.AuthClient, rpcS clientSub.SubscriptionClient, logger logger.Logger) {
+func CreateSubscriptionsHandler(e *echo.Echo,
+	rpcA clientAuth.AuthClient,
+	rpcS clientSub.SubscriptionClient,
+	uc subscription.UseCase,
+	sz *custom_sanitizer.CustomSanitizer,
+	logger logger.Logger) {
 	subscriptionHandler := SubscriptionHandler{
 		rpcAuth: rpcA,
 		rpcSub:  rpcS,
-		Logger:  logger}
+		usecase: uc,
+		sanitizer: sz,
+		Logger: logger}
 
 	e.POST("/api/v1/add/planning/:id", subscriptionHandler.AddPlanningEvent)
 	e.POST("/api/v1/add/visited/:id", subscriptionHandler.AddVisitedEvent)
 	e.DELETE("/api/v1/remove/:id", subscriptionHandler.RemoveEvent)
 	e.POST("/api/v1/subscribe/user/:id", subscriptionHandler.Subscribe)
 	e.DELETE("/api/v1/unsubscribe/user/:id", subscriptionHandler.Unsubscribe)
+	e.GET("/api/v1/followers/:id", subscriptionHandler.GetFollowers)
+	e.GET("/api/v1/subscriptions/:id", subscriptionHandler.GetSubscriptions)
 }
-
-
 
 func (sh SubscriptionHandler) Subscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
@@ -189,5 +201,52 @@ func (sh SubscriptionHandler) RemoveEvent(c echo.Context) error {
 	return sh.rpcSub.RemoveEvent(userId, uint64(eventId))
 }
 
+func (sh SubscriptionHandler) GetFollowers(c echo.Context) error {
+	defer c.Request().Body.Close()
 
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if userId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
 
+	users, err := sh.usecase.GetFollowers(uint64(userId))
+	if err != nil {
+		return err
+	}
+
+	users = sh.sanitizer.SanitizeUserCards(users)
+	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
+		sh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return err
+}
+
+func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if userId <= 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
+	}
+
+	users, err := sh.usecase.GetSubscriptions(uint64(userId))
+	if err != nil {
+		return err
+	}
+
+	users = sh.sanitizer.SanitizeUserCards(users)
+	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
+		sh.Logger.Warn(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return err
+}
