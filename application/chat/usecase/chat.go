@@ -93,8 +93,20 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 
 //ОБЯЗАТЕЛЬНО помечать сообщения read
 func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error) {
-	//Проверить, существует ли такой диалог вообще, иначе падает поросто реквест еррор с 0 ошибкой
-	dialogue, err := c.repo.GetEasyDialogue(id)
+	_, err := c.repoUser.GetUserByID(id)
+	if err != nil {
+		return models.Dialogue{}, err
+	}
+
+	isDialogue, d_id, err := c.repo.CheckDialogue(uid, id)
+	if err != nil {
+		return models.Dialogue{}, err
+	}
+	if !isDialogue {
+		return models.Dialogue{}, nil
+	}
+
+	dialogue, err := c.repo.GetEasyDialogue(d_id)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
