@@ -211,3 +211,23 @@ func (ud UserDatabase) FindUsers(str string, page int) ([]models.UserCardSQL, er
 
 	return users, nil
 }
+
+func (ud UserDatabase) GetUserByID(id uint64) (models.UserOnEvent, error) {
+	var users models.UsersOnEvent
+	err := pgxscan.Select(context.Background(), ud.pool, &users,
+		`SELECT id, name, avatar
+		FROM users
+		WHERE id = $1`, id)
+
+	if errors.As(err, &sql.ErrNoRows) {
+		err := errors.New("no user with this id")
+		ud.logger.Warn(err)
+		return models.UserOnEvent{}, err
+	}
+	if err != nil {
+		ud.logger.Warn(err)
+		return models.UserOnEvent{}, err
+	}
+
+	return users[0], nil
+}

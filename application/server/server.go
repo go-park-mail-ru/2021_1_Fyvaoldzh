@@ -2,6 +2,9 @@ package server
 
 import (
 	"context"
+	chhttp "kudago/application/chat/delivery/http"
+	chrepository "kudago/application/chat/repository"
+	chusecase "kudago/application/chat/usecase"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -78,17 +81,21 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	userRep := repository.NewUserDatabase(pool, logger)
 	eventRep := erepository.NewEventDatabase(pool, logger)
 	subRep := srepository.NewSubscriptionDatabase(pool, logger)
+	chatRep := chrepository.NewChatDatabase(pool, logger)
 
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
 	subscriptionUC := subusecase.NewSubscription(subRep, logger)
 
+	chatUC := chusecase.NewChat(chatRep, subRep, userRep, logger)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
 	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
 	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger)
 	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger)
+	chhttp.CreateChatHandler(e, chatUC, *rpcAuth, sanitizer, logger)
+
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,

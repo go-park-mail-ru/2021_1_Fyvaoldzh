@@ -2,11 +2,6 @@ package usecase
 
 import (
 	"database/sql"
-	"github.com/golang/mock/gomock"
-	"github.com/labstack/echo"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"image"
 	"image/png"
 	"io/ioutil"
@@ -21,6 +16,12 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/labstack/echo"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var (
