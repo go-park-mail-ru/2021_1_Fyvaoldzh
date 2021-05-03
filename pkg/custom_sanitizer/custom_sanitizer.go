@@ -88,3 +88,31 @@ func (cs *CustomSanitizer) SanitizeTags(tags models.Tags) models.Tags {
 	}
 	return newTags
 }
+
+func (cs *CustomSanitizer) SanitizeDialogueCards(dialogues models.DialogueCards) models.DialogueCards {
+	var sanitizeDialogues models.DialogueCards
+	for _, elem := range dialogues {
+		elem.Interlocutor.Avatar = cs.sanitizer.Sanitize(elem.Interlocutor.Avatar)
+		elem.Interlocutor.Name = cs.sanitizer.Sanitize(elem.Interlocutor.Name)
+		elem.LastMessage.Text = cs.sanitizer.Sanitize(elem.LastMessage.Text)
+		sanitizeDialogues = append(sanitizeDialogues, elem)
+	}
+
+	return sanitizeDialogues
+}
+
+func (cs *CustomSanitizer) SanitizeMessages(messages models.Messages) models.Messages {
+	var sanitizeMessages models.Messages
+	for _, elem := range messages {
+		elem.Text = cs.sanitizer.Sanitize(elem.Text)
+		sanitizeMessages = append(sanitizeMessages, elem)
+	}
+
+	return sanitizeMessages
+}
+
+func (cs *CustomSanitizer) SanitizeDialogue(dialogue *models.Dialogue) {
+	dialogue.Interlocutor.Name = cs.sanitizer.Sanitize(dialogue.Interlocutor.Name)
+	dialogue.Interlocutor.Avatar = cs.sanitizer.Sanitize(dialogue.Interlocutor.Avatar)
+	dialogue.DialogMessages = cs.SanitizeMessages(dialogue.DialogMessages)
+}

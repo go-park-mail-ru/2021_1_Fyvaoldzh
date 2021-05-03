@@ -51,11 +51,11 @@ func (ch ChatHandler) GetDialogues(c echo.Context) error {
 	uid := c.Get(constants.UserIdKey).(uint64)
 
 	dialogues, err := ch.UseCase.GetAllDialogues(uid, page)
-	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
 	}
+	dialogues = ch.sanitizer.SanitizeDialogueCards(dialogues)
 
 	if _, err = easyjson.MarshalToWriter(dialogues, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
@@ -85,14 +85,14 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 
-	messages, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
-	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
+	dialogue, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
 	}
+	ch.sanitizer.SanitizeDialogue(&dialogue)
 
-	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
+	if _, err = easyjson.MarshalToWriter(dialogue, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -226,11 +226,11 @@ func (ch ChatHandler) Search(c echo.Context) error {
 	}
 
 	messages, err := ch.UseCase.Search(uid, id, str, page)
-	//dialogues = ch.sanitizer.SanitizeEventCards(dialogues) SanitizeDialogues А нужно ли?
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
 	}
+	messages = ch.sanitizer.SanitizeMessages(messages)
 
 	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
