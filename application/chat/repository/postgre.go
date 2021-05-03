@@ -28,11 +28,11 @@ func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	var dialogues models.DialogueCardsSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
-		`SELECT DISTINCT d.id as ID, d.user_1 as User_1, d.user_2 as User_2, m.id as ID_mes,
+		`SELECT DISTINCT ON(d.id) d.id as ID, d.user_1 as User_1, d.user_2 as User_2, m.id as ID_mes,
 		m.mes_from as From, m.mes_to as To, m.text as Text, m.date as Date, m.redact as Redact, m.read as Read
 	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
 	WHERE user_1 = $1 OR user_2 = $1
-	ORDER BY date DESC
+	ORDER BY id, date DESC
 	LIMIT 6 OFFSET $2`, uid, (page-1)*6)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
@@ -137,7 +137,7 @@ func (cd ChatDatabase) DeleteMessage(id uint64) error {
 
 func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid uint64, now time.Time) error {
 	// messages (id, id_dialogue, mes_from, mes_to, text, date, redact, read)
-	_, err := cd.pool.Exec(context.Background(),
+	_, err := cd.pool.Query(context.Background(),
 		`INSERT INTO messages 
 		VALUES (default, $1, $2, $3, $4, $5, default, default)`,
 		id, uid, newMessage.To, newMessage.Text, now)
@@ -240,7 +240,7 @@ func (cd ChatDatabase) CheckDialogue(uid1 uint64, uid2 uint64) (bool, uint64, er
 
 //Как тут сразу вернуть созданный id?
 func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
-	_, err := cd.pool.Exec(context.Background(),
+	_, err := cd.pool.Query(context.Background(),
 		`INSERT INTO dialogues 
 		VALUES (default, $1, $2)`,
 		uid1, uid2)
