@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	mock_infrastructure "kudago/pkg/infrastructure/mocks"
+	mock_infrastructure "kudago/application/microservices/auth/session/mocks"
 	"kudago/pkg/logger"
 	"log"
 	"net/http"
