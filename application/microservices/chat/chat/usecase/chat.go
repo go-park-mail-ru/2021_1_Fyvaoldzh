@@ -3,8 +3,8 @@ package usecase
 import (
 	"errors"
 	"fmt"
-	"kudago/application/microservices/chat/chat"
 	"kudago/application/event"
+	"kudago/application/microservices/chat/chat"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/application/user"
@@ -45,7 +45,7 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 		}
 		if err != nil {
 			c.logger.Warn(err)
-			return nil, err
+			return models.DialogueCards{}, err
 		}
 		dialogueCards = append(dialogueCards, models.ConvertDialogueCard(dialogues[i], uid, interlocutor))
 	}
@@ -177,12 +177,12 @@ func (c Chat) EditMessage(uid uint64, newMessage *models.RedactMessage) error {
 		return err
 	}
 	if !isMessage {
-		return errors.New("no dialogue with this id")
+		return errors.New("no message with this id")
 	}
 
 	isSender := c.IsSenderMessage(uid, message)
 	if !isSender {
-		return errors.New("user is not interlocutor")
+		return errors.New("user is not sender")
 	}
 	err = c.repo.EditMessage(newMessage.ID, newMessage.Text)
 	if err != nil {
@@ -230,12 +230,12 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 		sqlMessages, err = c.repo.MessagesSearch(uid, str, page)
 		if err != nil {
 			c.logger.Warn(err)
-			return nil, err
+			return models.Messages{}, err
 		}
 	} else {
 		isDialogue, dialogue, err := c.repo.CheckDialogueID(uint64(id))
 		if err != nil {
-			return nil, err
+			return models.Messages{}, err
 		}
 		if !isDialogue {
 			return models.Messages{}, errors.New("no dialogue with this id")
@@ -246,10 +246,10 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 			sqlMessages, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
 			if err != nil {
 				c.logger.Warn(err)
-				return nil, err
+				return models.Messages{}, err
 			}
 		} else {
-			return nil, errors.New("user is not interlocutor")
+			return models.Messages{}, errors.New("user is not interlocutor")
 		}
 	}
 	var messages models.Messages
