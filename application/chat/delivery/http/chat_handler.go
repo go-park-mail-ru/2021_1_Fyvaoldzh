@@ -3,8 +3,9 @@ package http
 import (
 	"errors"
 	"fmt"
-	"kudago/application/chat"
 	"kudago/application/microservices/auth/client"
+	"kudago/application/microservices/chat/chat"
+	client_chat "kudago/application/microservices/chat/client"
 	"kudago/application/models"
 	"kudago/application/server/middleware"
 	"kudago/pkg/constants"
@@ -20,16 +21,17 @@ import (
 )
 
 type ChatHandler struct {
-	UseCase   chat.UseCase
 	rpcAuth   client.AuthClient
+	rpcChat   client_chat.ChatClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateChatHandler(e *echo.Echo, uc chat.UseCase, rpcA client.AuthClient,
-	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth) {
+func CreateChatHandler(e *echo.Echo, rpcA client.AuthClient,
+	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth,
+	rpcC client_chat.ChatClient) {
 
-	chatHandler := ChatHandler{UseCase: uc, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
+	chatHandler := ChatHandler{rpcChat: rpcC, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 
 	//TODO групповой чат
 	e.GET("/api/v1/dialogues", chatHandler.GetDialogues, auth.GetSession, middleware.GetPage)
@@ -51,7 +53,7 @@ func (ch ChatHandler) GetDialogues(c echo.Context) error {
 	page := c.Get(constants.PageKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	dialogues, err := ch.UseCase.GetAllDialogues(uid, page)
+	dialogues, err := ch.rpcChat.GetAllDialogues(uid, page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -76,7 +78,7 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 	uid := c.Get(constants.UserIdKey).(uint64)
 	id := c.Get(constants.IdKey).(int)
 
-	dialogue, err := ch.UseCase.GetOneDialogue(uid, uint64(id), page)
+	dialogue, err := ch.rpcChat.GetOneDialogue(uid, uint64(id), page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -100,7 +102,7 @@ func (ch ChatHandler) DeleteDialogue(c echo.Context) error {
 	id := c.Get(constants.IdKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.UseCase.DeleteDialogue(uid, uint64(id))
+	err := ch.rpcChat.DeleteDialogue(uid, uint64(id))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -139,7 +141,7 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.UseCase.SendMessage(newMessage, uid)
+	err = ch.rpcChat.SendMessage(newMessage, uid)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -158,7 +160,7 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 	id := c.Get(constants.IdKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.UseCase.DeleteMessage(uid, uint64(id))
+	err := ch.rpcChat.DeleteMessage(uid, uint64(id))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -197,7 +199,7 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.UseCase.EditMessage(uid, redactMessage)
+	err = ch.rpcChat.EditMessage(uid, redactMessage)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -250,7 +252,7 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.UseCase.Mailing(uid, mailing)
+	err = ch.rpcChat.Mailing(uid, mailing)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -285,7 +287,7 @@ func (ch ChatHandler) Search(c echo.Context) error {
 		return err
 	}
 
-	messages, err := ch.UseCase.Search(uid, id, str, page)
+	messages, err := ch.rpcChat.Search(uid, id, str, page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err

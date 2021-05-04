@@ -3,8 +3,7 @@ package server
 import (
 	"context"
 	chhttp "kudago/application/chat/delivery/http"
-	chrepository "kudago/application/chat/repository"
-	chusecase "kudago/application/chat/usecase"
+	clientChat "kudago/application/microservices/chat/client"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
@@ -36,6 +35,7 @@ import (
 type Server struct {
 	rpcAuth *clientAuth.AuthClient
 	rpcSub  *clientSub.SubscriptionClient
+	rpcChat  *clientChat.ChatClient
 	e       *echo.Echo
 }
 
@@ -80,15 +80,18 @@ func NewServer(l *zap.SugaredLogger) *Server {
 		logger.Fatal(err)
 	}
 
+	rpcChat, err := clientChat.NewChatClient(constants.ChatServicePort, logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	userRep := repository.NewUserDatabase(pool, logger)
 	eventRep := erepository.NewEventDatabase(pool, logger)
 	subRep := srepository.NewSubscriptionDatabase(pool, logger)
-	chatRep := chrepository.NewChatDatabase(pool, logger)
 
 	userUC := usecase.NewUser(userRep, subRep, logger)
 	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
 	subscriptionUC := subusecase.NewSubscription(subRep, logger)
-	chatUC := chusecase.NewChat(chatRep, subRep, userRep, eventRep, logger)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
@@ -97,7 +100,7 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger, auth)
 	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger, auth)
 	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger, auth)
-	chhttp.CreateChatHandler(e, chatUC, *rpcAuth, sanitizer, logger, auth)
+	chhttp.CreateChatHandler(e, *rpcAuth, sanitizer, logger, auth, *rpcChat)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,
@@ -106,6 +109,8 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	server.e = e
 	server.rpcAuth = rpcAuth
+	server.rpcSub = rpcSub
+	server.rpcChat = rpcChat
 	return &server
 }
 
@@ -113,4 +118,5 @@ func (s Server) ListenAndServe() {
 	s.e.Logger.Fatal(s.e.Start(":1323"))
 	defer s.rpcAuth.Close()
 	defer s.rpcSub.Close()
+	defer s.rpcChat.Close()
 }

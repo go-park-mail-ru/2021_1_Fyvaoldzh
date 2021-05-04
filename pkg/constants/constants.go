@@ -16,6 +16,7 @@ const (
 	TarantoolUser           = "admin"
 	AuthServicePort         = ":3001"
 	SubscriptionServicePort = ":3002"
+	ChatServicePort         = ":3003"
 	TarantoolPassword       = "fyvaoldzh"
 	TarantoolSpaceName      = "qdago"
 	UserPicDir              = "public/users/"
