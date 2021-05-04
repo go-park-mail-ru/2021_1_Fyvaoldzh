@@ -96,7 +96,7 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
 	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger)
-	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger)
+	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger, auth)
 	chhttp.CreateChatHandler(e, chatUC, *rpcAuth, sanitizer, logger, auth)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
