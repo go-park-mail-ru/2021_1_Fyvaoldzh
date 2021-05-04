@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"kudago/application/microservices/auth/client"
-	"kudago/application/microservices/chat/chat"
 	client_chat "kudago/application/microservices/chat/client"
 	"kudago/application/models"
 	"kudago/application/server/middleware"

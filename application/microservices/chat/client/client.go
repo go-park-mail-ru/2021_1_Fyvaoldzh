@@ -122,7 +122,7 @@ func (c *ChatClient) Mailing(uid uint64, mailing *models.Mailing) error {
 	in := &chat_proto.MailingIn{
 		UserId:  uid,
 		EventId: mailing.EventID,
-		To:      ConvertIds(mailing.To),
+		To:      ConvertIdsToProto(mailing.To),
 	}
 
 	_, err := c.client.Mailing(context.Background(), in)

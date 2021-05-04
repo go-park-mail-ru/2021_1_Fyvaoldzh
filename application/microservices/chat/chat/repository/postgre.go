@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"kudago/application/chat"
+	"kudago/application/microservices/chat/chat"
 	"kudago/application/models"
 	"kudago/pkg/logger"
 	"net/http"

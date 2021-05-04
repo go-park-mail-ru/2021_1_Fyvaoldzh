@@ -3,7 +3,7 @@ package usecase
 import (
 	"errors"
 	"fmt"
-	"kudago/application/chat"
+	"kudago/application/microservices/chat/chat"
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/application/subscription"
