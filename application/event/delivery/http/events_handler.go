@@ -6,13 +6,13 @@ import (
 	"kudago/application/event"
 	"kudago/application/microservices/auth/client"
 	"kudago/application/models"
+	"kudago/application/server/middleware"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/labstack/echo"
@@ -21,25 +21,26 @@ import (
 
 type EventHandler struct {
 	UseCase   event.UseCase
-	rpcAuth client.AuthClient
+	rpcAuth   client.AuthClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.AuthClient, sz *custom_sanitizer.CustomSanitizer, logger logger.Logger) {
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.AuthClient,
+	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth) {
 	eventHandler := EventHandler{UseCase: uc, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 
-	e.GET("/api/v1/", eventHandler.GetAllEvents)
-	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent)
-	e.GET("/api/v1/event", eventHandler.GetEvents)
-	e.GET("/api/v1/search", eventHandler.FindEvents)
+	e.GET("/api/v1/", eventHandler.GetAllEvents, middleware.GetPage)
+	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent, middleware.GetId)
+	e.GET("/api/v1/event", eventHandler.GetEvents, middleware.GetPage)
+	e.GET("/api/v1/search", eventHandler.FindEvents, middleware.GetPage)
 	//create & delete & save вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
 	e.POST("/api/v1/create", eventHandler.Create)
-	e.DELETE("/api/v1/event/:id", eventHandler.Delete)
-	e.POST("/api/v1/save/:id", eventHandler.Save)
-	e.GET("api/v1/event/:id/image", eventHandler.GetImage)
+	e.DELETE("/api/v1/event/:id", eventHandler.Delete, middleware.GetId)
+	e.POST("/api/v1/save/:id", eventHandler.Save, middleware.GetId)
+	e.GET("api/v1/event/:id/image", eventHandler.GetImage, middleware.GetId)
 	// TODO фикс названия ручки был
-	e.GET("/api/v1/recommend", eventHandler.Recommend)
+	e.GET("/api/v1/recommend", eventHandler.Recommend, middleware.GetPage, auth.GetSession)
 }
 
 func (eh EventHandler) Recommend(c echo.Context) error {
@@ -47,41 +48,23 @@ func (eh EventHandler) Recommend(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			eh.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	page := c.Get(constants.PageKey).(int)
+	uid := c.Get(constants.UserIdKey).(uint64)
 
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
+	events, err := eh.UseCase.GetRecommended(uid, page)
+	events = eh.sanitizer.SanitizeEventCards(events)
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return err
 	}
 
-	if uid, err := eh.GetUserID(c); err == nil {
-		events, err := eh.UseCase.GetRecommended(uid, page)
-		events = eh.sanitizer.SanitizeEventCards(events)
-		if err != nil {
-			eh.Logger.LogError(c, start, requestId, err)
-			return err
-		}
-
-		if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
-			eh.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		eh.Logger.LogInfo(c, start, requestId)
-		return nil
-	} else {
+	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+
+	eh.Logger.LogInfo(c, start, requestId)
+	return nil
 }
 
 func (eh EventHandler) GetAllEvents(c echo.Context) error {
@@ -89,22 +72,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			eh.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
-	}
+	page := c.Get(constants.PageKey).(int)
 
 	events, err := eh.UseCase.GetAllEvents(page)
 	events = eh.sanitizer.SanitizeEventCards(events)
@@ -158,11 +126,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		eh.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	id := c.Get(constants.IdKey).(int)
 
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
@@ -193,22 +157,8 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
 	category := c.QueryParam("category")
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			eh.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	page := c.Get(constants.PageKey).(int)
 
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
-	}
 	events, err := eh.UseCase.GetEventsByCategory(category, page)
 	events = eh.sanitizer.SanitizeEventCards(events)
 
@@ -248,13 +198,9 @@ func (eh EventHandler) Create(c echo.Context) error {
 func (eh EventHandler) Delete(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	id := c.Get(constants.IdKey).(int)
 
-	err = eh.UseCase.Delete(uint64(id))
+	err := eh.UseCase.Delete(uint64(id))
 	if err != nil {
 		log.Println(err)
 		return err
@@ -266,11 +212,7 @@ func (eh EventHandler) Delete(c echo.Context) error {
 func (eh EventHandler) Save(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusTeapot, err.Error())
-	}
+	id := c.Get(constants.IdKey).(int)
 
 	img, err := c.FormFile("image")
 	if err != nil {
@@ -290,11 +232,7 @@ func (eh EventHandler) Save(c echo.Context) error {
 func (eh EventHandler) GetImage(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		log.Println(err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+	id := c.Get(constants.IdKey).(int)
 
 	file, err := eh.UseCase.GetImage(uint64(id))
 	if err != nil {
@@ -318,22 +256,7 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	requestId := fmt.Sprintf("%016x", rand.Int())
 	str := c.QueryParam("find")
 	category := c.QueryParam("category")
-	var page int
-	if c.QueryParam("page") == "" {
-		page = 1
-	} else {
-		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
-		if err != nil {
-			eh.Logger.LogError(c, start, requestId, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-
-		if pageatoi == 0 {
-			page = 1
-		} else {
-			page = pageatoi
-		}
-	}
+	page := c.Get(constants.PageKey).(int)
 
 	events, err := eh.UseCase.FindEvents(str, category, page)
 	events = eh.sanitizer.SanitizeEventCards(events)
@@ -350,4 +273,3 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	eh.Logger.LogInfo(c, start, requestId)
 	return nil
 }
-
