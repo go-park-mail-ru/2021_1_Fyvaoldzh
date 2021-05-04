@@ -3373,7 +3373,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels37(in *jlexer.Lexer, out *Acti
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v37 ActionCard
+			var v37 ActionCardStringTime
 			(v37).UnmarshalEasyJSON(in)
 			*out = append(*out, v37)
 			in.WantComma()
@@ -3422,7 +3422,7 @@ func (v *ActionCards) UnmarshalJSON(data []byte) error {
 func (v *ActionCards) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels37(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels38(in *jlexer.Lexer, out *ActionCard) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels38(in *jlexer.Lexer, out *ActionCardStringTime) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3446,7 +3446,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels38(in *jlexer.Lexer, out *Acti
 		case "name_1":
 			out.Name1 = string(in.String())
 		case "id_2":
-			out.Id2 = string(in.String())
+			out.Id2 = uint64(in.Uint64())
 		case "name_2":
 			out.Name2 = string(in.String())
 		case "time":
@@ -3463,7 +3463,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels38(in *jlexer.Lexer, out *Acti
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels38(out *jwriter.Writer, in ActionCard) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels38(out *jwriter.Writer, in ActionCardStringTime) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -3480,7 +3480,7 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels38(out *jwriter.Writer, in Act
 	{
 		const prefix string = ",\"id_2\":"
 		out.RawString(prefix)
-		out.String(string(in.Id2))
+		out.Uint64(uint64(in.Id2))
 	}
 	{
 		const prefix string = ",\"name_2\":"
@@ -3501,25 +3501,128 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels38(out *jwriter.Writer, in Act
 }
 
 // MarshalJSON supports json.Marshaler interface
-func (v ActionCard) MarshalJSON() ([]byte, error) {
+func (v ActionCardStringTime) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
 	easyjsonD2b7633eEncodeKudagoApplicationModels38(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v ActionCard) MarshalEasyJSON(w *jwriter.Writer) {
+func (v ActionCardStringTime) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjsonD2b7633eEncodeKudagoApplicationModels38(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *ActionCard) UnmarshalJSON(data []byte) error {
+func (v *ActionCardStringTime) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjsonD2b7633eDecodeKudagoApplicationModels38(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *ActionCard) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *ActionCardStringTime) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels38(l, v)
+}
+func easyjsonD2b7633eDecodeKudagoApplicationModels39(in *jlexer.Lexer, out *ActionCard) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "Id1":
+			out.Id1 = uint64(in.Uint64())
+		case "Name1":
+			out.Name1 = string(in.String())
+		case "Id2":
+			out.Id2 = uint64(in.Uint64())
+		case "Name2":
+			out.Name2 = string(in.String())
+		case "Time":
+			if data := in.Raw(); in.Ok() {
+				in.AddError((out.Time).UnmarshalJSON(data))
+			}
+		case "Type":
+			out.Type = string(in.String())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeKudagoApplicationModels39(out *jwriter.Writer, in ActionCard) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"Id1\":"
+		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.Id1))
+	}
+	{
+		const prefix string = ",\"Name1\":"
+		out.RawString(prefix)
+		out.String(string(in.Name1))
+	}
+	{
+		const prefix string = ",\"Id2\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.Id2))
+	}
+	{
+		const prefix string = ",\"Name2\":"
+		out.RawString(prefix)
+		out.String(string(in.Name2))
+	}
+	{
+		const prefix string = ",\"Time\":"
+		out.RawString(prefix)
+		out.Raw((in.Time).MarshalJSON())
+	}
+	{
+		const prefix string = ",\"Type\":"
+		out.RawString(prefix)
+		out.String(string(in.Type))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v ActionCard) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeKudagoApplicationModels39(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v ActionCard) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeKudagoApplicationModels39(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *ActionCard) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeKudagoApplicationModels39(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *ActionCard) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeKudagoApplicationModels39(l, v)
 }

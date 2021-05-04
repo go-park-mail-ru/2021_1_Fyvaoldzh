@@ -5,16 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"kudago/application/models"
-	"kudago/application/user"
-	"kudago/pkg/logger"
-	"log"
-	"net/http"
-
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
+	"kudago/application/models"
+	"kudago/application/user"
+	"kudago/pkg/logger"
+	"net/http"
 )
 
 type UserDatabase struct {
@@ -232,29 +230,35 @@ func (ud UserDatabase) GetUserByID(id uint64) (models.UserOnEvent, error) {
 	return users[0], nil
 }
 
-func (ud UserDatabase) GetActions(id uint64) (models.ActionCards, error) {
-	var actions models.ActionCards
+func (ud UserDatabase) GetActions(id uint64, page int) ([]*models.ActionCard, error) {
+	var actions []*models.ActionCard
 	err := pgxscan.Select(context.Background(), ud.pool, &actions,
 		`SELECT user_id as Id1, u.name as Name1, event_id as Id2, e.title as Name2, time as Time, 'user_event' as Type
 		FROM actions_user_event
 		JOIN users u on actions_user_event.user_id = u.id
 		JOIN events e on actions_user_event.event_id = e.id
-		JOIN subscriptions s2 on user_id = s2.subscribed_to_id AND subscriber_id = $1
+		JOIN subscriptions s2 on subscriber_id = $1 AND user_id = s2.subscribed_to_id
 		UNION ALL
 		select a_s.subscriber_id, u1.name, a_s.subscribed_to_id, u2.name, a_s.time, 'subscription'
 		FROM actions_subscription a_s
-		JOIN subscriptions s on s.subscriber_id = $1 AND s.subscribed_to_id = a_s.subscriber_id
+		JOIN subscriptions s on s.subscriber_id = $1 AND s.subscribed_to_id = a_s.subscriber_id AND a_s.subscribed_to_id <> $1
 		JOIN users u1 on a_s.subscriber_id = u1.id
 		JOIN users u2 on a_s.subscribed_to_id = u2.id
-		ORDER BY Time`, id)
-	log.Println(actions)
+		UNION ALL
+		SELECT ss.subscriber_id, u3.name, ss.subscribed_to_id, '', ss.time, 'new_follower'
+		FROM actions_subscription ss
+		JOIN users u3 on ss.subscriber_id = u3.id
+		WHERE subscribed_to_id = 29
+		ORDER BY Time DESC
+		LIMIT 10 OFFSET $2`, id, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) {
-		return models.ActionCards{}, nil
+		return []*models.ActionCard{}, nil
 	}
 	if err != nil {
 		ud.logger.Warn(err)
-		return models.ActionCards{}, err
+		return []*models.ActionCard{}, err
 	}
+
 
 	return actions, nil
 }

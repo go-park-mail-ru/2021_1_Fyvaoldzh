@@ -421,7 +421,23 @@ func (uh *UserHandler) GetActions(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
 	}
 
-	actions, err := uh.UseCase.GetActions(uid)
+	var page int
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		pageatoi, err := strconv.Atoi(c.QueryParam("page"))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		if pageatoi == 0 {
+			page = 1
+		} else {
+			page = pageatoi
+		}
+	}
+
+	actions, err := uh.UseCase.GetActions(uid, page)
 	if err != nil {
 		uh.Logger.Warn(err)
 		return err

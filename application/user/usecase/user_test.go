@@ -34,7 +34,7 @@ var (
 	badBackPassword        = "1111IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
 	email                  = "email@mail.ru"
 	birthdayStr            = "1999-01-01"
-	birthday, err          = time.Parse(constants.TimeFormat, "1999-01-01")
+	birthday, err          = time.Parse(constants.DateFormat, "1999-01-01")
 	city                   = "City"
 	about                  = "some personal information"
 	avatar                 = "public/users/default.png"
