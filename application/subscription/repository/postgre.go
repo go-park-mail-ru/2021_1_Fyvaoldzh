@@ -127,7 +127,6 @@ func (sd SubscriptionDatabase) GetSubscriptions(id uint64, page int) ([]models.U
 	return users, nil
 }
 
-
 func (sd SubscriptionDatabase) GetPlanningEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
@@ -165,4 +164,3 @@ func (sd SubscriptionDatabase) GetVisitedEvents(id uint64, page int) ([]models.E
 
 	return events, nil
 }
-

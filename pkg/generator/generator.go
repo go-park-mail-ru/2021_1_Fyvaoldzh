@@ -20,7 +20,7 @@ func RandStringRunes(n uint8) string {
 func HashPassword(oldPassword string) string {
 	hash := sha256.New()
 	salt := RandStringRunes(constants.SaltLength)
-	hash.Write([]byte(salt+oldPassword))
+	hash.Write([]byte(salt + oldPassword))
 	return salt + base64.URLEncoding.EncodeToString(hash.Sum(nil))
 }
 
@@ -64,4 +64,3 @@ func CreateCookie(n uint8) *http.Cookie {
 
 	return newCookie
 }
-

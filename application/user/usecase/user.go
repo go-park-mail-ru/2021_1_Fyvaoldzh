@@ -26,7 +26,6 @@ type UserUseCase struct {
 	Logger  logger.Logger
 }
 
-
 func NewUser(u user.Repository, repoSubscription subscription.Repository, logger logger.Logger) user.UseCase {
 	return &UserUseCase{repo: u, repoSub: repoSubscription, Logger: logger}
 }

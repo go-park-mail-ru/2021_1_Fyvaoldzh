@@ -10,4 +10,3 @@ type UseCase interface {
 	GetPlanningEvents(id uint64, page int) (models.EventCards, error)
 	GetVisitedEvents(id uint64, page int) (models.EventCards, error)
 }
-

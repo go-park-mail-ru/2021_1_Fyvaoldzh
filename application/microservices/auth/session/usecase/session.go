@@ -9,9 +9,9 @@ import (
 )
 
 type SessionUseCase struct {
-	repo    session.Repository
+	repo        session.Repository
 	userUseCase user.UseCase
-	logger  logger.Logger
+	logger      logger.Logger
 }
 
 func NewSessionUseCase(s session.Repository, u user.UseCase, logger logger.Logger) session.UseCase {

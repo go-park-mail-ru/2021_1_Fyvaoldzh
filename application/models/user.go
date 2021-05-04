@@ -146,12 +146,12 @@ type ActionCard struct {
 }
 
 type ActionCardStringTime struct {
-	Id1   uint64    `json:"id_1"`
-	Name1 string    `json:"name_1"`
-	Id2   uint64    `json:"id_2"`
-	Name2 string    `json:"name_2"`
+	Id1   uint64 `json:"id_1"`
+	Name1 string `json:"name_1"`
+	Id2   uint64 `json:"id_2"`
+	Name2 string `json:"name_2"`
 	Time  string `json:"time"`
-	Type  string    `json:"type"`
+	Type  string `json:"type"`
 }
 
 //easyjson:json

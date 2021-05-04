@@ -7,11 +7,11 @@ import (
 )
 
 type UserUseCase struct {
-	repo    user.Repository
-	logger  logger.Logger
+	repo   user.Repository
+	logger logger.Logger
 }
 
-func NewUserUseCase(u user.Repository,  logger logger.Logger) user.UseCase {
+func NewUserUseCase(u user.Repository, logger logger.Logger) user.UseCase {
 	return &UserUseCase{repo: u, logger: logger}
 }
 
@@ -31,4 +31,3 @@ func (uc UserUseCase) CheckUser(login string, password string) (uint64, bool, er
 
 	return gotUser.Id, false, nil
 }
-

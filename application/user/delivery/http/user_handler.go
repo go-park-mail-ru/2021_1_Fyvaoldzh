@@ -20,10 +20,10 @@ import (
 
 type UserHandler struct {
 	UseCase   user.UseCase
-	rpcAuth client.AuthClient
+	rpcAuth   client.AuthClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
-	auth middleware.Auth
+	auth      middleware.Auth
 }
 
 func CreateUserHandler(e *echo.Echo,
@@ -33,11 +33,11 @@ func CreateUserHandler(e *echo.Echo,
 	logger logger.Logger,
 	am middleware.Auth) {
 	userHandler := UserHandler{
-		UseCase: uc,
-		rpcAuth: auth,
+		UseCase:   uc,
+		rpcAuth:   auth,
 		sanitizer: sz,
-		Logger: logger,
-		auth: am}
+		Logger:    logger,
+		auth:      am}
 
 	e.POST("/api/v1/login", userHandler.Login)
 	e.DELETE("/api/v1/logout",

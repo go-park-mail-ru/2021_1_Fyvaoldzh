@@ -56,7 +56,6 @@ func (s Subscription) GetSubscriptions(id uint64, page int) (models.UserCards, e
 	return userCards, nil
 }
 
-
 func (s Subscription) GetPlanningEvents(id uint64, page int) (models.EventCards, error) {
 	sqlEvents, err := s.repo.GetPlanningEvents(id, page)
 	if err != nil {

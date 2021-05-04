@@ -96,7 +96,6 @@ func (sd SubscriptionDatabase) RemoveEvent(userId uint64, eventId uint64) error 
 		return status.Error(codes.Internal, err.Error())
 	}
 
-
 	return nil
 }
 

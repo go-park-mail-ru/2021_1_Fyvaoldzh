@@ -12,7 +12,7 @@ import (
 
 type SessionRepository struct {
 	Conn *tarantool.Connection
-	lg logger.Logger
+	lg   logger.Logger
 }
 
 func NewSessionRepository(c *tarantool.Connection, l logger.Logger) session.Repository {

@@ -16,7 +16,7 @@ import (
 
 type Server struct {
 	port string
-	ss *SubscriptionServer
+	ss   *SubscriptionServer
 }
 
 func NewServer(port string, logger *logger.Logger) *Server {
@@ -34,7 +34,7 @@ func NewServer(port string, logger *logger.Logger) *Server {
 
 	return &Server{
 		port: port,
-		ss: NewSubscriptionServer(sUseCase),
+		ss:   NewSubscriptionServer(sUseCase),
 	}
 }
 
