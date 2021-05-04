@@ -156,7 +156,7 @@ func (uc UserUseCase) Update(uid uint64, ud *models.UserOwnProfile) error {
 	}
 
 	if len(ud.Birthday) != 0 {
-		dt, err := time.Parse(constants.TimeFormat, ud.Birthday)
+		dt, err := time.Parse(constants.DateFormat, ud.Birthday)
 		if err != nil {
 			uc.Logger.Warn(err)
 			return err
@@ -260,6 +260,15 @@ func (uc UserUseCase) FindUsers(str string, page int) (models.UserCards, error) 
 	return cards, nil
 }
 
-func (uc UserUseCase) GetActions(id uint64) (models.ActionCards, error) {
-	return uc.repo.GetActions(id)
+func (uc UserUseCase) GetActions(id uint64, page int) (models.ActionCards, error) {
+	actions, err := uc.repo.GetActions(id, page)
+	if err != nil {
+		return models.ActionCards{}, err
+	}
+	var newActions models.ActionCards
+	for _, elem := range actions {
+		newActions = append(newActions, models.ConvertActionCard(*elem))
+	}
+
+	return newActions, nil
 }

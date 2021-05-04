@@ -16,5 +16,5 @@ type UseCase interface {
 	GetAvatar(id uint64) ([]byte, error)
 	GetUsers(page int) (models.UserCards, error)
 	FindUsers(str string, page int) (models.UserCards, error)
-	GetActions(id uint64) (models.ActionCards, error)
+	GetActions(id uint64, page int) (models.ActionCards, error)
 }

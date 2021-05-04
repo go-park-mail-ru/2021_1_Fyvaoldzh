@@ -106,7 +106,7 @@ func ConvertToOwn(own UserDataSQL) *UserOwnProfile {
 	usr.Name = own.Name.String
 	usr.Login = own.Login
 	if own.Birthday.Valid {
-		usr.Birthday = own.Birthday.Time.Format(constants.TimeFormat)
+		usr.Birthday = own.Birthday.Time.Format(constants.DateFormat)
 	}
 	usr.Avatar = own.Avatar.String
 	usr.City = own.City.String
@@ -137,13 +137,33 @@ type RegData struct {
 }
 
 type ActionCard struct {
-	Id1   uint64 `json:"id_1"`
-	Name1 string `json:"name_1"`
-	Id2   string `json:"id_2"`
-	Name2 string `json:"name_2"`
+	Id1   uint64
+	Name1 string
+	Id2   uint64
+	Name2 string
+	Time  time.Time
+	Type  string
+}
+
+type ActionCardStringTime struct {
+	Id1   uint64    `json:"id_1"`
+	Name1 string    `json:"name_1"`
+	Id2   uint64    `json:"id_2"`
+	Name2 string    `json:"name_2"`
 	Time  string `json:"time"`
-	Type  string `json:"type"`
+	Type  string    `json:"type"`
 }
 
 //easyjson:json
-type ActionCards []ActionCard
+type ActionCards []ActionCardStringTime
+
+func ConvertActionCard(card ActionCard) ActionCardStringTime {
+	var newCard ActionCardStringTime
+	newCard.Id1 = card.Id1
+	newCard.Id2 = card.Id2
+	newCard.Name1 = card.Name1
+	newCard.Name2 = card.Name2
+	newCard.Type = card.Type
+	newCard.Time = card.Time.Format(constants.DateTimeFormat)
+	return newCard
+}
