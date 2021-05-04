@@ -3,12 +3,22 @@ package models
 import "time"
 
 type NewMessage struct {
-	To   uint64 `json:"to"`
+	To   uint64
+	Text string
+}
+
+type NewMessageJSON struct {
+	To   string `json:"to"`
 	Text string `json:"text"`
 }
 
 type RedactMessage struct {
-	ID   uint64 `json:"id"`
+	ID   uint64
+	Text string
+}
+
+type RedactMessageJSON struct {
+	ID   string `json:"id"`
 	Text string `json:"text"`
 }
 
@@ -72,6 +82,11 @@ type DialogueCardSQL struct {
 type Mailing struct {
 	EventID uint64   `json:"event"`
 	To      []uint64 `json:"to"`
+}
+
+type MailingJSON struct {
+	EventID string   `json:"event"`
+	To      []string `json:"to"`
 }
 
 //easyjson:json

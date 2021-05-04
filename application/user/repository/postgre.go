@@ -8,7 +8,6 @@ import (
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/logger"
-	"log"
 	"net/http"
 
 	"github.com/georgysavva/scany/pgxscan"
@@ -247,7 +246,7 @@ func (ud UserDatabase) GetActions(id uint64) (models.ActionCards, error) {
 		JOIN users u1 on a_s.subscriber_id = u1.id
 		JOIN users u2 on a_s.subscribed_to_id = u2.id
 		ORDER BY Time`, id)
-	log.Println(actions)
+	//log.Println(actions)
 	if errors.As(err, &sql.ErrNoRows) {
 		return models.ActionCards{}, nil
 	}

@@ -19,4 +19,5 @@ type Repository interface {
 	CheckDialogue(uid1 uint64, uid2 uint64) (bool, uint64, error)
 	CheckMessage(uid1 uint64, uid2 uint64) (bool, uint64, error)
 	NewDialogue(uid1 uint64, uid2 uint64) (uint64, error)
+	ReadMessages(id uint64, page int, uid uint64) error
 }

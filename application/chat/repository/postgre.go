@@ -29,11 +29,12 @@ func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	var dialogues models.DialogueCardsSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
-		`SELECT DISTINCT ON(d.id) d.id as ID, d.user_1, d.user_2, m.id as IDMes,
+		`SELECT * FROM (SELECT DISTINCT ON(d.id) d.id as ID, d.user_1, d.user_2, m.id as IDMes,
 		m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
 	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
 	WHERE user_1 = $1 OR user_2 = $1
-	ORDER BY id, date DESC
+	ORDER BY id, date DESC) as pl
+	ORDER BY date DESC
 	LIMIT $2 OFFSET $3`, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
@@ -49,7 +50,6 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 	return dialogues, nil
 }
 
-//Исправить значения на read
 func (cd ChatDatabase) GetMessages(id uint64, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
@@ -255,4 +255,19 @@ func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
 	}
 
 	return id, nil
+}
+
+func (cd ChatDatabase) ReadMessages(id uint64, page int, uid uint64) error {
+	_, err := cd.pool.Exec(context.Background(),
+		`UPDATE messages SET read = true
+		WHERE id in
+	(SELECT id from messages where mes_to = $1 AND id_dialogue = $2
+		ORDER BY date DESC LIMIT $3 OFFSET $4)`, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+
+	if err != nil {
+		cd.logger.Warn(err)
+		return err
+	}
+
+	return nil
 }

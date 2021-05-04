@@ -115,22 +115,31 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	newMessage := &models.NewMessage{}
+	newMessageJSON := &models.NewMessageJSON{}
 
-	if err := easyjson.UnmarshalFromReader(c.Request().Body, newMessage); err != nil {
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, newMessageJSON); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
-	if newMessage.To <= 0 {
+	newMessage := &models.NewMessage{}
+	toInt, err := strconv.Atoi(newMessageJSON.To)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if toInt <= 0 {
 		err := errors.New("user id cannot be less than zero")
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 
+	newMessage.To = uint64(toInt)
+	newMessage.Text = newMessageJSON.Text
+
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.UseCase.SendMessage(newMessage, uid)
+	err = ch.UseCase.SendMessage(newMessage, uid)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -164,21 +173,31 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
-	redactMessage := &models.RedactMessage{}
+	redactMessageJSON := &models.RedactMessageJSON{}
 
-	if err := easyjson.UnmarshalFromReader(c.Request().Body, redactMessage); err != nil {
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, redactMessageJSON); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
-	if redactMessage.ID <= 0 {
+
+	redactMessage := &models.RedactMessage{}
+	idInt, err := strconv.Atoi(redactMessageJSON.ID)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if idInt <= 0 {
 		err := errors.New("message id cannot be less than zero")
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 
+	redactMessage.ID = uint64(idInt)
+	redactMessage.Text = redactMessageJSON.Text
+
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.UseCase.EditMessage(uid, redactMessage)
+	err = ch.UseCase.EditMessage(uid, redactMessage)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
@@ -194,22 +213,44 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 	start := time.Now()
 	requestId := fmt.Sprintf("%016x", rand.Int())
 
-	mailing := &models.Mailing{}
-	if err := easyjson.UnmarshalFromReader(c.Request().Body, mailing); err != nil {
+	mailingJSON := &models.MailingJSON{}
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, mailingJSON); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
-	for _, id := range mailing.To {
-		if id <= 0 {
+
+	mailing := &models.Mailing{}
+
+	eventIdInt, err := strconv.Atoi(mailingJSON.EventID)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if eventIdInt <= 0 {
+		err := errors.New("message id cannot be less than zero")
+		ch.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusTeapot, err)
+	}
+	mailing.EventID = uint64(eventIdInt)
+
+	for i := range mailingJSON.To {
+		idInt, err := strconv.Atoi(mailingJSON.To[i])
+		if err != nil {
+			ch.Logger.LogError(c, start, requestId, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		if idInt <= 0 {
 			err := errors.New("user id cannot be less than zero")
 			ch.Logger.LogError(c, start, requestId, err)
 			return echo.NewHTTPError(http.StatusTeapot, err)
 		}
+
+		mailing.To = append(mailing.To, uint64(idInt))
 	}
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.UseCase.Mailing(uid, mailing)
+	err = ch.UseCase.Mailing(uid, mailing)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err

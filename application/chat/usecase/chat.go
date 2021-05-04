@@ -57,20 +57,14 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
-//TODO: ОБЯЗАТЕЛЬНО помечать сообщения read!!!!!!!
-//Как сделать так, чтобы сообщения выдавались непрочитанные сначала? Ну типа чтоб как в вк, открываешь диалог и тебя
-//скролит к последнему сообщению прочитанному, а дальше ты листаешь вниз и читаешь типа
 func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error) {
-	_, err := c.repoUser.GetUserByID(id)
-	if err != nil {
-		return models.Dialogue{}, err
-	}
 	interlocutor, err := c.repoUser.GetUserByID(id)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
 
+	//Заменить geteasydialogue на checkdialogue(возвращать изи диалог)
 	isDialogue, d_id, err := c.repo.CheckDialogue(uid, id)
 	if err != nil {
 		return models.Dialogue{}, err
@@ -98,6 +92,12 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 	}
 
 	resDialogue := models.ConvertDialogue(dialogue, messages, uid, interlocutor)
+
+	err = c.repo.ReadMessages(dialogue.ID, page, uid)
+	if err != nil {
+		c.logger.Warn(err)
+		return resDialogue, nil
+	}
 
 	return resDialogue, nil
 }
@@ -127,7 +127,7 @@ func (c Chat) IsSenderMessage(uid uint64, id uint64) (bool, error) {
 }
 
 //Не совсем оптимально получается, дважды смотрим один и тот же диалог, сначала на предмет существования, потом на то, являемся ли собеседником,
-//можно убрать первую проверку, но тогда будет возвращаться ошибка "0 request error". Далее у функци
+//можно убрать первую проверку, но тогда будет возвращаться ошибка "0 request error".
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
 	isDialogue, _, err := c.repo.CheckDialogue(uid, id)
 	if err != nil {
@@ -204,6 +204,7 @@ func (c Chat) DeleteMessage(uid uint64, id uint64) error {
 	return errors.New("user is not interlocutor")
 }
 
+//Неплохо бы проверять, как давно было написано сообщение, чтобы нельзя было меня сообщения, написанные пару часов назад
 //Тут вообще кастомную функцию для проверки существования сообщения по его id надо делать
 func (c Chat) EditMessage(uid uint64, newMessage *models.RedactMessage) error {
 	/*isMessage, _, err := c.repo.CustomCheckMessage(newMessage.ID)
