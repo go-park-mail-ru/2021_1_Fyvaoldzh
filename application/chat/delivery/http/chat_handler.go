@@ -20,16 +20,16 @@ import (
 )
 
 type ChatHandler struct {
-	rpcAuth   client.AuthClient
-	rpcChat   client_chat.ChatClient
+	rpcAuth   client.IAuthClient
+	rpcChat   client_chat.IChatClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
 
-func CreateChatHandler(e *echo.Echo, rpcA client.AuthClient,
+func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth,
-	rpcC client_chat.ChatClient) {
+	rpcC client_chat.IChatClient) {
 
 	chatHandler := ChatHandler{rpcChat: rpcC, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 

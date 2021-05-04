@@ -20,7 +20,7 @@ type AuthClient struct {
 	logger logger.Logger
 }
 
-func NewAuthClient(port string, logger logger.Logger) (*AuthClient, error) {
+func NewAuthClient(port string, logger logger.Logger) (IAuthClient, error) {
 	gConn, err := grpc.Dial(
 		constants.Localhost+port,
 		grpc.WithInsecure(),

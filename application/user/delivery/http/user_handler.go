@@ -20,7 +20,7 @@ import (
 
 type UserHandler struct {
 	UseCase   user.UseCase
-	rpcAuth   client.AuthClient
+	rpcAuth   client.IAuthClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 	auth      middleware.Auth
@@ -28,7 +28,7 @@ type UserHandler struct {
 
 func CreateUserHandler(e *echo.Echo,
 	uc user.UseCase,
-	auth client.AuthClient,
+	auth client.IAuthClient,
 	sz *custom_sanitizer.CustomSanitizer,
 	logger logger.Logger,
 	am middleware.Auth) {

@@ -15,8 +15,8 @@ import (
 )
 
 type SubscriptionHandler struct {
-	rpcAuth   clientAuth.AuthClient
-	rpcSub    clientSub.SubscriptionClient
+	rpcAuth   clientAuth.IAuthClient
+	rpcSub    clientSub.ISubscriptionClient
 	usecase   subscription.UseCase
 	sanitizer *custom_sanitizer.CustomSanitizer
 	Logger    logger.Logger
@@ -24,8 +24,8 @@ type SubscriptionHandler struct {
 }
 
 func CreateSubscriptionsHandler(e *echo.Echo,
-	rpcA clientAuth.AuthClient,
-	rpcS clientSub.SubscriptionClient,
+	rpcA clientAuth.IAuthClient,
+	rpcS clientSub.ISubscriptionClient,
 	uc subscription.UseCase,
 	sz *custom_sanitizer.CustomSanitizer,
 	logger logger.Logger,

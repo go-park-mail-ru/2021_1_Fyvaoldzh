@@ -20,7 +20,7 @@ type SubscriptionClient struct {
 	logger logger.Logger
 }
 
-func NewSubscriptionClient(port string, logger logger.Logger) (*SubscriptionClient, error) {
+func NewSubscriptionClient(port string, logger logger.Logger) (ISubscriptionClient, error) {
 	gConn, err := grpc.Dial(
 		constants.Localhost+port,
 		grpc.WithInsecure(),

@@ -33,9 +33,9 @@ import (
 )
 
 type Server struct {
-	rpcAuth *clientAuth.AuthClient
-	rpcSub  *clientSub.SubscriptionClient
-	rpcChat  *clientChat.ChatClient
+	rpcAuth clientAuth.IAuthClient
+	rpcSub  clientSub.ISubscriptionClient
+	rpcChat  clientChat.IChatClient
 	e       *echo.Echo
 }
 
@@ -97,10 +97,10 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	auth := middleware1.NewAuth(rpcAuth)
 
-	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger, auth)
-	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger, auth)
-	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger, auth)
-	chhttp.CreateChatHandler(e, *rpcAuth, sanitizer, logger, auth, *rpcChat)
+	http.CreateUserHandler(e, userUC, rpcAuth, sanitizer, logger, auth)
+	shttp.CreateSubscriptionsHandler(e, rpcAuth, rpcSub, subscriptionUC, sanitizer, logger, auth)
+	ehttp.CreateEventHandler(e, eventUC, rpcAuth, sanitizer, logger, auth)
+	chhttp.CreateChatHandler(e, rpcAuth, sanitizer, logger, auth, rpcChat)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,

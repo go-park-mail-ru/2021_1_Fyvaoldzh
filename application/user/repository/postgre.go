@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/logger"
@@ -172,22 +171,6 @@ func (ud UserDatabase) GetUsers(page int) ([]models.UserCardSQL, error) {
 	if err != nil {
 		ud.logger.Warn(err)
 		return []models.UserCardSQL{}, err
-	}
-
-	return users, nil
-}
-
-func (ud UserDatabase) GetUserFollowers(id uint64) ([]uint64, error) {
-	var users []uint64
-	err := pgxscan.Select(context.Background(), ud.pool, &users, `SELECT subscriber_id
-		FROM subscriptions WHERE subscribed_to_id = $1`, id)
-	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		ud.logger.Debug("got no rows in method CountUserFollowers with id " + fmt.Sprint(id))
-		return []uint64{}, nil
-	}
-	if err != nil {
-		ud.logger.Warn(err)
-		return []uint64{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	return users, nil

@@ -10,10 +10,10 @@ import (
 )
 
 type Auth struct {
-	rpcAuth *client.AuthClient
+	rpcAuth client.IAuthClient
 }
 
-func NewAuth(rpcAuth *client.AuthClient) Auth {
+func NewAuth(rpcAuth client.IAuthClient) Auth {
 	return Auth{rpcAuth: rpcAuth}
 }
 

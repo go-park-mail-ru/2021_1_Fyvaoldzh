@@ -19,7 +19,7 @@ type ChatClient struct {
 	logger logger.Logger
 }
 
-func NewChatClient(port string, logger logger.Logger) (*ChatClient, error) {
+func NewChatClient(port string, logger logger.Logger) (IChatClient, error) {
 	gConn, err := grpc.Dial(
 		constants.Localhost+port,
 		grpc.WithInsecure(),

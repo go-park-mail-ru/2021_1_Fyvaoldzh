@@ -21,12 +21,12 @@ import (
 
 type EventHandler struct {
 	UseCase   event.UseCase
-	rpcAuth   client.AuthClient
+	rpcAuth   client.IAuthClient
 	Logger    logger.Logger
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.AuthClient,
+func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth) {
 	eventHandler := EventHandler{UseCase: uc, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 

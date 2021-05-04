@@ -49,6 +49,18 @@ func (mr *MockIAuthClientMockRecorder) Check(value interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Check", reflect.TypeOf((*MockIAuthClient)(nil).Check), value)
 }
 
+// Close mocks base method.
+func (m *MockIAuthClient) Close() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Close")
+}
+
+// Close indicates an expected call of Close.
+func (mr *MockIAuthClientMockRecorder) Close() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockIAuthClient)(nil).Close))
+}
+
 // Login mocks base method.
 func (m *MockIAuthClient) Login(login, password, value string) (uint64, string, error) {
 	m.ctrl.T.Helper()
