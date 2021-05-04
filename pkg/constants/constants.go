@@ -25,7 +25,7 @@ const (
 	CookiePath              = "/"
 	EventsPerPage           = 6
 	UsersPerPage            = 10
-	ChatPerPage             = 20
+	ChatPerPage             = 100
 	MailingText             = " приглашает Вас на мероприятие "
 	MailingAddress          = "qdaqda.ru:3000/event"
 )
