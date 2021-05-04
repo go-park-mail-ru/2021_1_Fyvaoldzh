@@ -249,7 +249,7 @@ func (ud UserDatabase) GetActions(id uint64, page int) ([]*models.ActionCard, er
 		SELECT ss.subscriber_id, u3.name, ss.subscribed_to_id, '', ss.time, 'new_follower'
 		FROM actions_subscription ss
 		JOIN users u3 on ss.subscriber_id = u3.id
-		WHERE subscribed_to_id = 29
+		WHERE subscribed_to_id = $1
 		ORDER BY Time DESC
 		LIMIT 10 OFFSET $2`, id, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) {

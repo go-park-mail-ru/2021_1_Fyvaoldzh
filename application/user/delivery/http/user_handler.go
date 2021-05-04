@@ -67,6 +67,7 @@ func CreateUserHandler(e *echo.Echo,
 		middleware.GetPage)
 	e.GET("/api/v1/actions",
 		userHandler.GetActions,
+		am.GetSession,
 		middleware.GetPage)
 }
 
