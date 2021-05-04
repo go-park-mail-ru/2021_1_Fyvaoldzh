@@ -3,12 +3,22 @@ package models
 import "time"
 
 type NewMessage struct {
-	To   uint64 `json:"to"`
+	To   uint64
+	Text string
+}
+
+type NewMessageJSON struct {
+	To   string `json:"to"`
 	Text string `json:"text"`
 }
 
 type RedactMessage struct {
-	ID   uint64 `json:"id"`
+	ID   uint64
+	Text string
+}
+
+type RedactMessageJSON struct {
+	ID   string `json:"id"`
 	Text string `json:"text"`
 }
 
@@ -57,7 +67,7 @@ type DialogueCard struct {
 }
 
 type DialogueCardSQL struct {
-	ID     uint64
+	ID     uint64 `db:"id"`
 	User1  uint64 `db:"user_1"`
 	User2  uint64 `db:"user_2"`
 	IDMes  uint64 `db:"idmes"`
@@ -72,6 +82,11 @@ type DialogueCardSQL struct {
 type Mailing struct {
 	EventID uint64   `json:"event"`
 	To      []uint64 `json:"to"`
+}
+
+type MailingJSON struct {
+	EventID string   `json:"event"`
+	To      []string `json:"to"`
 }
 
 //easyjson:json
@@ -110,7 +125,7 @@ func ConvertMessage(old MessageSQL, uid uint64) Message {
 
 func ConvertMessageFromCard(old DialogueCardSQL, uid uint64) Message {
 	var newMessage Message
-	newMessage.ID = old.ID
+	newMessage.ID = old.IDMes
 	newMessage.Text = old.Text
 	newMessage.Redact = old.Redact
 	newMessage.Read = old.Read

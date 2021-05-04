@@ -5,8 +5,8 @@ import "kudago/application/models"
 //go:generate mockgen -destination=./mock/usecase_mock.go -package=mock -source=./application/event/usecase.go
 
 type UseCase interface {
-	IsInterlocutor(uid uint64, id uint64, f func(id uint64) (models.EasyDialogueMessageSQL, error)) (bool, error)
-	IsSenderMessage(uid uint64, id uint64) (bool, error)
+	IsInterlocutor(uid uint64, elem models.EasyDialogueMessageSQL) bool
+	IsSenderMessage(uid uint64, elem models.EasyDialogueMessageSQL) bool
 	GetAllDialogues(uid uint64, page int) (models.DialogueCards, error)
 	GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error)
 	DeleteDialogue(uid uint64, id uint64) error

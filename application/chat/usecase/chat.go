@@ -57,38 +57,19 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
-//TODO: ОБЯЗАТЕЛЬНО помечать сообщения read!!!!!!!
-//Как сделать так, чтобы сообщения выдавались непрочитанные сначала? Ну типа чтоб как в вк, открываешь диалог и тебя
-//скролит к последнему сообщению прочитанному, а дальше ты листаешь вниз и читаешь типа
-func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error) {
-	_, err := c.repoUser.GetUserByID(id)
-	if err != nil {
-		return models.Dialogue{}, err
-	}
-	interlocutor, err := c.repoUser.GetUserByID(id)
+func (c Chat) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogue, error) {
+	interlocutor, err := c.repoUser.GetUserByID(uid2)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Dialogue{}, err
 	}
 
-	isDialogue, d_id, err := c.repo.CheckDialogue(uid, id)
+	isDialogue, dialogue, err := c.repo.CheckDialogueUsers(uid1, uid2)
 	if err != nil {
 		return models.Dialogue{}, err
 	}
 	if !isDialogue {
 		return models.Dialogue{Interlocutor: interlocutor, DialogMessages: models.Messages{}}, nil
-	}
-
-	dialogue, err := c.repo.GetEasyDialogue(d_id)
-	if err != nil {
-		c.logger.Warn(err)
-		return models.Dialogue{}, err
-	}
-
-	if dialogue.User1 != uid && dialogue.User2 != uid {
-		err := errors.New("you are not interlocutor of this dialogue")
-		c.logger.Warn(err)
-		return models.Dialogue{}, err
 	}
 
 	messages, err := c.repo.GetMessages(dialogue.ID, page)
@@ -97,39 +78,33 @@ func (c Chat) GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, 
 		return models.Dialogue{}, err
 	}
 
-	resDialogue := models.ConvertDialogue(dialogue, messages, uid, interlocutor)
+	resDialogue := models.ConvertDialogue(dialogue, messages, uid1, interlocutor)
+
+	err = c.repo.ReadMessages(dialogue.ID, page, uid1)
+	if err != nil {
+		c.logger.Warn(err)
+		return resDialogue, nil
+	}
 
 	return resDialogue, nil
 }
 
-func (c Chat) IsInterlocutor(uid uint64, id uint64, f func(id uint64) (models.EasyDialogueMessageSQL, error)) (bool, error) {
-	dialogue, err := f(id)
-	if err != nil {
-		c.logger.Warn(err)
-		return false, err
+func (c Chat) IsInterlocutor(uid uint64, elem models.EasyDialogueMessageSQL) bool {
+	if uid != elem.User1 && uid != elem.User2 {
+		return false
 	}
-	if uid != dialogue.User1 && uid != dialogue.User2 {
-		return false, nil
-	}
-	return true, nil
+	return true
 }
 
-func (c Chat) IsSenderMessage(uid uint64, id uint64) (bool, error) {
-	message, err := c.repo.GetEasyMessage(id)
-	if err != nil {
-		c.logger.Warn(err)
-		return false, err
+func (c Chat) IsSenderMessage(uid uint64, elem models.EasyDialogueMessageSQL) bool {
+	if uid != elem.User1 {
+		return false
 	}
-	if uid != message.User1 {
-		return false, nil
-	}
-	return true, nil
+	return true
 }
 
-//Не совсем оптимально получается, дважды смотрим один и тот же диалог, сначала на предмет существования, потом на то, являемся ли собеседником,
-//можно убрать первую проверку, но тогда будет возвращаться ошибка "0 request error". Далее у функци
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
-	isDialogue, _, err := c.repo.CheckDialogue(uid, id)
+	isDialogue, dialogue, err := c.repo.CheckDialogueID(id)
 	if err != nil {
 		return err
 	}
@@ -137,11 +112,7 @@ func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
 		return errors.New("no dialogue with this id")
 	}
 
-	isInterlocutor, err := c.IsInterlocutor(uid, id, c.repo.GetEasyDialogue)
-	if err != nil {
-		c.logger.Warn(err)
-		return err
-	}
+	isInterlocutor := c.IsInterlocutor(uid, dialogue)
 	if isInterlocutor {
 		err := c.repo.DeleteDialogue(id)
 		if err != nil {
@@ -159,18 +130,18 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 		return err
 	}
 
-	isDialogue, id, err := c.repo.CheckDialogue(uid, newMessage.To)
+	isDialogue, dialogue, err := c.repo.CheckDialogueUsers(uid, newMessage.To)
 	if err != nil {
 		return err
 	}
 	if !isDialogue {
-		id, err = c.repo.NewDialogue(uid, newMessage.To)
+		dialogue.ID, err = c.repo.NewDialogue(uid, newMessage.To)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = c.repo.SendMessage(id, newMessage, uid, time.Now())
+	err = c.repo.SendMessage(dialogue.ID, newMessage, uid, time.Now())
 	if err != nil {
 		c.logger.Warn(err)
 		return err
@@ -178,9 +149,8 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 	return nil
 }
 
-//Тут так же 2 запроса, просто устал уже думать(
 func (c Chat) DeleteMessage(uid uint64, id uint64) error {
-	isMessage, _, err := c.repo.CheckMessage(uid, id)
+	isMessage, message, err := c.repo.CheckMessage(id)
 	if err != nil {
 		return err
 	}
@@ -188,11 +158,7 @@ func (c Chat) DeleteMessage(uid uint64, id uint64) error {
 		return errors.New("no dialogue with this id")
 	}
 
-	isInterlocutor, err := c.IsInterlocutor(uid, id, c.repo.GetEasyMessage)
-	if err != nil {
-		c.logger.Warn(err)
-		return err
-	}
+	isInterlocutor := c.IsInterlocutor(uid, message)
 	if isInterlocutor {
 		err := c.repo.DeleteMessage(id)
 		if err != nil {
@@ -204,30 +170,27 @@ func (c Chat) DeleteMessage(uid uint64, id uint64) error {
 	return errors.New("user is not interlocutor")
 }
 
-//Тут вообще кастомную функцию для проверки существования сообщения по его id надо делать
+//Неплохо бы проверять, как давно было написано сообщение, чтобы нельзя было менять сообщения, написанные пару часов назад
 func (c Chat) EditMessage(uid uint64, newMessage *models.RedactMessage) error {
-	/*isMessage, _, err := c.repo.CustomCheckMessage(newMessage.ID)
+	isMessage, message, err := c.repo.CheckMessage(newMessage.ID)
 	if err != nil {
 		return err
 	}
 	if !isMessage {
 		return errors.New("no dialogue with this id")
-	}*/
+	}
 
-	isInterlocutor, err := c.IsSenderMessage(uid, newMessage.ID)
+	isSender := c.IsSenderMessage(uid, message)
+	if !isSender {
+		return errors.New("user is not interlocutor")
+	}
+	err = c.repo.EditMessage(newMessage.ID, newMessage.Text)
 	if err != nil {
 		c.logger.Warn(err)
 		return err
 	}
-	if isInterlocutor {
-		err := c.repo.EditMessage(newMessage.ID, newMessage.Text)
-		if err != nil {
-			c.logger.Warn(err)
-			return err
-		}
-		return nil
-	}
-	return errors.New("user is not interlocutor")
+
+	return nil
 }
 
 func (c Chat) AutoMailingConstructor(to uint64, from, eventName, eventID string) models.NewMessage {
@@ -258,7 +221,6 @@ func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 	return nil
 }
 
-//И вот тут 2 раза
 func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages, error) {
 	str = strings.ToLower(str)
 
@@ -271,7 +233,7 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 			return nil, err
 		}
 	} else {
-		isDialogue, _, err := c.repo.CheckMessage(uid, uint64(id))
+		isDialogue, dialogue, err := c.repo.CheckDialogueID(uint64(id))
 		if err != nil {
 			return nil, err
 		}
@@ -279,11 +241,7 @@ func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages,
 			return models.Messages{}, errors.New("no dialogue with this id")
 		}
 
-		isInterlocutor, err := c.IsInterlocutor(uid, uint64(id), c.repo.GetEasyDialogue)
-		if err != nil {
-			c.logger.Warn(err)
-			return nil, err
-		}
+		isInterlocutor := c.IsInterlocutor(uid, dialogue)
 		if isInterlocutor {
 			sqlMessages, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
 			if err != nil {

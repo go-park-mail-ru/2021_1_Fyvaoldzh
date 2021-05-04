@@ -5,14 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/labstack/echo"
 	"kudago/application/models"
 	"kudago/application/user"
 	"kudago/pkg/logger"
 	"net/http"
+
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/labstack/echo"
 )
 
 type UserDatabase struct {
@@ -258,7 +259,6 @@ func (ud UserDatabase) GetActions(id uint64, page int) ([]*models.ActionCard, er
 		ud.logger.Warn(err)
 		return []*models.ActionCard{}, err
 	}
-
 
 	return actions, nil
 }
