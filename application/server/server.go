@@ -94,8 +94,8 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	auth := middleware1.NewAuth(rpcAuth)
 
-	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger)
-	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger)
+	http.CreateUserHandler(e, userUC, *rpcAuth, sanitizer, logger, auth)
+	shttp.CreateSubscriptionsHandler(e, *rpcAuth, *rpcSub, subscriptionUC, sanitizer, logger, auth)
 	ehttp.CreateEventHandler(e, eventUC, *rpcAuth, sanitizer, logger)
 	chhttp.CreateChatHandler(e, chatUC, *rpcAuth, sanitizer, logger, auth)
 

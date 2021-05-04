@@ -1,19 +1,17 @@
 package http
 
 import (
-	"errors"
+	"github.com/labstack/echo"
 	"github.com/mailru/easyjson"
 	clientAuth "kudago/application/microservices/auth/client"
 	clientSub "kudago/application/microservices/subscription/client"
 	"kudago/application/models"
+	"kudago/application/server/middleware"
 	"kudago/application/subscription"
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
 	"net/http"
-	"strconv"
-
-	"github.com/labstack/echo"
 )
 
 type SubscriptionHandler struct {
@@ -22,6 +20,7 @@ type SubscriptionHandler struct {
 	usecase   subscription.UseCase
 	sanitizer *custom_sanitizer.CustomSanitizer
 	Logger    logger.Logger
+	auth      middleware.Auth
 }
 
 func CreateSubscriptionsHandler(e *echo.Echo,
@@ -29,52 +28,65 @@ func CreateSubscriptionsHandler(e *echo.Echo,
 	rpcS clientSub.SubscriptionClient,
 	uc subscription.UseCase,
 	sz *custom_sanitizer.CustomSanitizer,
-	logger logger.Logger) {
+	logger logger.Logger,
+	a middleware.Auth) {
 	subscriptionHandler := SubscriptionHandler{
 		rpcAuth:   rpcA,
 		rpcSub:    rpcS,
 		usecase:   uc,
 		sanitizer: sz,
-		Logger:    logger}
+		Logger:    logger,
+		auth:      a}
 
-	e.POST("/api/v1/add/planning/:id", subscriptionHandler.AddPlanningEvent)
-	e.POST("/api/v1/add/visited/:id", subscriptionHandler.AddVisitedEvent)
-	e.DELETE("/api/v1/remove/:id", subscriptionHandler.RemoveEvent)
-	e.POST("/api/v1/subscribe/user/:id", subscriptionHandler.Subscribe)
-	e.DELETE("/api/v1/unsubscribe/user/:id", subscriptionHandler.Unsubscribe)
-	e.GET("/api/v1/followers/:id", subscriptionHandler.GetFollowers)
-	e.GET("/api/v1/subscriptions/:id", subscriptionHandler.GetSubscriptions)
-	e.GET("/api/v1/event/is_added/:id", subscriptionHandler.IsAdded)
+	e.POST("/api/v1/add/planning/:id",
+		subscriptionHandler.AddPlanningEvent,
+		a.GetSession,
+		middleware.GetId)
+	e.POST("/api/v1/add/visited/:id",
+		subscriptionHandler.AddVisitedEvent,
+		a.GetSession,
+		middleware.GetId)
+	e.DELETE("/api/v1/remove/:id",
+		subscriptionHandler.RemoveEvent,
+		a.GetSession,
+		middleware.GetId)
+	e.POST("/api/v1/subscribe/user/:id",
+		subscriptionHandler.Subscribe,
+		a.GetSession,
+		middleware.GetId)
+	e.DELETE("/api/v1/unsubscribe/user/:id",
+		subscriptionHandler.Unsubscribe,
+		a.GetSession,
+		middleware.GetId)
+	e.GET("/api/v1/followers/:id",
+		subscriptionHandler.GetFollowers,
+		middleware.GetPage,
+		middleware.GetId)
+	e.GET("/api/v1/subscriptions/:id",
+		subscriptionHandler.GetSubscriptions,
+		middleware.GetPage,
+		middleware.GetId)
+	e.GET("/api/v1/event/is_added/:id",
+		subscriptionHandler.IsAdded,
+		a.GetSession,
+		middleware.GetId)
 
-	e.GET("/api/v1/get/planning/:id", subscriptionHandler.GetPlanningEvents)
-	e.GET("/api/v1/get/visited/:id", subscriptionHandler.GetVisitedEvents)
+	e.GET("/api/v1/get/planning/:id",
+		subscriptionHandler.GetPlanningEvents,
+		middleware.GetPage,
+		middleware.GetId)
+	e.GET("/api/v1/get/visited/:id",
+		subscriptionHandler.GetVisitedEvents,
+		middleware.GetPage,
+		middleware.GetId)
 }
 
 func (sh SubscriptionHandler) Subscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
 
-	var subscriberId uint64
-	var exists bool
-	exists, subscriberId, err = sh.rpcAuth.Check(cookie.Value)
-	if err != nil {
-		sh.Logger.Warn(err)
-		return err
-	}
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-	}
+	subscribedToId := c.Get(constants.IdKey).(int)
+	subscriberId := c.Get(constants.UserIdKey).(uint64)
 
-	subscribedToId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if subscribedToId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
 	if subscriberId == uint64(subscribedToId) {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
@@ -85,31 +97,9 @@ func (sh SubscriptionHandler) Subscribe(c echo.Context) error {
 func (sh SubscriptionHandler) Unsubscribe(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	var subscriberId uint64
-	var exists bool
-	exists, subscriberId, err = sh.rpcAuth.Check(cookie.Value)
-	if err != nil {
-		sh.Logger.Warn(err)
-		return err
-	}
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-	}
-
-	subscribedToId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if subscribedToId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	subscribedToId := c.Get(constants.IdKey).(int)
+	subscriberId := c.Get(constants.UserIdKey).(uint64)
 	if subscriberId == uint64(subscribedToId) {
-		sh.Logger.Warn(errors.New("subscriberId == subscribedToId"))
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
@@ -119,29 +109,8 @@ func (sh SubscriptionHandler) Unsubscribe(c echo.Context) error {
 func (sh SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	var userId uint64
-	var exists bool
-	exists, userId, err = sh.rpcAuth.Check(cookie.Value)
-	if err != nil {
-		sh.Logger.Warn(err)
-		return err
-	}
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-	}
-
-	eventId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if eventId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.UserIdKey).(uint64)
+	eventId := c.Get(constants.IdKey).(int)
 
 	return sh.rpcSub.AddPlanningEvent(userId, uint64(eventId))
 }
@@ -149,29 +118,8 @@ func (sh SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
 func (sh SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	var userId uint64
-	var exists bool
-	exists, userId, err = sh.rpcAuth.Check(cookie.Value)
-	if err != nil {
-		sh.Logger.Warn(err)
-		return err
-	}
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-	}
-
-	eventId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if eventId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.UserIdKey).(uint64)
+	eventId := c.Get(constants.IdKey).(int)
 
 	return sh.rpcSub.AddVisitedEvent(userId, uint64(eventId))
 }
@@ -179,29 +127,8 @@ func (sh SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
 func (sh SubscriptionHandler) RemoveEvent(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	var userId uint64
-	var exists bool
-	exists, userId, err = sh.rpcAuth.Check(cookie.Value)
-	if err != nil {
-		sh.Logger.Warn(err)
-		return err
-	}
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-	}
-
-	eventId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if eventId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.UserIdKey).(uint64)
+	eventId := c.Get(constants.IdKey).(int)
 
 	return sh.rpcSub.RemoveEvent(userId, uint64(eventId))
 }
@@ -209,15 +136,10 @@ func (sh SubscriptionHandler) RemoveEvent(c echo.Context) error {
 func (sh SubscriptionHandler) GetFollowers(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	userId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if userId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.IdKey).(int)
+	page := c.Get(constants.PageKey).(int)
 
-	users, err := sh.usecase.GetFollowers(uint64(userId))
+	users, err := sh.usecase.GetFollowers(uint64(userId), page)
 	if err != nil {
 		return err
 	}
@@ -234,15 +156,10 @@ func (sh SubscriptionHandler) GetFollowers(c echo.Context) error {
 func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	userId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if userId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.IdKey).(int)
+	page := c.Get(constants.PageKey).(int)
 
-	users, err := sh.usecase.GetSubscriptions(uint64(userId))
+	users, err := sh.usecase.GetSubscriptions(uint64(userId), page)
 	if err != nil {
 		return err
 	}
@@ -259,29 +176,9 @@ func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
 func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	cookie, err := c.Cookie(constants.SessionCookieName)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "user is not authorized")
-	}
-
-	var userId uint64
-	var exists bool
-	exists, userId, err = sh.rpcAuth.Check(cookie.Value)
-	if err != nil {
-		sh.Logger.Warn(err)
-		return err
-	}
-	if !exists {
-		return echo.NewHTTPError(http.StatusBadRequest, "user is not authorized")
-	}
-
-	eventId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if eventId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	var err error
+	userId := c.Get(constants.UserIdKey).(uint64)
+	eventId := c.Get(constants.IdKey).(int)
 
 	var answer models.IsAddedEvent
 	answer.IsAdded, err = sh.usecase.IsAddedEvent(userId, uint64(eventId))
@@ -301,15 +198,10 @@ func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
 func (sh SubscriptionHandler) GetPlanningEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	userId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if userId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.IdKey).(int)
+	page := c.Get(constants.PageKey).(int)
 
-	events, err := sh.usecase.GetPlanningEvents(uint64(userId))
+	events, err := sh.usecase.GetPlanningEvents(uint64(userId), page)
 	if err != nil {
 		return err
 	}
@@ -325,15 +217,10 @@ func (sh SubscriptionHandler) GetPlanningEvents(c echo.Context) error {
 func (sh SubscriptionHandler) GetVisitedEvents(c echo.Context) error {
 	defer c.Request().Body.Close()
 
-	userId, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if userId <= 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
+	userId := c.Get(constants.IdKey).(int)
+	page := c.Get(constants.PageKey).(int)
 
-	events, err := sh.usecase.GetVisitedEvents(uint64(userId))
+	events, err := sh.usecase.GetVisitedEvents(uint64(userId), page)
 	if err != nil {
 		return err
 	}

@@ -26,8 +26,8 @@ func (s Subscription) IsAddedEvent(userId uint64, eventId uint64) (bool, error) 
 	return s.repo.IsAddedEvent(userId, eventId)
 }
 
-func (s Subscription) GetFollowers(id uint64) (models.UserCards, error) {
-	users, err := s.repo.GetFollowers(id)
+func (s Subscription) GetFollowers(id uint64, page int) (models.UserCards, error) {
+	users, err := s.repo.GetFollowers(id, page)
 	if err != nil {
 		s.Logger.Warn(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -41,8 +41,8 @@ func (s Subscription) GetFollowers(id uint64) (models.UserCards, error) {
 	return userCards, nil
 }
 
-func (s Subscription) GetSubscriptions(id uint64) (models.UserCards, error) {
-	users, err := s.repo.GetFollowers(id)
+func (s Subscription) GetSubscriptions(id uint64, page int) (models.UserCards, error) {
+	users, err := s.repo.GetFollowers(id, page)
 	if err != nil {
 		s.Logger.Warn(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -57,8 +57,8 @@ func (s Subscription) GetSubscriptions(id uint64) (models.UserCards, error) {
 }
 
 
-func (s Subscription) GetPlanningEvents(id uint64) (models.EventCards, error) {
-	sqlEvents, err := s.repo.GetPlanningEvents(id)
+func (s Subscription) GetPlanningEvents(id uint64, page int) (models.EventCards, error) {
+	sqlEvents, err := s.repo.GetPlanningEvents(id, page)
 	if err != nil {
 		s.Logger.Warn(err)
 		return models.EventCards{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -80,9 +80,9 @@ func (s Subscription) GetPlanningEvents(id uint64) (models.EventCards, error) {
 	return newEvents, nil
 }
 
-func (s Subscription) GetVisitedEvents(id uint64) (models.EventCards, error) {
+func (s Subscription) GetVisitedEvents(id uint64, page int) (models.EventCards, error) {
 	var events models.EventCards
-	sqlEvents, err := s.repo.GetVisitedEvents(id)
+	sqlEvents, err := s.repo.GetVisitedEvents(id, page)
 	if err != nil {
 		s.Logger.Warn(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())

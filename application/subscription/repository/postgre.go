@@ -91,12 +91,13 @@ func (sd SubscriptionDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool
 	return true, nil
 }
 
-func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]models.UserCardSQL, error) {
+func (sd SubscriptionDatabase) GetFollowers(id uint64, page int) ([]models.UserCardSQL, error) {
 	var users []models.UserCardSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &users,
 		`SELECT u.id, u.name, u.avatar, u.birthday, u.city
 		FROM users u
-		JOIN subscriptions s ON subscribed_to_id = $1 AND u.id = s.subscriber_id`, id)
+		JOIN subscriptions s ON subscribed_to_id = $1 AND u.id = s.subscriber_id
+		LIMIT 10 OFFSET $2`, id, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
 		return []models.UserCardSQL{}, nil
 	}
@@ -108,12 +109,13 @@ func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]models.UserCardSQL, er
 	return users, nil
 }
 
-func (sd SubscriptionDatabase) GetSubscriptions(id uint64) ([]models.UserCardSQL, error) {
+func (sd SubscriptionDatabase) GetSubscriptions(id uint64, page int) ([]models.UserCardSQL, error) {
 	var users []models.UserCardSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &users,
 		`SELECT u.id, u.name, u.avatar, u.birthday, u.city
 		FROM users u
-		JOIN subscriptions s ON subscriber_id = $1 AND u.id = s.subscribed_to_id`, id)
+		JOIN subscriptions s ON subscriber_id = $1 AND u.id = s.subscribed_to_id
+		LIMIT 10 OFFSET $2`, id, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
 		return []models.UserCardSQL{}, nil
 	}
@@ -126,13 +128,14 @@ func (sd SubscriptionDatabase) GetSubscriptions(id uint64) ([]models.UserCardSQL
 }
 
 
-func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+func (sd SubscriptionDatabase) GetPlanningEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
 		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date
 		FROM events e
 		JOIN user_event ON user_id = $1
-		WHERE event_id = e.id AND is_planning = $2`, id, true)
+		WHERE event_id = e.id AND is_planning = $2
+		LIMIT 10 OFFSET $3`, id, true, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
 	}
@@ -144,13 +147,14 @@ func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardW
 	return events, nil
 }
 
-func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+func (sd SubscriptionDatabase) GetVisitedEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), sd.pool, &events,
 		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date  
 		FROM events e
 		JOIN user_event ON user_id = $1
-		WHERE event_id = e.id AND is_planning = $2`, id, false)
+		WHERE event_id = e.id AND is_planning = $2
+		LIMIT 10 OFFSET $3`, id, false, (page-1)*10)
 	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
 		return []models.EventCardWithDateSQL{}, nil
 	}
