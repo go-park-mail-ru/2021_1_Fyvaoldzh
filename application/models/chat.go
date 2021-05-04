@@ -67,7 +67,7 @@ type DialogueCard struct {
 }
 
 type DialogueCardSQL struct {
-	ID     uint64
+	ID     uint64 `db:"id"`
 	User1  uint64 `db:"user_1"`
 	User2  uint64 `db:"user_2"`
 	IDMes  uint64 `db:"idmes"`
@@ -125,7 +125,7 @@ func ConvertMessage(old MessageSQL, uid uint64) Message {
 
 func ConvertMessageFromCard(old DialogueCardSQL, uid uint64) Message {
 	var newMessage Message
-	newMessage.ID = old.ID
+	newMessage.ID = old.IDMes
 	newMessage.Text = old.Text
 	newMessage.Redact = old.Redact
 	newMessage.Read = old.Read

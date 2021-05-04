@@ -72,22 +72,22 @@ func (cd ChatDatabase) GetMessages(id uint64, page int) (models.MessagesSQL, err
 }
 
 //Здесь as оставляем, с разных таблиц в одну структурку пишем
-func (cd ChatDatabase) GetEasyDialogue(id uint64) (models.EasyDialogueMessageSQL, error) {
+func (cd ChatDatabase) CheckDialogueID(id uint64) (bool, models.EasyDialogueMessageSQL, error) {
 	var dialogue []models.EasyDialogueMessageSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &dialogue,
 		`SELECT id as ID, user_1 as User1, user_2 as User2 FROM dialogues
 	WHERE id = $1`, id)
 
-	if errors.As(err, &pgx.ErrNoRows) {
+	if errors.As(err, &pgx.ErrNoRows) || len(dialogue) == 0 {
 		cd.logger.Debug("no rows in method GetEventsByCategory")
-		return models.EasyDialogueMessageSQL{}, nil
+		return false, models.EasyDialogueMessageSQL{}, nil
 	}
 
 	if err != nil {
 		cd.logger.Warn(err)
-		return models.EasyDialogueMessageSQL{}, nil
+		return false, models.EasyDialogueMessageSQL{}, nil
 	}
-	return dialogue[0], nil
+	return true, dialogue[0], nil
 }
 
 func (cd ChatDatabase) GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error) {
@@ -153,7 +153,6 @@ func (cd ChatDatabase) SendMessage(id uint64, newMessage *models.NewMessage, uid
 	return nil
 }
 
-//в вк показывается время отправки и (ред.), если на него навести, то будет время редактирования
 func (cd ChatDatabase) EditMessage(id uint64, text string) error {
 	_, err := cd.pool.Exec(context.Background(),
 		`UPDATE messages SET text = $1, redact = true WHERE id = $2`, text, id)
@@ -171,9 +170,9 @@ func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
 		`SELECT id, mes_from, mes_to, text,
 		date, redact, read FROM messages
-		WHERE (LOWER(text) LIKE '%' || $1 || '%')
+		WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
 		ORDER BY date DESC
-		LIMIT $2 OFFSET $3`, str, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+		LIMIT $3 OFFSET $4`, str, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
@@ -193,10 +192,10 @@ func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string,
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
 		`SELECT id, mes_from, mes_to, text,
 		date, redact, read FROM messages
-		WHERE (LOWER(text) LIKE '%' || $1 || '%')
-		AND id_dialogue = $2
+		WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
+		AND id_dialogue = $3
 		ORDER BY date DESC
-		LIMIT $3 OFFSET $4`, str, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+		LIMIT $4 OFFSET $5`, str, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
@@ -211,36 +210,37 @@ func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string,
 	return messages, nil
 }
 
-func (cd ChatDatabase) CheckDialogue(uid1 uint64, uid2 uint64) (bool, uint64, error) {
-	var id []uint64
-	err := pgxscan.Select(context.Background(), cd.pool, &id,
-		`SELECT id FROM dialogues WHERE 
+func (cd ChatDatabase) CheckDialogueUsers(uid1 uint64, uid2 uint64) (bool, models.EasyDialogueMessageSQL, error) {
+	var dialogue []models.EasyDialogueMessageSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogue,
+		`SELECT id as ID, user_1 as User1, user_2 as User2 FROM dialogues WHERE 
 		(user_1 = $1 AND user_2 = $2) OR (user_1 = $2 AND user_2 = $1)`, uid1, uid2)
 
-	if errors.As(err, &pgx.ErrNoRows) || len(id) == 0 {
-		return false, 0, nil
+	if errors.As(err, &pgx.ErrNoRows) || len(dialogue) == 0 {
+		return false, models.EasyDialogueMessageSQL{}, nil
 	}
 	if err != nil {
 		cd.logger.Warn(err)
-		return false, 0, err
+		return false, models.EasyDialogueMessageSQL{}, err
 	}
-	return true, id[0], nil
+	return true, dialogue[0], nil
 }
 
-func (cd ChatDatabase) CheckMessage(uid1 uint64, uid2 uint64) (bool, uint64, error) {
-	var id []uint64
-	err := pgxscan.Select(context.Background(), cd.pool, &id,
-		`SELECT id FROM messages WHERE 
-		(mes_from = $1 AND mes_to = $2) OR (mes_from = $2 AND mes_to = $1)`, uid1, uid2)
+func (cd ChatDatabase) CheckMessage(id uint64) (bool, models.EasyDialogueMessageSQL, error) {
+	var messages []models.EasyDialogueMessageSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &messages,
+		`SELECT id as ID, mes_from as User1, mes_to as User2 FROM messages WHERE 
+		id = $1`, id)
 
-	if errors.As(err, &pgx.ErrNoRows) || len(id) == 0 {
-		return false, 0, nil
+	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
+		return false, models.EasyDialogueMessageSQL{}, nil
 	}
 	if err != nil {
 		cd.logger.Warn(err)
-		return false, 0, err
+		return false, models.EasyDialogueMessageSQL{}, err
 	}
-	return true, id[0], nil
+	return true, messages[0], nil
+
 }
 
 func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
