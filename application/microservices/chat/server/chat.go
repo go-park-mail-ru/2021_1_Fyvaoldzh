@@ -21,7 +21,6 @@ func (cs *ChatServer) GetAllDialogues(c context.Context, idPage *proto.IdPage) (
 	if err != nil {
 		return nil, err
 	}
-	client.ConvertDialogueCardsToProto(answer)
 
 	return client.ConvertDialogueCardsToProto(answer), nil
 }
