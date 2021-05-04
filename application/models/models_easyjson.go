@@ -3624,7 +3624,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels40(in *jlexer.Lexer, out *Acti
 			*out = (*out)[:0]
 		}
 		for !in.IsDelim(']') {
-			var v40 ActionCard
+			var v40 ActionCardStringTime
 			(v40).UnmarshalEasyJSON(in)
 			*out = append(*out, v40)
 			in.WantComma()
@@ -3673,7 +3673,7 @@ func (v *ActionCards) UnmarshalJSON(data []byte) error {
 func (v *ActionCards) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels40(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels41(in *jlexer.Lexer, out *ActionCard) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels41(in *jlexer.Lexer, out *ActionCardStringTime) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3714,7 +3714,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels41(in *jlexer.Lexer, out *Acti
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels41(out *jwriter.Writer, in ActionCard) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels41(out *jwriter.Writer, in ActionCardStringTime) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -3759,7 +3759,7 @@ func (v ActionCardStringTime) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v ActionCard) MarshalEasyJSON(w *jwriter.Writer) {
+func (v ActionCardStringTime) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjsonD2b7633eEncodeKudagoApplicationModels41(w, v)
 }
 
@@ -3771,10 +3771,10 @@ func (v *ActionCardStringTime) UnmarshalJSON(data []byte) error {
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *ActionCard) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *ActionCardStringTime) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels41(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels39(in *jlexer.Lexer, out *ActionCard) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels42(in *jlexer.Lexer, out *ActionCard) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -3817,7 +3817,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels39(in *jlexer.Lexer, out *Acti
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels39(out *jwriter.Writer, in ActionCard) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels42(out *jwriter.Writer, in ActionCard) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -3857,23 +3857,23 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels39(out *jwriter.Writer, in Act
 // MarshalJSON supports json.Marshaler interface
 func (v ActionCard) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeKudagoApplicationModels39(&w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels42(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ActionCard) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeKudagoApplicationModels39(w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels42(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ActionCard) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeKudagoApplicationModels39(&r, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels42(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ActionCard) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeKudagoApplicationModels39(l, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels42(l, v)
 }
