@@ -2,7 +2,7 @@
 
 id1=`pgrep auth`
 id2=`pgrep sub`
-id3=`pgrep sub`
+id3=`pgrep chat`
 id4=`pgrep main`
 
 kill $id1

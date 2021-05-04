@@ -26,6 +26,7 @@ type ChatHandler struct {
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
+
 func CreateChatHandler(e *echo.Echo, rpcA client.AuthClient,
 	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth,
 	rpcC client_chat.ChatClient) {
