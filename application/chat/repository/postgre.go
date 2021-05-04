@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"kudago/application/chat"
 	"kudago/application/models"
-	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"net/http"
 	"time"
@@ -28,14 +27,21 @@ func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
 
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	var dialogues models.DialogueCardsSQL
-	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
+	/*err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
 		`SELECT * FROM (SELECT DISTINCT ON(d.id) d.id as ID, d.user_1, d.user_2, m.id as IDMes,
 		m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
 	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
 	WHERE user_1 = $1 OR user_2 = $1
 	ORDER BY id, date DESC) as pl
 	ORDER BY date DESC
-	LIMIT $2 OFFSET $3`, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+	LIMIT $2 OFFSET $3`, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)*/
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
+		`SELECT * FROM (SELECT DISTINCT ON(d.id) d.id as ID, d.user_1, d.user_2, m.id as IDMes,
+		m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
+	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
+	WHERE user_1 = $1 OR user_2 = $1
+	ORDER BY id, date DESC) as pl
+	ORDER BY date DESC`, uid)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
 		cd.logger.Debug("no rows in method GetAllEvents")
@@ -52,11 +58,15 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 
 func (cd ChatDatabase) GetMessages(id uint64, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
+	/*err := pgxscan.Select(context.Background(), cd.pool, &messages,
+		`SELECT id, mes_from, mes_to, text,
+		date, redact, read FROM messages
+	WHERE id_dialogue = $1 ORDER BY date DESC
+	LIMIT $2 OFFSET $3`, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)*/
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
 		`SELECT id, mes_from, mes_to, text,
 		date, redact, read FROM messages
-	WHERE id_dialogue = $1
-	LIMIT $2 OFFSET $3`, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+	WHERE id_dialogue = $1 ORDER BY date`, id)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method GetMessages")
@@ -167,12 +177,17 @@ func (cd ChatDatabase) EditMessage(id uint64, text string) error {
 
 func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
+	/*err := pgxscan.Select(context.Background(), cd.pool, &messages,
+	`SELECT id, mes_from, mes_to, text,
+	date, redact, read FROM messages
+	WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
+	ORDER BY date DESC
+	LIMIT $3 OFFSET $4`, str, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)*/
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
 		`SELECT id, mes_from, mes_to, text,
 		date, redact, read FROM messages
 		WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
-		ORDER BY date DESC
-		LIMIT $3 OFFSET $4`, str, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+		ORDER BY date`, str, uid)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
@@ -189,13 +204,19 @@ func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.
 
 func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
+	/*err := pgxscan.Select(context.Background(), cd.pool, &messages,
+	`SELECT id, mes_from, mes_to, text,
+	date, redact, read FROM messages
+	WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
+	AND id_dialogue = $3
+	ORDER BY date DESC
+	LIMIT $4 OFFSET $5`, str, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)*/
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
 		`SELECT id, mes_from, mes_to, text,
 		date, redact, read FROM messages
 		WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
 		AND id_dialogue = $3
-		ORDER BY date DESC
-		LIMIT $4 OFFSET $5`, str, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+		ORDER BY date`, str, uid, id)
 
 	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
 		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
@@ -258,11 +279,16 @@ func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
 }
 
 func (cd ChatDatabase) ReadMessages(id uint64, page int, uid uint64) error {
+	/*_, err := cd.pool.Exec(context.Background(),
+		`UPDATE messages SET read = true
+		WHERE id in
+	(SELECT id from messages where mes_to = $1 AND id_dialogue = $2
+		ORDER BY date DESC LIMIT $3 OFFSET $4)`, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)*/
 	_, err := cd.pool.Exec(context.Background(),
 		`UPDATE messages SET read = true
 		WHERE id in
 	(SELECT id from messages where mes_to = $1 AND id_dialogue = $2
-		ORDER BY date DESC LIMIT $3 OFFSET $4)`, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+		ORDER BY date)`, uid, id)
 
 	if err != nil {
 		cd.logger.Warn(err)
