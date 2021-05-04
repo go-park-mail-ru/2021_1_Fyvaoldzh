@@ -77,6 +77,36 @@ func (mr *MockRepositoryMockRecorder) ChangeAvatar(id, path interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeAvatar", reflect.TypeOf((*MockRepository)(nil).ChangeAvatar), id, path)
 }
 
+// FindUsers mocks base method.
+func (m *MockRepository) FindUsers(str string, page int) ([]models.UserCardSQL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindUsers", str, page)
+	ret0, _ := ret[0].([]models.UserCardSQL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindUsers indicates an expected call of FindUsers.
+func (mr *MockRepositoryMockRecorder) FindUsers(str, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUsers", reflect.TypeOf((*MockRepository)(nil).FindUsers), str, page)
+}
+
+// GetActions mocks base method.
+func (m *MockRepository) GetActions(id uint64, page int) ([]*models.ActionCard, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActions", id, page)
+	ret0, _ := ret[0].([]*models.ActionCard)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActions indicates an expected call of GetActions.
+func (mr *MockRepositoryMockRecorder) GetActions(id, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActions", reflect.TypeOf((*MockRepository)(nil).GetActions), id, page)
+}
+
 // GetByIdOwn mocks base method.
 func (m *MockRepository) GetByIdOwn(id uint64) (*models.UserDataSQL, error) {
 	m.ctrl.T.Helper()
@@ -90,6 +120,21 @@ func (m *MockRepository) GetByIdOwn(id uint64) (*models.UserDataSQL, error) {
 func (mr *MockRepositoryMockRecorder) GetByIdOwn(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIdOwn", reflect.TypeOf((*MockRepository)(nil).GetByIdOwn), id)
+}
+
+// GetUserByID mocks base method.
+func (m *MockRepository) GetUserByID(id uint64) (models.UserOnEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByID", id)
+	ret0, _ := ret[0].(models.UserOnEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByID indicates an expected call of GetUserByID.
+func (mr *MockRepositoryMockRecorder) GetUserByID(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByID", reflect.TypeOf((*MockRepository)(nil).GetUserByID), id)
 }
 
 // GetUsers mocks base method.
@@ -110,7 +155,7 @@ func (mr *MockRepositoryMockRecorder) GetUsers(page interface{}) *gomock.Call {
 // IsCorrect mocks base method.
 func (m *MockRepository) IsCorrect(user *models.User) (*models.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUser", user)
+	ret := m.ctrl.Call(m, "IsCorrect", user)
 	ret0, _ := ret[0].(*models.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -119,7 +164,7 @@ func (m *MockRepository) IsCorrect(user *models.User) (*models.User, error) {
 // IsCorrect indicates an expected call of IsCorrect.
 func (mr *MockRepositoryMockRecorder) IsCorrect(user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockRepository)(nil).IsCorrect), user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCorrect", reflect.TypeOf((*MockRepository)(nil).IsCorrect), user)
 }
 
 // IsExisting mocks base method.

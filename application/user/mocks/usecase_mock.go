@@ -65,6 +65,36 @@ func (mr *MockUseCaseMockRecorder) CheckUser(usr interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUser", reflect.TypeOf((*MockUseCase)(nil).CheckUser), usr)
 }
 
+// FindUsers mocks base method.
+func (m *MockUseCase) FindUsers(str string, page int) (models.UserCards, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindUsers", str, page)
+	ret0, _ := ret[0].(models.UserCards)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindUsers indicates an expected call of FindUsers.
+func (mr *MockUseCaseMockRecorder) FindUsers(str, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindUsers", reflect.TypeOf((*MockUseCase)(nil).FindUsers), str, page)
+}
+
+// GetActions mocks base method.
+func (m *MockUseCase) GetActions(id uint64, page int) (models.ActionCards, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActions", id, page)
+	ret0, _ := ret[0].(models.ActionCards)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActions indicates an expected call of GetActions.
+func (mr *MockUseCaseMockRecorder) GetActions(id, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActions", reflect.TypeOf((*MockUseCase)(nil).GetActions), id, page)
+}
+
 // GetAvatar mocks base method.
 func (m *MockUseCase) GetAvatar(id uint64) ([]byte, error) {
 	m.ctrl.T.Helper()
