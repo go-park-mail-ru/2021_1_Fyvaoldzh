@@ -49,6 +49,21 @@ func (mr *MockRepositoryMockRecorder) CountUserFollowers(id interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUserFollowers", reflect.TypeOf((*MockRepository)(nil).CountUserFollowers), id)
 }
 
+// CountUserSubscriptions mocks base method.
+func (m *MockRepository) CountUserSubscriptions(id uint64) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountUserSubscriptions", id)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountUserSubscriptions indicates an expected call of CountUserSubscriptions.
+func (mr *MockRepositoryMockRecorder) CountUserSubscriptions(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUserSubscriptions", reflect.TypeOf((*MockRepository)(nil).CountUserSubscriptions), id)
+}
+
 // GetEventFollowers mocks base method.
 func (m *MockRepository) GetEventFollowers(eventId uint64) (models.UsersOnEvent, error) {
 	m.ctrl.T.Helper()

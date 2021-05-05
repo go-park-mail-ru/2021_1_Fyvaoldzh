@@ -499,6 +499,7 @@ func TestUserUseCase_FindUsers(t *testing.T) {
 
 	rep.EXPECT().FindUsers(name, pageNum).Return(testUserCardsSQL, nil)
 	repSub.EXPECT().CountUserFollowers(gomock.Any()).Return(uint64(1), nil)
+	repSub.EXPECT().CountUserSubscriptions(gomock.Any()).Return(uint64(1), nil)
 
 	_, err := uc.FindUsers(name, pageNum)
 
