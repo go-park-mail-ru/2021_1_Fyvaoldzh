@@ -2019,7 +2019,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels22(in *jlexer.Lexer, out *Mail
 		}
 		switch key {
 		case "event":
-			out.EventID = string(in.String())
+			out.EventID = uint64(in.Uint64())
 		case "to":
 			if in.IsNull() {
 				in.Skip()
@@ -2060,7 +2060,7 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels22(out *jwriter.Writer, in Mai
 	{
 		const prefix string = ",\"event\":"
 		out.RawString(prefix[1:])
-		out.String(string(in.EventID))
+		out.Uint64(uint64(in.EventID))
 	}
 	{
 		const prefix string = ",\"to\":"

@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	mock_infrastructure "kudago/application/microservices/auth/session/mocks"
+	"kudago/application/microservices/auth/client"
 	"kudago/pkg/logger"
 	"log"
 	"net/http"
@@ -86,15 +86,14 @@ var testAllEvents = models.EventCards{
 }
 
 func setUp(t *testing.T, url, method string) (echo.Context,
-	EventHandler, *mock_event.MockUseCase, *mock_infrastructure.MockSessionTarantool) {
+	EventHandler, *mock_event.MockUseCase, *client.MockIAuthClient) {
 	e := echo.New()
 	r := e.Router()
 	r.Add(method, url, func(echo.Context) error { return nil })
 
 	ctrl := gomock.NewController(t)
-	_ = mock_event.NewMockRepository(ctrl)
 	usecase := mock_event.NewMockUseCase(ctrl)
-	sm := mock_infrastructure.NewMockSessionTarantool(ctrl)
+	rpcAuth := client.NewMockIAuthClient(ctrl)
 
 	l, err := zap.NewProduction()
 	if err != nil {
@@ -106,7 +105,7 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 
 	handler := EventHandler{
 		UseCase:   usecase,
-		Sm:        sm,
+		rpcAuth:   rpcAuth,
 		Logger:    logger.NewLogger(sugar),
 		sanitizer: cs,
 	}
@@ -133,38 +132,13 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 	c := e.NewContext(req, rec)
 	c.SetPath(url)
 
-	return c, handler, usecase, sm
+	return c, handler, usecase, rpcAuth
 }
 
 func TestEventsHandler_GetAllEventsOk(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page=1", http.MethodGet)
-	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
-
-	err := h.GetAllEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_GetAllEventsAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/?page='aaaa'", http.MethodGet)
-
-	err := h.GetAllEvents(c)
-
-	assert.NotNil(t, err)
-}
-
-func TestEventsHandler_GetAllEventsWithoutPage(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/", http.MethodGet)
 	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
-
-	err := h.GetAllEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_GetAllEventsWithZero(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page=0", http.MethodGet)
-	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
+	c.Set(constants.PageKey, 1)
 
 	err := h.GetAllEvents(c)
 
@@ -172,7 +146,8 @@ func TestEventsHandler_GetAllEventsWithZero(t *testing.T) {
 }
 
 func TestEventsHandler_GetAllEventsError(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page=1", http.MethodGet)
+	c, h, usecase, _ := setUp(t, "/api/v1/", http.MethodGet)
+	c.Set(constants.PageKey, 1)
 	usecase.EXPECT().GetAllEvents(1).Return(models.EventCards{}, errors.New("get all error"))
 
 	err := h.GetAllEvents(c)
@@ -193,7 +168,7 @@ func TestEventsHandler_GetOneEventOk(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(true, uint64(1), nil)
 	usecase.EXPECT().RecomendSystem(uint64(1), testEvent.Category).Return(nil)
 
 	err := h.GetOneEvent(c)
@@ -233,7 +208,7 @@ func TestEventsHandler_GetOneEventCookieNotExist(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().CheckSession(key).Return(false, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(false, uint64(1), nil)
 
 	err := h.GetOneEvent(c)
 
@@ -253,7 +228,7 @@ func TestEventsHandler_GetOneEventErrorCookie(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), errors.New("error cookie"))
+	sm.EXPECT().Check(key).Return(true, uint64(1), errors.New("error cookie"))
 
 	err := h.GetOneEvent(c)
 
@@ -428,7 +403,7 @@ func TestEventsHandler_RecommendWithoutPageOk(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(true, uint64(1), nil)
 	usecase.EXPECT().GetRecommended(uint64(1), 1).Return(testAllEvents, nil)
 
 	err := h.Recommend(c)
@@ -447,7 +422,7 @@ func TestEventsHandler_RecommendWithZeroError(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(true, uint64(1), nil)
 	usecase.EXPECT().GetRecommended(uint64(1), 1).Return(models.EventCards{}, errors.New("get recommend error"))
 
 	err := h.Recommend(c)

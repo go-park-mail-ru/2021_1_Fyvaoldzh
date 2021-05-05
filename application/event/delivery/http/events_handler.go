@@ -10,7 +10,6 @@ import (
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
-	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -183,12 +182,10 @@ func (eh EventHandler) Create(c echo.Context) error {
 	newEvent := &models.Event{}
 
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, newEvent); err != nil {
-		log.Println(err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	if err := eh.UseCase.CreateNewEvent(newEvent); err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -202,7 +199,6 @@ func (eh EventHandler) Delete(c echo.Context) error {
 
 	err := eh.UseCase.Delete(uint64(id))
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -216,14 +212,12 @@ func (eh EventHandler) Save(c echo.Context) error {
 
 	img, err := c.FormFile("image")
 	if err != nil {
-		log.Println(err)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	err = eh.UseCase.SaveImage(uint64(id), img)
 
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	return c.JSON(http.StatusOK, "Picture changed successfully")
@@ -236,13 +230,11 @@ func (eh EventHandler) GetImage(c echo.Context) error {
 
 	file, err := eh.UseCase.GetImage(uint64(id))
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
 	_, err = c.Response().Write(file)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 

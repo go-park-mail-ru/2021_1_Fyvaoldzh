@@ -26,7 +26,6 @@ type ChatHandler struct {
 	sanitizer *custom_sanitizer.CustomSanitizer
 }
 
-
 func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 	sz *custom_sanitizer.CustomSanitizer, logger logger.Logger, auth middleware.Auth,
 	rpcC client_chat.IChatClient) {
@@ -223,17 +222,17 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 
 	mailing := &models.Mailing{}
 
-	eventIdInt, err := strconv.Atoi(mailingJSON.EventID)
+	/*eventIdInt, err := strconv.Atoi(mailingJSON.EventID)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if eventIdInt <= 0 {
+	}*/
+	if mailingJSON.EventID <= 0 {
 		err := errors.New("message id cannot be less than zero")
 		ch.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
-	mailing.EventID = uint64(eventIdInt)
+	mailing.EventID = mailingJSON.EventID
 
 	for i := range mailingJSON.To {
 		idInt, err := strconv.Atoi(mailingJSON.To[i])
@@ -252,7 +251,7 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.rpcChat.Mailing(uid, mailing)
+	err := ch.rpcChat.Mailing(uid, mailing)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		return err

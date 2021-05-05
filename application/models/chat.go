@@ -85,7 +85,7 @@ type Mailing struct {
 }
 
 type MailingJSON struct {
-	EventID string   `json:"event"`
+	EventID uint64   `json:"event"`
 	To      []string `json:"to"`
 }
 
