@@ -42,7 +42,7 @@ func (s Subscription) GetFollowers(id uint64, page int) (models.UserCards, error
 }
 
 func (s Subscription) GetSubscriptions(id uint64, page int) (models.UserCards, error) {
-	users, err := s.repo.GetFollowers(id, page)
+	users, err := s.repo.GetSubscriptions(id, page)
 	if err != nil {
 		s.Logger.Warn(err)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
