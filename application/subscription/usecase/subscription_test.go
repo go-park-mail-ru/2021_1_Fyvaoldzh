@@ -1,13 +1,17 @@
 package usecase
 
 import (
+	"database/sql"
 	"github.com/golang/mock/gomock"
+	"github.com/labstack/echo"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
+	"kudago/application/models"
 	"kudago/application/subscription"
 	mock_subscription "kudago/application/subscription/mocks"
+	"net/http"
+	"time"
 
 	"kudago/pkg/logger"
 	"log"
@@ -17,7 +21,57 @@ import (
 var (
 	userId  uint64 = 1
 	eventId uint64 = 1
+	eventId2 uint64 = 2
+	page = 1
+	evPlanning = models.EventCard{
+		ID:        eventId,
+		StartDate: evPlanningSQL.StartDate.String(),
+		EndDate:   evPlanningSQL.EndDate.String(),
+	}
+	evVisitedSQL = models.EventCardWithDateSQL{
+		ID:        eventId2,
+		StartDate: time.Now(),
+		EndDate:   time.Now(),
+	}
+	evVisited = models.EventCard{
+		ID:        eventId2,
+		StartDate: evVisitedSQL.StartDate.String(),
+		EndDate:   evVisitedSQL.EndDate.String(),
+	}
+	evPlanningSQL          = models.EventCardWithDateSQL{
+		ID:        eventId,
+		StartDate: time.Now(),
+		EndDate:   time.Now().Add(10 * time.Hour),
+	}
+	eventsPlanningSQL = []models.EventCardWithDateSQL{
+		evPlanningSQL, evVisitedSQL,
+	}
+	eventsVisitedSQL = []models.EventCardWithDateSQL{
+		evVisitedSQL,
+	}
+	eventsPlanning = []models.EventCard{
+		evPlanning,
+	}
+	eventsVisited = []models.EventCard{
+		evVisited,
+	}
 )
+
+var userCardSql = models.UserCardSQL{
+	Id: userId,
+	Name: "name",
+	Avatar: "avatar",
+	Birthday: sql.NullTime{
+		Time:  time.Now(),
+		Valid: true,
+	},
+	City: sql.NullString{
+		String: "city",
+		Valid:  true,
+	},
+}
+
+var userCards = []models.UserCardSQL{userCardSql}
 
 func setUp(t *testing.T) (*mock_subscription.MockRepository, subscription.UseCase) {
 	ctrl := gomock.NewController(t)
@@ -37,94 +91,6 @@ func setUp(t *testing.T) (*mock_subscription.MockRepository, subscription.UseCas
 
 ///////////////////////////////////////////////////
 
-func TestSubscription_SubscribeUser(t *testing.T) {
-	rep, uc := setUp(t)
-
-	rep.EXPECT().SubscribeUser(userId, userId+1).Return(nil)
-
-	err := uc.SubscribeUser(userId, userId+1)
-
-	assert.Nil(t, err)
-}
-
-func TestSubscription_SubscribeUserErrorSameId(t *testing.T) {
-	_, uc := setUp(t)
-
-	err := uc.SubscribeUser(userId, userId)
-
-	assert.Error(t, err)
-}
-
-///////////////////////////////////////////////////
-
-func TestSubscription_UnsubscribeUser(t *testing.T) {
-	rep, uc := setUp(t)
-
-	rep.EXPECT().UnsubscribeUser(userId, userId+1).Return(nil)
-
-	err := uc.UnsubscribeUser(userId, userId+1)
-
-	assert.Nil(t, err)
-}
-
-func TestSubscription_UnsubscribeUserErrorSameId(t *testing.T) {
-	_, uc := setUp(t)
-
-	err := uc.UnsubscribeUser(userId, userId)
-
-	assert.Error(t, err)
-}
-
-///////////////////////////////////////////////////
-
-func TestSubscription_AddPlanning(t *testing.T) {
-	rep, uc := setUp(t)
-
-	rep.EXPECT().AddPlanning(userId, eventId).Return(nil)
-
-	err := uc.AddPlanning(userId, eventId)
-
-	assert.Nil(t, err)
-}
-
-///////////////////////////////////////////////////
-
-func TestSubscription_RemovePlanning(t *testing.T) {
-	rep, uc := setUp(t)
-
-	rep.EXPECT().RemovePlanning(userId, eventId).Return(nil)
-
-	err := uc.RemovePlanning(userId, eventId)
-
-	assert.Nil(t, err)
-}
-
-///////////////////////////////////////////////////
-
-func TestSubscription_AddVisited(t *testing.T) {
-	rep, uc := setUp(t)
-
-	rep.EXPECT().AddVisited(userId, eventId).Return(nil)
-
-	err := uc.AddVisited(userId, eventId)
-
-	assert.Nil(t, err)
-}
-
-///////////////////////////////////////////////////
-
-func TestSubscription_RemoveVisited(t *testing.T) {
-	rep, uc := setUp(t)
-
-	rep.EXPECT().RemoveVisited(userId, eventId).Return(nil)
-
-	err := uc.RemoveVisited(userId, eventId)
-
-	assert.Nil(t, err)
-}
-
-///////////////////////////////////////////////////
-
 func TestSubscription_UpdateEventStatus(t *testing.T) {
 	rep, uc := setUp(t)
 
@@ -135,6 +101,8 @@ func TestSubscription_UpdateEventStatus(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+///////////////////////////////////////////////////
+
 func TestSubscription_IsAddedEvent(t *testing.T) {
 	rep, uc := setUp(t)
 
@@ -143,4 +111,107 @@ func TestSubscription_IsAddedEvent(t *testing.T) {
 	_, err := uc.IsAddedEvent(userId, eventId)
 
 	assert.Nil(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestSubscription_GetFollowers(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetFollowers(userId, page).Return(userCards, nil)
+
+	_, err := uc.GetFollowers(userId, page)
+
+	assert.Nil(t, err)
+}
+
+func TestSubscription_GetFollowersErrorRepGF(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetFollowers(userId, page).Return(nil, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetFollowers(userId, page)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestSubscription_GetSubscriptions(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetSubscriptions(userId, page).Return(userCards, nil)
+
+	_, err := uc.GetSubscriptions(userId, page)
+
+	assert.Nil(t, err)
+}
+
+func TestSubscription_GetSubscriptionsErrorRepGS(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetSubscriptions(userId, page).Return(nil, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetSubscriptions(userId, page)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestSubscription_GetPlanningEvents(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetPlanningEvents(userId, page).Return(eventsPlanningSQL, nil)
+	rep.EXPECT().UpdateEventStatus(userId, eventId2).Return(nil)
+
+	_, err := uc.GetPlanningEvents(userId, page)
+
+	assert.Nil(t, err)
+}
+
+func TestSubscription_GetPlanningEventsErrorRepUES(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetPlanningEvents(userId, page).Return(eventsPlanningSQL, nil)
+	rep.EXPECT().UpdateEventStatus(userId, eventId2).Return(
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetPlanningEvents(userId, page)
+
+	assert.Error(t, err)
+}
+
+func TestSubscription_GetPlanningEventsErrorRepGPE(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetPlanningEvents(userId, page).Return(nil,
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetPlanningEvents(userId, page)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestSubscription_GetVisitedEvents(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetVisitedEvents(userId, page).Return(eventsVisitedSQL, nil)
+
+	_, err := uc.GetVisitedEvents(userId, page)
+
+	assert.Nil(t, err)
+}
+
+func TestSubscription_GetVisitedEventsErrorRepGVE(t *testing.T) {
+	rep, uc := setUp(t)
+
+	rep.EXPECT().GetVisitedEvents(userId, page).Return(nil,
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetVisitedEvents(userId, page)
+
+	assert.Error(t, err)
 }

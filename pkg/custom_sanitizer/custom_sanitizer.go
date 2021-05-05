@@ -1,9 +1,8 @@
 package custom_sanitizer
 
 import (
-	"kudago/application/models"
-
 	"github.com/microcosm-cc/bluemonday"
+	"kudago/application/models"
 )
 
 type CustomSanitizer struct {

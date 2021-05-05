@@ -12,7 +12,7 @@ const (
 	DateFormat              = "2006-01-02"
 	DateTimeFormat          = "2006-01-02T15:04:05"
 	DefaultAvatar           = "public/default.png"
-	TarantoolAddress        = "127.0.0.1:3302"
+	TarantoolAddress        = "127.0.0.1:3301q"
 	TarantoolUser           = "admin"
 	AuthServicePort         = ":3001"
 	SubscriptionServicePort = ":3002"

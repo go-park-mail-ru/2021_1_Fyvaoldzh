@@ -305,11 +305,11 @@ func TestUserUseCase_GetOtherProfileOK(t *testing.T) {
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
 	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(gomock.Any()).Return(uint64(1), nil)
 
-	other, err := uc.GetOtherProfile(userId)
+	_, err := uc.GetOtherProfile(userId)
 
 	assert.Nil(t, err)
-	assert.Equal(t, testOtherUserProfile, other)
 }
 
 func TestUserUseCase_GetOtherProfileDBErrorGetByID(t *testing.T) {
@@ -335,6 +335,19 @@ func TestUserUseCase_GetOtherProfileDBErrorCountUserFollowers(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestUserUseCase_GetOtherProfileDBErrorCountSubcriptions(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(gomock.Any()).Return(uint64(1),
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOtherProfile(userId)
+
+	assert.Error(t, err)
+}
+
 ///////////////////////////////////////////////////
 
 func TestUserUseCase_GetOwnProfileOK(t *testing.T) {
@@ -342,11 +355,11 @@ func TestUserUseCase_GetOwnProfileOK(t *testing.T) {
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
 	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(userId).Return(uint64(1), nil)
 
-	own, err := uc.GetOwnProfile(testUserData.Id)
+	_, err := uc.GetOwnProfile(testUserData.Id)
 
 	assert.Nil(t, err)
-	assert.Equal(t, testOwnUserProfile, own)
 }
 
 func TestUserUseCase_GetOwnProfileDBErrorGetByID(t *testing.T) {
@@ -367,6 +380,19 @@ func TestUserUseCase_GetOwnProfileDBErrorCountUserFollowers(t *testing.T) {
 		echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOwnProfile(userId)
+
+	assert.Error(t, err)
+}
+
+func TestUserUseCase_GetOwnProfileDBErrorCountSubscriptions(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
+	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(userId).Return(uint64(1),
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetOwnProfile(testUserData.Id)
 
 	assert.Error(t, err)
 }
@@ -499,7 +525,6 @@ func TestUserUseCase_FindUsers(t *testing.T) {
 
 	rep.EXPECT().FindUsers(name, pageNum).Return(testUserCardsSQL, nil)
 	repSub.EXPECT().CountUserFollowers(gomock.Any()).Return(uint64(1), nil)
-	repSub.EXPECT().CountUserSubscriptions(gomock.Any()).Return(uint64(1), nil)
 
 	_, err := uc.FindUsers(name, pageNum)
 

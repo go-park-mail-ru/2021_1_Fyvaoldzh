@@ -157,7 +157,6 @@ func TestUserHandler_GetOwnProfile(t *testing.T) {
 
 	usecase.EXPECT().GetOwnProfile(userId).Return(testOwnUserProfile, nil)
 
-
 	err := h.GetOwnProfile(c)
 
 	assert.Nil(t, err)
@@ -361,6 +360,18 @@ func TestUserHandler_Login(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestUserHandler_LoginCookieNotNil(t *testing.T) {
+	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodPost)
+	cookie := generator.CreateCookie(constants.CookieLength)
+	c.Request().AddCookie(cookie)
+
+	rpcAuth.EXPECT().Login(gomock.Any(), gomock.Any(), cookie.Value).Return(userId, "lalala", nil)
+
+	err := h.Login(c)
+
+	assert.Nil(t, err)
+}
+
 /*
 func TestUserHandler_LoginErrorAlreadyLogin(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/login", http.MethodPost)
@@ -448,14 +459,13 @@ func TestUserHandler_RegisterErrorRpcAuthLogin(t *testing.T) {
 	c, h, usecase, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
 
 	usecase.EXPECT().Add(testRegData).Return(userId, nil)
-	rpcAuth.EXPECT().Login(gomock.Any(), gomock.Any(), "").Return(0, "", echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Login(gomock.Any(), gomock.Any(), "").Return(userId, "", echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Register(c)
 
 	assert.Error(t, err)
 }
 
-/*
 
 func TestUserHandler_RegisterErrorUCAdd(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/register", http.MethodPost)
@@ -466,6 +476,7 @@ func TestUserHandler_RegisterErrorUCAdd(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
 
 func TestUserHandler_RegisterLoggedIn(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
@@ -479,7 +490,7 @@ func TestUserHandler_RegisterLoggedIn(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserHandler_RegisterErrorSMCheckSession(t *testing.T) {
+func TestUserHandler_RegisterErrorRpcAuthCheck(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
@@ -494,12 +505,12 @@ func TestUserHandler_RegisterErrorSMCheckSession(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserHandler_Update(t *testing.T) {
-	c, h, usecase, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
+	c, h, usecase, _ := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 
 	usecase.EXPECT().Update(userId, testOwnUserProfile).Return(nil)
-	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, nil)
 
 	err := h.Update(c)
 
@@ -507,18 +518,19 @@ func TestUserHandler_Update(t *testing.T) {
 }
 
 func TestUserHandler_UpdateErrorUC(t *testing.T) {
-	c, h, usecase, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
+	c, h, usecase, _ := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 
 	usecase.EXPECT().Update(userId, testOwnUserProfile).Return(echo.NewHTTPError(http.StatusInternalServerError))
-	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, nil)
 
 	err := h.Update(c)
 
 	assert.Error(t, err)
 }
 
+/*
 func TestUserHandler_UpdateSessionNotExists(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
@@ -530,6 +542,9 @@ func TestUserHandler_UpdateSessionNotExists(t *testing.T) {
 
 	assert.Error(t, err)
 }
+*/
+
+/*
 
 func TestUserHandler_UpdateErrorSM(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
@@ -542,7 +557,9 @@ func TestUserHandler_UpdateErrorSM(t *testing.T) {
 
 	assert.Error(t, err)
 }
+*/
 
+/*
 func TestUserHandler_UpdateNoCookie(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/update", http.MethodPost)
 
@@ -552,4 +569,28 @@ func TestUserHandler_UpdateNoCookie(t *testing.T) {
 }
 
  */
+
+///////////////////////////////////////////////////
+
+func TestUserHandler_FindUsers(t *testing.T) {
+	c, h, usecase, _ := setUp(t, "/api/v1/find", http.MethodGet)
+	c.Set(constants.PageKey, pageNum)
+	usecase.EXPECT().FindUsers(gomock.Any(), pageNum).Return(testUserCards, nil)
+
+	err := h.FindUsers(c)
+
+	assert.Nil(t, err)
+}
+
+func TestUserHandler_FindUsersErrorUCFindUsers(t *testing.T) {
+	c, h, usecase, _ := setUp(t, "/api/v1/find", http.MethodGet)
+	c.Set(constants.PageKey, pageNum)
+	usecase.EXPECT().FindUsers(gomock.Any(), pageNum).Return(testUserCards, echo.NewHTTPError(http.StatusInternalServerError))
+
+	err := h.FindUsers(c)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
 

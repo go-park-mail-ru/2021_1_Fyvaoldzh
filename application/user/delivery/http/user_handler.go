@@ -316,10 +316,10 @@ func (uh UserHandler) FindUsers(c echo.Context) error {
 	page := c.Get(constants.PageKey).(int)
 
 	users, err := uh.UseCase.FindUsers(str, page)
-	users = uh.sanitizer.SanitizeUserCards(users)
 	if err != nil {
 		return err
 	}
+	users = uh.sanitizer.SanitizeUserCards(users)
 
 	if _, err := easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		uh.Logger.Warn(err)
