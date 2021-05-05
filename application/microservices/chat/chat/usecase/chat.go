@@ -196,7 +196,7 @@ func (c Chat) EditMessage(uid uint64, newMessage *models.RedactMessage) error {
 func (c Chat) AutoMailingConstructor(to uint64, from, eventName, eventID string) models.NewMessage {
 	var mailingMessage models.NewMessage
 	mailingMessage.To = to
-	mailingMessage.Text = from + constants.MailingText + `"` + eventName + `" ` + constants.MailingAddress + eventID
+	mailingMessage.Text = from + constants.MailingText + eventName + " " + constants.MailingAddress + eventID
 
 	return mailingMessage
 }

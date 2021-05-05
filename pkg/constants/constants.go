@@ -27,7 +27,7 @@ const (
 	UsersPerPage            = 10
 	ChatPerPage             = 100
 	MailingText             = " приглашает Вас на мероприятие "
-	MailingAddress          = "qdaqda.ru:3000/event"
+	MailingAddress          = "95.163.180.8:3000/event"
 )
 
 var Category = map[string]string{

@@ -30,7 +30,7 @@ var (
 	test_text_2    = "test text 2"
 	test_from      = "test from"
 	test_event     = "test event"
-	test_mail_text = `test from приглашает Вас на мероприятие "test event" qdaqda.ru:3000/event1`
+	test_mail_text = `test from приглашает Вас на мероприятие test event 95.163.180.8:3000/event1`
 )
 
 var testDialogueMessageSQL = models.EasyDialogueMessageSQL{
