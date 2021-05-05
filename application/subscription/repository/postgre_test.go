@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	userId          uint64 = 1
+	userId  uint64 = 1
 	eventId uint64 = 1
-	pageNum = 1
+	pageNum        = 1
 )
 
 func newDb(t *testing.T) subscription.Repository {

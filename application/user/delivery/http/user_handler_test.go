@@ -161,6 +161,7 @@ func TestUserHandler_GetOwnProfile(t *testing.T) {
 
 	assert.Nil(t, err)
 }
+
 /*
 func TestUserHandler_GetOwnProfileErrorNoCookie(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/profile", http.MethodGet)
@@ -170,7 +171,7 @@ func TestUserHandler_GetOwnProfileErrorNoCookie(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 /*
 func TestUserHandler_GetOwnProfileRpcAuthFalse(t *testing.T) {
@@ -186,7 +187,7 @@ func TestUserHandler_GetOwnProfileRpcAuthFalse(t *testing.T) {
 }
 
 
- */
+*/
 
 /*
 func TestUserHandler_GetOwnProfileErrorRpcAuth(t *testing.T) {
@@ -201,7 +202,7 @@ func TestUserHandler_GetOwnProfileErrorRpcAuth(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 func TestUserHandler_GetOwnProfileErrorUCGetOwnProfile(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/profile", http.MethodGet)
@@ -209,7 +210,6 @@ func TestUserHandler_GetOwnProfileErrorUCGetOwnProfile(t *testing.T) {
 	c.Set(constants.SessionCookieName, cookie.Value)
 	c.Set(constants.UserIdKey, userId)
 	usecase.EXPECT().GetOwnProfile(userId).Return(testOwnUserProfile, echo.NewHTTPError(http.StatusBadRequest))
-
 
 	err := h.GetOwnProfile(c)
 
@@ -240,7 +240,7 @@ func TestUserHandler_GetOtherUserProfileErrorAtoi(t *testing.T) {
 	assert.Error(t, err, echo.NewHTTPError(http.StatusBadRequest))
 }
 
- */
+*/
 
 /*
 func TestUserHandler_GetOtherUserProfileErrorMinus(t *testing.T) {
@@ -253,7 +253,7 @@ func TestUserHandler_GetOtherUserProfileErrorMinus(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 func TestUserHandler_GetOtherUserProfileErrorUC(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/profile/:id", http.MethodGet)
@@ -287,7 +287,7 @@ func TestUserHandler_GetUsersErrorAtoi(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 /*
 func TestUserHandler_GetUsersErrorMinus(t *testing.T) {
@@ -299,7 +299,7 @@ func TestUserHandler_GetUsersErrorMinus(t *testing.T) {
 }
 
 
- */
+*/
 func TestUserHandler_GetUsersErrorUC(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/users", http.MethodGet)
 	c.Set(constants.PageKey, pageNum)
@@ -346,7 +346,7 @@ func TestUserHandler_GetAvatarErrorAtoi(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 ///////////////////////////////////////////////////
 
@@ -384,7 +384,7 @@ func TestUserHandler_LoginErrorAlreadyLogin(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 /*
 
@@ -403,7 +403,6 @@ func TestUserHandler_LoginErrorRpcAuthCheckSession(t *testing.T) {
 	assert.Error(t, err)
 }
 */
-
 
 func TestUserHandler_LoginErrorRpcAuthLogin(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodPost)
@@ -428,7 +427,6 @@ func TestUserHandler_Logout(t *testing.T) {
 
 	assert.Nil(t, err)
 }
-
 
 func TestUserHandler_LogoutErrorRpcAuthLogout(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodDelete)
@@ -466,7 +464,6 @@ func TestUserHandler_RegisterErrorRpcAuthLogin(t *testing.T) {
 	assert.Error(t, err)
 }
 
-
 func TestUserHandler_RegisterErrorUCAdd(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/register", http.MethodPost)
 
@@ -476,7 +473,6 @@ func TestUserHandler_RegisterErrorUCAdd(t *testing.T) {
 
 	assert.Error(t, err)
 }
-
 
 func TestUserHandler_RegisterLoggedIn(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
@@ -568,7 +564,7 @@ func TestUserHandler_UpdateNoCookie(t *testing.T) {
 	assert.Error(t, err)
 }
 
- */
+*/
 
 ///////////////////////////////////////////////////
 
@@ -593,4 +589,3 @@ func TestUserHandler_FindUsersErrorUCFindUsers(t *testing.T) {
 }
 
 ///////////////////////////////////////////////////
-

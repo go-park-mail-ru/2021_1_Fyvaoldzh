@@ -159,8 +159,7 @@ var testActionCard = &models.ActionCard{
 }
 
 var testUserCardsSQL = []models.UserCardSQL{*testUserCardSQL}
-var testActionCards = []*models.ActionCard {testActionCard}
-
+var testActionCards = []*models.ActionCard{testActionCard}
 
 func setUp(t *testing.T) (*mock_user.MockRepository, *mock_subscription.MockRepository, user.UseCase) {
 	ctrl := gomock.NewController(t)
@@ -321,7 +320,6 @@ func TestUserUseCase_GetOtherProfileDBErrorGetByID(t *testing.T) {
 
 	assert.Error(t, err)
 }
-
 
 func TestUserUseCase_GetOtherProfileDBErrorCountUserFollowers(t *testing.T) {
 	rep, repSub, uc := setUp(t)
@@ -575,7 +573,6 @@ func TestUserUseCase_DBErrorGetActions(t *testing.T) {
 
 	assert.Error(t, err)
 }
-
 
 /*
 func TestUserUseCase_UploadAvatar(t *testing.T) {

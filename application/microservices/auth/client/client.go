@@ -7,6 +7,8 @@ protoc --go_out=plugins=grpc:. *.proto
 import (
 	"context"
 	"github.com/labstack/echo"
+	traceutils "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"kudago/application/microservices/auth/proto"
 	"kudago/pkg/constants"
@@ -18,12 +20,14 @@ type AuthClient struct {
 	client proto.AuthClient
 	gConn  *grpc.ClientConn
 	logger logger.Logger
+
 }
 
-func NewAuthClient(port string, logger logger.Logger) (IAuthClient, error) {
+func NewAuthClient(port string, logger logger.Logger, tracer opentracing.Tracer) (IAuthClient, error) {
 	gConn, err := grpc.Dial(
 		constants.Localhost+port,
 		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(traceutils.OpenTracingClientInterceptor(tracer)),
 	)
 	if err != nil {
 		return nil, err

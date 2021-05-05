@@ -2,12 +2,16 @@ package server
 
 import (
 	"context"
+	"log"
+
+	//"github.com/uber/jaeger-client-go"
+	//"github.com/uber/jaeger-lib/metrics"
 	chhttp "kudago/application/chat/delivery/http"
-	clientChat "kudago/application/microservices/chat/client"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
 	clientAuth "kudago/application/microservices/auth/client"
+	clientChat "kudago/application/microservices/chat/client"
 	clientSub "kudago/application/microservices/subscription/client"
 	shttp "kudago/application/subscription/delivery/http"
 	srepository "kudago/application/subscription/repository"
@@ -20,7 +24,11 @@ import (
 	"kudago/pkg/logger"
 
 	"github.com/microcosm-cc/bluemonday"
-
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
+	"github.com/uber/jaeger-lib/metrics"
 	middleware1 "kudago/application/server/middleware"
 
 	_ "github.com/jackc/pgx/stdlib"
@@ -28,19 +36,40 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
-	"github.com/tarantool/go-tarantool"
 	"go.uber.org/zap"
 )
 
 type Server struct {
 	rpcAuth clientAuth.IAuthClient
 	rpcSub  clientSub.ISubscriptionClient
-	rpcChat  clientChat.IChatClient
+	rpcChat clientChat.IChatClient
 	e       *echo.Echo
 }
 
 func NewServer(l *zap.SugaredLogger) *Server {
 	var server Server
+
+	jaegerCfgInstance := jaegercfg.Configuration{
+		ServiceName: "main_server",
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans:           true,
+			LocalAgentHostPort: "localhost:6831",
+		},
+	}
+
+	tracer, _, err := jaegerCfgInstance.NewTracer(
+		jaegercfg.Logger(jaegerlog.StdLogger),
+		jaegercfg.Metrics(metrics.NullFactory),
+	)
+	if err != nil {
+		log.Fatal("cannot create tracer", err)
+	}
+	opentracing.SetGlobalTracer(tracer)
+
 	e := echo.New()
 	logger := logger.NewLogger(l)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -57,30 +86,18 @@ func NewServer(l *zap.SugaredLogger) *Server {
 		logger.Fatal(err)
 	}
 
-	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
-		User: constants.TarantoolUser,
-		Pass: constants.TarantoolPassword,
-	})
+
+	rpcAuth, err := clientAuth.NewAuthClient(constants.AuthServicePort, logger, tracer)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	_, err = conn.Ping()
+	rpcSub, err := clientSub.NewSubscriptionClient(constants.SubscriptionServicePort, logger, tracer)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	rpcAuth, err := clientAuth.NewAuthClient(constants.AuthServicePort, logger)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	rpcSub, err := clientSub.NewSubscriptionClient(constants.SubscriptionServicePort, logger)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	rpcChat, err := clientChat.NewChatClient(constants.ChatServicePort, logger)
+	rpcChat, err := clientChat.NewChatClient(constants.ChatServicePort, logger, tracer)
 	if err != nil {
 		logger.Fatal(err)
 	}

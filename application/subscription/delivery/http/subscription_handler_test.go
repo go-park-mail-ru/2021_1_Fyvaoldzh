@@ -20,25 +20,25 @@ import (
 )
 
 var (
-	userId uint64 = 1
-	n = 1
-	id     uint64 = 1
-	num           = 2
-	numu        uint64   = 2
-	strId         = "1"
-	name = "name"
-	evPlanningSQL          = models.EventCardWithDateSQL{
+	userId        uint64 = 1
+	n                    = 1
+	id            uint64 = 1
+	num                  = 2
+	numu          uint64 = 2
+	strId                = "1"
+	name                 = "name"
+	evPlanningSQL        = models.EventCardWithDateSQL{
 		ID:        1,
 		StartDate: time.Now(),
 		EndDate:   time.Now().Add(10 * time.Hour),
 	}
 	evPlanning = models.EventCard{
-		ID:        1,
-		Title: "title",
-		Place: "place",
+		ID:          1,
+		Title:       "title",
+		Place:       "place",
 		Description: "desc",
-		StartDate: evPlanningSQL.StartDate.String(),
-		EndDate:   evPlanningSQL.EndDate.String(),
+		StartDate:   evPlanningSQL.StartDate.String(),
+		EndDate:     evPlanningSQL.EndDate.String(),
 	}
 	evVisitedSQL = models.EventCardWithDateSQL{
 		ID:        2,
@@ -46,12 +46,12 @@ var (
 		EndDate:   time.Now(),
 	}
 	evVisited = models.EventCard{
-		ID:        2,
-		Title: "title",
-		Place: "place",
+		ID:          2,
+		Title:       "title",
+		Place:       "place",
 		Description: "desc",
-		StartDate: evVisitedSQL.StartDate.String(),
-		EndDate:   evVisitedSQL.EndDate.String(),
+		StartDate:   evVisitedSQL.StartDate.String(),
+		EndDate:     evVisitedSQL.EndDate.String(),
 	}
 	eventsPlanningSQL = []models.EventCardWithDateSQL{
 		evPlanningSQL, evVisitedSQL,
@@ -66,7 +66,6 @@ var (
 		evVisited,
 	}
 )
-
 
 var testUserCard = &models.UserCard{
 	Id:   userId,
@@ -138,7 +137,6 @@ func TestSubscriptionHandler_SubscribeErrorSame(t *testing.T) {
 
 ///////////////////////////////////////////////////
 
-
 func TestSubscriptionHandler_Unsubscribe(t *testing.T) {
 	c, h, _, _, rpcSub := setUp(t, "/api/v1/unsubscribe/user/:id", http.MethodDelete)
 	c.Set(constants.UserIdKey, userId)
@@ -150,7 +148,6 @@ func TestSubscriptionHandler_Unsubscribe(t *testing.T) {
 
 	assert.Nil(t, err)
 }
-
 
 ///////////////////////////////////////////////////
 

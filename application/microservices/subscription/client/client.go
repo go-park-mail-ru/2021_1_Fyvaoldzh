@@ -7,6 +7,8 @@ protoc --go_out=plugins=grpc:. *.proto
 import (
 	"context"
 	"github.com/labstack/echo"
+	traceutils "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	"kudago/application/microservices/subscription/proto"
 	"kudago/pkg/constants"
@@ -20,10 +22,11 @@ type SubscriptionClient struct {
 	logger logger.Logger
 }
 
-func NewSubscriptionClient(port string, logger logger.Logger) (ISubscriptionClient, error) {
+func NewSubscriptionClient(port string, logger logger.Logger, tracer opentracing.Tracer) (ISubscriptionClient, error) {
 	gConn, err := grpc.Dial(
 		constants.Localhost+port,
 		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(traceutils.OpenTracingClientInterceptor(tracer)),
 	)
 	if err != nil {
 		logger.Warn(err)

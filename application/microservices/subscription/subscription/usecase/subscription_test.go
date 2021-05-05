@@ -3,12 +3,12 @@ package usecase
 import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	mock_subscription "kudago/application/microservices/subscription/subscription/mocks"
-	"kudago/application/microservices/subscription/subscription"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"kudago/application/microservices/subscription/subscription"
+	mock_subscription "kudago/application/microservices/subscription/subscription/mocks"
 	"kudago/pkg/logger"
 	"log"
 	"testing"
@@ -16,7 +16,7 @@ import (
 
 var (
 	userId  uint64 = 1
-	userId2  uint64 = 2
+	userId2 uint64 = 2
 	eventId uint64 = 1
 )
 
@@ -164,7 +164,7 @@ func TestSubscription_AddPlanning(t *testing.T) {
 	rep.EXPECT().AddPlanning(userId, eventId).Return(nil)
 	rep.EXPECT().AddUserEventAction(userId, eventId).Return(nil)
 
-	_, _,err := uc.AddPlanning(userId, eventId)
+	_, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Nil(t, err)
 }
@@ -178,7 +178,7 @@ func TestSubscription_AddPlanningErrorUCAUEA(t *testing.T) {
 	rep.EXPECT().AddUserEventAction(userId, eventId).Return(
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddPlanning(userId, eventId)
+	_, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -191,7 +191,7 @@ func TestSubscription_AddPlanningErrorUCAP(t *testing.T) {
 	rep.EXPECT().AddPlanning(userId, eventId).Return(
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddPlanning(userId, eventId)
+	_, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -202,7 +202,7 @@ func TestSubscription_AddPlanningExists(t *testing.T) {
 	rep.EXPECT().CheckEventInList(eventId).Return(true, nil)
 	rep.EXPECT().CheckEventAdded(userId, eventId).Return(true, nil)
 
-	flag, _,err := uc.AddPlanning(userId, eventId)
+	flag, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, true, flag)
@@ -215,7 +215,7 @@ func TestSubscription_AddPlanningErrorUCCEA(t *testing.T) {
 	rep.EXPECT().CheckEventAdded(userId, eventId).Return(false,
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddPlanning(userId, eventId)
+	_, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -225,7 +225,7 @@ func TestSubscription_AddPlanningNotExistingEvent(t *testing.T) {
 
 	rep.EXPECT().CheckEventInList(eventId).Return(false, nil)
 
-	flag, _,err := uc.AddPlanning(userId, eventId)
+	flag, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, true, flag)
@@ -236,7 +236,7 @@ func TestSubscription_AddPlanningErrorUCCEIL(t *testing.T) {
 
 	rep.EXPECT().CheckEventInList(eventId).Return(false, status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddPlanning(userId, eventId)
+	_, _, err := uc.AddPlanning(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -251,7 +251,7 @@ func TestSubscription_AddVisited(t *testing.T) {
 	rep.EXPECT().AddVisited(userId, eventId).Return(nil)
 	rep.EXPECT().AddUserEventAction(userId, eventId).Return(nil)
 
-	_, _,err := uc.AddVisited(userId, eventId)
+	_, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Nil(t, err)
 }
@@ -265,7 +265,7 @@ func TestSubscription_AddVisitedErrorUCAUEA(t *testing.T) {
 	rep.EXPECT().AddUserEventAction(userId, eventId).Return(
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddVisited(userId, eventId)
+	_, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -278,7 +278,7 @@ func TestSubscription_AddVisitedErrorUCAP(t *testing.T) {
 	rep.EXPECT().AddVisited(userId, eventId).Return(
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddVisited(userId, eventId)
+	_, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -289,7 +289,7 @@ func TestSubscription_AddVisitedExists(t *testing.T) {
 	rep.EXPECT().CheckEventInList(eventId).Return(true, nil)
 	rep.EXPECT().CheckEventAdded(userId, eventId).Return(true, nil)
 
-	flag, _,err := uc.AddVisited(userId, eventId)
+	flag, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, true, flag)
@@ -302,7 +302,7 @@ func TestSubscription_AddVisitedErrorUCCEA(t *testing.T) {
 	rep.EXPECT().CheckEventAdded(userId, eventId).Return(false,
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddVisited(userId, eventId)
+	_, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -312,7 +312,7 @@ func TestSubscription_AddVisitedNotExistingEvent(t *testing.T) {
 
 	rep.EXPECT().CheckEventInList(eventId).Return(false, nil)
 
-	flag, _,err := uc.AddVisited(userId, eventId)
+	flag, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, true, flag)
@@ -323,7 +323,7 @@ func TestSubscription_AddVisitedErrorUCCEIL(t *testing.T) {
 
 	rep.EXPECT().CheckEventInList(eventId).Return(false, status.Error(codes.Internal, ""))
 
-	_, _,err := uc.AddVisited(userId, eventId)
+	_, _, err := uc.AddVisited(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -337,7 +337,7 @@ func TestSubscription_RemoveEvent(t *testing.T) {
 	rep.EXPECT().RemoveEvent(userId, eventId).Return(nil)
 	rep.EXPECT().RemoveUserEventAction(userId, eventId).Return(nil)
 
-	_, _,err := uc.RemoveEvent(userId, eventId)
+	_, _, err := uc.RemoveEvent(userId, eventId)
 
 	assert.Nil(t, err)
 }
@@ -350,7 +350,7 @@ func TestSubscription_RemoveEventErrorUCRUEA(t *testing.T) {
 	rep.EXPECT().RemoveUserEventAction(userId, eventId).Return(
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.RemoveEvent(userId, eventId)
+	_, _, err := uc.RemoveEvent(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -362,7 +362,7 @@ func TestSubscription_RemoveEventErrorUCRE(t *testing.T) {
 	rep.EXPECT().RemoveEvent(userId, eventId).Return(
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.RemoveEvent(userId, eventId)
+	_, _, err := uc.RemoveEvent(userId, eventId)
 
 	assert.Error(t, err)
 }
@@ -372,7 +372,7 @@ func TestSubscription_RemoveEventNotExists(t *testing.T) {
 
 	rep.EXPECT().CheckEventAdded(userId, eventId).Return(false, nil)
 
-	flag, _,err := uc.RemoveEvent(userId, eventId)
+	flag, _, err := uc.RemoveEvent(userId, eventId)
 
 	assert.Nil(t, err)
 	assert.Equal(t, true, flag)
@@ -384,7 +384,7 @@ func TestSubscription_RemoveEventErrorUCCEA(t *testing.T) {
 	rep.EXPECT().CheckEventAdded(userId, eventId).Return(false,
 		status.Error(codes.Internal, ""))
 
-	_, _,err := uc.RemoveEvent(userId, eventId)
+	_, _, err := uc.RemoveEvent(userId, eventId)
 
 	assert.Error(t, err)
 }

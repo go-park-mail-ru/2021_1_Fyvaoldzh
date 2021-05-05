@@ -6,6 +6,8 @@ protoc --go_out=plugins=grpc:. *.proto
 
 import (
 	"context"
+	traceutils "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc"
 	chat_proto "kudago/application/microservices/chat/proto"
 	"kudago/application/models"
@@ -19,10 +21,11 @@ type ChatClient struct {
 	logger logger.Logger
 }
 
-func NewChatClient(port string, logger logger.Logger) (IChatClient, error) {
+func NewChatClient(port string, logger logger.Logger, tracer opentracing.Tracer) (IChatClient, error) {
 	gConn, err := grpc.Dial(
 		constants.Localhost+port,
 		grpc.WithInsecure(),
+		grpc.WithUnaryInterceptor(traceutils.OpenTracingClientInterceptor(tracer)),
 	)
 	if err != nil {
 		return nil, err

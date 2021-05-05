@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	userId  uint64 = 1
-	eventId uint64 = 1
-	eventId2 uint64 = 2
-	page = 1
-	evPlanning = models.EventCard{
+	userId     uint64 = 1
+	eventId    uint64 = 1
+	eventId2   uint64 = 2
+	page              = 1
+	evPlanning        = models.EventCard{
 		ID:        eventId,
 		StartDate: evPlanningSQL.StartDate.String(),
 		EndDate:   evPlanningSQL.EndDate.String(),
@@ -38,7 +38,7 @@ var (
 		StartDate: evVisitedSQL.StartDate.String(),
 		EndDate:   evVisitedSQL.EndDate.String(),
 	}
-	evPlanningSQL          = models.EventCardWithDateSQL{
+	evPlanningSQL = models.EventCardWithDateSQL{
 		ID:        eventId,
 		StartDate: time.Now(),
 		EndDate:   time.Now().Add(10 * time.Hour),
@@ -58,8 +58,8 @@ var (
 )
 
 var userCardSql = models.UserCardSQL{
-	Id: userId,
-	Name: "name",
+	Id:     userId,
+	Name:   "name",
 	Avatar: "avatar",
 	Birthday: sql.NullTime{
 		Time:  time.Now(),

@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	userId          uint64 = 1
+	userId  uint64 = 1
 	eventId uint64 = 1
-	pageNum = 1
+	pageNum        = 1
 )
 
 func newDb(t *testing.T) subscription.Repository {
@@ -131,7 +131,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 
 func TestSubscriptionDatabase_SubscribeUser(t *testing.T) {
 	h := newDb(t)
-    err := h.SubscribeUser(userId, userId)
+	err := h.SubscribeUser(userId, userId)
 
 	assert.Error(t, err)
 }
