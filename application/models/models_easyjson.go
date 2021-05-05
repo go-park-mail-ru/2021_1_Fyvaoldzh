@@ -117,6 +117,8 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels1(in *jlexer.Lexer, out *UserO
 			out.Email = string(in.String())
 		case "followers":
 			out.Followers = uint64(in.Uint64())
+		case "subscriptions":
+			out.Subscriptions = uint64(in.Uint64())
 		case "about":
 			out.About = string(in.String())
 		case "avatar":
@@ -173,6 +175,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels1(out *jwriter.Writer, in User
 		const prefix string = ",\"followers\":"
 		out.RawString(prefix)
 		out.Uint64(uint64(in.Followers))
+	}
+	{
+		const prefix string = ",\"subscriptions\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.Subscriptions))
 	}
 	{
 		const prefix string = ",\"about\":"
@@ -1421,6 +1428,8 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels15(in *jlexer.Lexer, out *Othe
 			out.Avatar = string(in.String())
 		case "followers":
 			out.Followers = uint64(in.Uint64())
+		case "subscriptions":
+			out.Subscriptions = uint64(in.Uint64())
 		default:
 			in.SkipRecursive()
 		}
@@ -1469,6 +1478,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels15(out *jwriter.Writer, in Oth
 		const prefix string = ",\"followers\":"
 		out.RawString(prefix)
 		out.Uint64(uint64(in.Followers))
+	}
+	{
+		const prefix string = ",\"subscriptions\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.Subscriptions))
 	}
 	out.RawByte('}')
 }

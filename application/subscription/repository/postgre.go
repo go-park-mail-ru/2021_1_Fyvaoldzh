@@ -36,6 +36,18 @@ func (sd SubscriptionDatabase) CountUserFollowers(id uint64) (uint64, error) {
 	return num, nil
 }
 
+func (sd SubscriptionDatabase) CountUserSubscriptions(id uint64) (uint64, error) {
+	var num uint64
+	err := sd.pool.QueryRow(context.Background(), `SELECT COUNT(subscribed_to_id)
+		FROM subscriptions WHERE subscriber_id = $1`, id).Scan(&num)
+	if err != nil {
+		sd.logger.Warn(err)
+		return 0, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return num, nil
+}
+
 func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
 	resp, err := sd.pool.Exec(context.Background(),
 		`UPDATE user_event SET is_planning = $1 WHERE user_id = $2 AND event_id = $3`,

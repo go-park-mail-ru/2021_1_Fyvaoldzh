@@ -57,27 +57,29 @@ func ConvertUserCard(sqlCard UserCardSQL) *UserCard {
 type UsersOnEvent []UserOnEvent
 
 type OtherUserProfile struct {
-	Uid       uint64
-	Name      string `json:"name"`
-	Age       uint8  `json:"age"`
-	City      string `json:"city"`
-	About     string `json:"about"`
-	Avatar    string `json:"avatar"`
-	Followers uint64 `json:"followers"`
+	Uid           uint64
+	Name          string `json:"name"`
+	Age           uint8  `json:"age"`
+	City          string `json:"city"`
+	About         string `json:"about"`
+	Avatar        string `json:"avatar"`
+	Followers     uint64 `json:"followers"`
+	Subscriptions uint64 `json:"subscriptions"`
 }
 
 type UserOwnProfile struct {
-	Uid         uint64
-	Name        string `json:"name"`
-	Login       string `json:"login"`
-	Birthday    string `json:"birthday"`
-	City        string `json:"city"`
-	Email       string `json:"email"`
-	Followers   uint64 `json:"followers"`
-	About       string `json:"about"`
-	Avatar      string `json:"avatar"`
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+	Uid           uint64
+	Name          string `json:"name"`
+	Login         string `json:"login"`
+	Birthday      string `json:"birthday"`
+	City          string `json:"city"`
+	Email         string `json:"email"`
+	Followers     uint64 `json:"followers"`
+	Subscriptions uint64 `json:"subscriptions"`
+	About         string `json:"about"`
+	Avatar        string `json:"avatar"`
+	OldPassword   string `json:"old_password"`
+	NewPassword   string `json:"new_password"`
 }
 
 type UserDataSQL struct {

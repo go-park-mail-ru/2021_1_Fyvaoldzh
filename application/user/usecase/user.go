@@ -93,6 +93,12 @@ func (uc UserUseCase) GetOtherProfile(id uint64) (*models.OtherUserProfile, erro
 		return &models.OtherUserProfile{}, err
 	}
 
+	other.Subscriptions, err = uc.repoSub.CountUserSubscriptions(id)
+	if err != nil {
+		uc.Logger.Warn(err)
+		return &models.OtherUserProfile{}, err
+	}
+
 	return other, err
 }
 
@@ -106,6 +112,12 @@ func (uc UserUseCase) GetOwnProfile(id uint64) (*models.UserOwnProfile, error) {
 	own := models.ConvertToOwn(*usr)
 
 	own.Followers, err = uc.repoSub.CountUserFollowers(id)
+	if err != nil {
+		uc.Logger.Warn(err)
+		return &models.UserOwnProfile{}, err
+	}
+
+	own.Subscriptions, err = uc.repoSub.CountUserSubscriptions(id)
 	if err != nil {
 		uc.Logger.Warn(err)
 		return &models.UserOwnProfile{}, err

@@ -24,6 +24,7 @@ import (
 )
 
 var (
+	pageNum              = 1
 	userId        uint64 = 1
 	strUserId            = "1"
 	login                = "userlogin"
@@ -116,8 +117,8 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 
 	handler := UserHandler{
 		UseCase:   usecase,
-		rpcAuth: rpcAuth,
-		auth: auth,
+		rpcAuth:   rpcAuth,
+		auth:      auth,
 		Logger:    logger.NewLogger(sugar),
 		sanitizer: cs,
 	}
@@ -149,17 +150,19 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 }
 
 func TestUserHandler_GetOwnProfile(t *testing.T) {
-	c, h, usecase, rpcAuth := setUp(t, "/api/v1/profile", http.MethodGet)
+	c, h, usecase, _ := setUp(t, "/api/v1/profile", http.MethodGet)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
-	rpcAuth.EXPECT().Check(cookie.Value).Return(true, userId, nil)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
+
 	usecase.EXPECT().GetOwnProfile(userId).Return(testOwnUserProfile, nil)
+
 
 	err := h.GetOwnProfile(c)
 
 	assert.Nil(t, err)
 }
-
+/*
 func TestUserHandler_GetOwnProfileErrorNoCookie(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/profile", http.MethodGet)
 
@@ -168,10 +171,14 @@ func TestUserHandler_GetOwnProfileErrorNoCookie(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserHandler_GetOwnProfileSMFalse(t *testing.T) {
+ */
+
+/*
+func TestUserHandler_GetOwnProfileRpcAuthFalse(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/profile", http.MethodGet)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 	rpcAuth.EXPECT().Check(cookie.Value).Return(false, userId, nil)
 
 	err := h.GetOwnProfile(c)
@@ -179,10 +186,15 @@ func TestUserHandler_GetOwnProfileSMFalse(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserHandler_GetOwnProfileErrorSM(t *testing.T) {
+
+ */
+
+/*
+func TestUserHandler_GetOwnProfileErrorRpcAuth(t *testing.T) {
 	c, h, _, rpcAuth := setUp(t, "/api/v1/profile", http.MethodGet)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 	rpcAuth.EXPECT().Check(cookie.Value).Return(false, userId, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.GetOwnProfile(c)
@@ -190,12 +202,15 @@ func TestUserHandler_GetOwnProfileErrorSM(t *testing.T) {
 	assert.Error(t, err)
 }
 
+ */
+
 func TestUserHandler_GetOwnProfileErrorUCGetOwnProfile(t *testing.T) {
-	c, h, usecase, rpcAuth := setUp(t, "/api/v1/profile", http.MethodGet)
+	c, h, usecase, _ := setUp(t, "/api/v1/profile", http.MethodGet)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
-	rpcAuth.EXPECT().Check(cookie.Value).Return(true, userId, nil)
-	usecase.EXPECT().GetOwnProfile(userId).Return(testOwnUserProfile, echo.NewHTTPError(http.StatusInternalServerError))
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
+	usecase.EXPECT().GetOwnProfile(userId).Return(testOwnUserProfile, echo.NewHTTPError(http.StatusBadRequest))
+
 
 	err := h.GetOwnProfile(c)
 
@@ -206,8 +221,7 @@ func TestUserHandler_GetOwnProfileErrorUCGetOwnProfile(t *testing.T) {
 
 func TestUserHandler_GetOtherUserProfile(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/profile/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues(strUserId)
+	c.Set(constants.IdKey, pageNum)
 
 	usecase.EXPECT().GetOtherProfile(userId).Return(testOtherUserProfile, nil)
 
@@ -216,6 +230,7 @@ func TestUserHandler_GetOtherUserProfile(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+/*
 func TestUserHandler_GetOtherUserProfileErrorAtoi(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/profile/:id", http.MethodGet)
 	c.SetParamNames("id")
@@ -226,6 +241,9 @@ func TestUserHandler_GetOtherUserProfileErrorAtoi(t *testing.T) {
 	assert.Error(t, err, echo.NewHTTPError(http.StatusBadRequest))
 }
 
+ */
+
+/*
 func TestUserHandler_GetOtherUserProfileErrorMinus(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/profile/:id", http.MethodGet)
 	c.SetParamNames("id")
@@ -235,6 +253,8 @@ func TestUserHandler_GetOtherUserProfileErrorMinus(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+ */
 
 func TestUserHandler_GetOtherUserProfileErrorUC(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/profile/:id", http.MethodGet)
@@ -251,8 +271,8 @@ func TestUserHandler_GetOtherUserProfileErrorUC(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserHandler_GetUsers(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/users?page=1", http.MethodGet)
-
+	c, h, usecase, _ := setUp(t, "/api/v1/users", http.MethodGet)
+	c.Set(constants.PageKey, pageNum)
 	usecase.EXPECT().GetUsers(1).Return(testUserCards, nil)
 
 	err := h.GetUsers(c)
@@ -260,6 +280,7 @@ func TestUserHandler_GetUsers(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+/*
 func TestUserHandler_GetUsersErrorAtoi(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/users?page=a", http.MethodGet)
 
@@ -268,6 +289,9 @@ func TestUserHandler_GetUsersErrorAtoi(t *testing.T) {
 	assert.Error(t, err)
 }
 
+ */
+
+/*
 func TestUserHandler_GetUsersErrorMinus(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/users?page=-1", http.MethodGet)
 
@@ -276,8 +300,11 @@ func TestUserHandler_GetUsersErrorMinus(t *testing.T) {
 	assert.Error(t, err)
 }
 
+
+ */
 func TestUserHandler_GetUsersErrorUC(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/users?page=1", http.MethodGet)
+	c, h, usecase, _ := setUp(t, "/api/v1/users", http.MethodGet)
+	c.Set(constants.PageKey, pageNum)
 
 	usecase.EXPECT().GetUsers(1).Return(testUserCards, echo.NewHTTPError(http.StatusInternalServerError))
 
@@ -312,6 +339,7 @@ func TestUserHandler_GetAvatarErrorUC(t *testing.T) {
 	assert.Error(t, err)
 }
 
+/*
 func TestUserHandler_GetAvatarErrorAtoi(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/avatar/:id", http.MethodGet)
 	c.SetParamNames("id")
@@ -321,6 +349,8 @@ func TestUserHandler_GetAvatarErrorAtoi(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+ */
 
 ///////////////////////////////////////////////////
 
@@ -339,7 +369,8 @@ func TestUserHandler_Login(t *testing.T) {
 func TestUserHandler_LoginErrorAlreadyLogin(t *testing.T) {
 	c, h, usecase, rpcAuth := setUp(t, "/api/v1/login", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 
 	usecase.EXPECT().Login(testUserFront).Return(userId, nil)
 	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, nil)
@@ -349,10 +380,11 @@ func TestUserHandler_LoginErrorAlreadyLogin(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserHandler_LoginErrorSMCheckSession(t *testing.T) {
+func TestUserHandler_LoginErrorRpcAuthCheckSession(t *testing.T) {
 	c, h, usecase, rpcAuth := setUp(t, "/api/v1/login", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 
 	usecase.EXPECT().Login(testUserFront).Return(userId, nil)
 	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
@@ -365,7 +397,8 @@ func TestUserHandler_LoginErrorSMCheckSession(t *testing.T) {
 func TestUserHandler_LoginErrorUC(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/login", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
-	c.Request().AddCookie(cookie)
+	c.Set(constants.SessionCookieName, cookie.Value)
+	c.Set(constants.UserIdKey, userId)
 
 	usecase.EXPECT().Login(testUserFront).Return(userId, echo.NewHTTPError(http.StatusInternalServerError))
 
@@ -378,7 +411,7 @@ func TestUserHandler_LoginErrorSMInsertSession(t *testing.T) {
 	c, h, usecase, rpcAuth := setUp(t, "/api/v1/login", http.MethodPost)
 
 	usecase.EXPECT().Login(testUserFront).Return(userId, nil)
-	rpcAuth.EXPECT().Login(userId, gomock.Any()).Return(echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Login(gomock.Any(), gomock.Any(), "").Return(echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Login(c)
 
@@ -388,12 +421,12 @@ func TestUserHandler_LoginErrorSMInsertSession(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserHandler_Logout(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/login", http.MethodDelete)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodDelete)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(cookie.Value).Return(true, userId, nil)
-	sm.EXPECT().DeleteSession(cookie.Value).Return(nil)
+	rpcAuth.EXPECT().Check(cookie.Value).Return(true, userId, nil)
+	rpcAuth.EXPECT().Logout(cookie.Value).Return(nil)
 
 	err := h.Logout(c)
 
@@ -401,12 +434,12 @@ func TestUserHandler_Logout(t *testing.T) {
 }
 
 func TestUserHandler_LogoutErrorSMDeleteSession(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/login", http.MethodDelete)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodDelete)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(cookie.Value).Return(true, userId, nil)
-	sm.EXPECT().DeleteSession(cookie.Value).Return(echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Check(cookie.Value).Return(true, userId, nil)
+	rpcAuth.EXPECT().Logout(cookie.Value).Return(echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Logout(c)
 
@@ -414,11 +447,11 @@ func TestUserHandler_LogoutErrorSMDeleteSession(t *testing.T) {
 }
 
 func TestUserHandler_LogoutUnauthorized(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/login", http.MethodDelete)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodDelete)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(cookie.Value).Return(false, userId, nil)
+	rpcAuth.EXPECT().Check(cookie.Value).Return(false, userId, nil)
 
 	err := h.Logout(c)
 
@@ -426,11 +459,11 @@ func TestUserHandler_LogoutUnauthorized(t *testing.T) {
 }
 
 func TestUserHandler_LogoutErrorSMCheckSession(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/login", http.MethodDelete)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/login", http.MethodDelete)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(cookie.Value).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Check(cookie.Value).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Logout(c)
 
@@ -448,10 +481,10 @@ func TestUserHandler_LogoutNoCookie(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserHandler_Register(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/register", http.MethodPost)
+	c, h, usecase, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
 
 	usecase.EXPECT().Add(testRegData).Return(userId, nil)
-	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(nil)
+	rpcAuth.EXPECT().Login(gomock.Any(), gomock.Any(), "").Return(nil)
 
 	err := h.Register(c)
 
@@ -459,10 +492,10 @@ func TestUserHandler_Register(t *testing.T) {
 }
 
 func TestUserHandler_RegisterErrorSMInsertSession(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/register", http.MethodPost)
+	c, h, usecase, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
 
 	usecase.EXPECT().Add(testRegData).Return(userId, nil)
-	sm.EXPECT().InsertSession(userId, gomock.Any()).Return(echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Login(gomock.Any(), gomock.Any(), "").Return(echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Register(c)
 
@@ -480,11 +513,11 @@ func TestUserHandler_RegisterErrorUCAdd(t *testing.T) {
 }
 
 func TestUserHandler_RegisterLoggedIn(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/register", http.MethodPost)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, nil)
+	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, nil)
 
 	err := h.Register(c)
 
@@ -492,11 +525,11 @@ func TestUserHandler_RegisterLoggedIn(t *testing.T) {
 }
 
 func TestUserHandler_RegisterErrorSMCheckSession(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/register", http.MethodPost)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/register", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Register(c)
 
@@ -506,12 +539,12 @@ func TestUserHandler_RegisterErrorSMCheckSession(t *testing.T) {
 ///////////////////////////////////////////////////
 
 func TestUserHandler_Update(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/update", http.MethodPost)
+	c, h, usecase, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
 	usecase.EXPECT().Update(userId, testOwnUserProfile).Return(nil)
-	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, nil)
+	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, nil)
 
 	err := h.Update(c)
 
@@ -519,12 +552,12 @@ func TestUserHandler_Update(t *testing.T) {
 }
 
 func TestUserHandler_UpdateErrorUC(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/update", http.MethodPost)
+	c, h, usecase, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
 	usecase.EXPECT().Update(userId, testOwnUserProfile).Return(echo.NewHTTPError(http.StatusInternalServerError))
-	sm.EXPECT().CheckSession(gomock.Any()).Return(true, userId, nil)
+	rpcAuth.EXPECT().Check(gomock.Any()).Return(true, userId, nil)
 
 	err := h.Update(c)
 
@@ -532,11 +565,11 @@ func TestUserHandler_UpdateErrorUC(t *testing.T) {
 }
 
 func TestUserHandler_UpdateSessionNotExists(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/update", http.MethodPost)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(gomock.Any()).Return(false, userId, nil)
+	rpcAuth.EXPECT().Check(gomock.Any()).Return(false, userId, nil)
 
 	err := h.Update(c)
 
@@ -544,11 +577,11 @@ func TestUserHandler_UpdateSessionNotExists(t *testing.T) {
 }
 
 func TestUserHandler_UpdateErrorSM(t *testing.T) {
-	c, h, _, sm := setUp(t, "/api/v1/update", http.MethodPost)
+	c, h, _, rpcAuth := setUp(t, "/api/v1/update", http.MethodPost)
 	cookie := generator.CreateCookie(constants.CookieLength)
 	c.Request().AddCookie(cookie)
 
-	sm.EXPECT().CheckSession(gomock.Any()).Return(false, userId, echo.NewHTTPError(http.StatusInternalServerError))
+	rpcAuth.EXPECT().Check(gomock.Any()).Return(false, userId, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := h.Update(c)
 
