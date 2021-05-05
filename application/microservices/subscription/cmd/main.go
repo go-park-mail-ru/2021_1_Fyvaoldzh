@@ -3,7 +3,7 @@ package main
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"kudago/application/microservices/chat/server"
+	"kudago/application/microservices/subscription/server"
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"log"

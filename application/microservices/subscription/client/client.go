@@ -26,6 +26,7 @@ func NewSubscriptionClient(port string, logger logger.Logger) (ISubscriptionClie
 		grpc.WithInsecure(),
 	)
 	if err != nil {
+		logger.Warn(err)
 		return nil, err
 	}
 
@@ -40,6 +41,7 @@ func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint6
 
 	answer, err := s.client.Subscribe(context.Background(), users)
 	if err != nil {
+		s.logger.Warn(err)
 		return err
 	}
 	if answer.Flag {
@@ -57,6 +59,7 @@ func (s *SubscriptionClient) Unsubscribe(subscriberId uint64, subscribedToId uin
 
 	answer, err := s.client.Unsubscribe(context.Background(), users)
 	if err != nil {
+		s.logger.Warn(err)
 		return err
 	}
 	if answer.Flag {
@@ -74,6 +77,7 @@ func (s *SubscriptionClient) AddPlanningEvent(userId uint64, eventId uint64) err
 
 	answer, err := s.client.AddPlanningEvent(context.Background(), userEvent)
 	if err != nil {
+		s.logger.Warn(err)
 		return err
 	}
 	if answer.Flag {
@@ -91,6 +95,7 @@ func (s *SubscriptionClient) RemoveEvent(userId uint64, eventId uint64) error {
 
 	answer, err := s.client.RemoveEvent(context.Background(), userEvent)
 	if err != nil {
+		s.logger.Warn(err)
 		return err
 	}
 	if answer.Flag {
@@ -108,6 +113,7 @@ func (s *SubscriptionClient) AddVisitedEvent(userId uint64, eventId uint64) erro
 
 	answer, err := s.client.AddVisitedEvent(context.Background(), userEvent)
 	if err != nil {
+		s.logger.Warn(err)
 		return err
 	}
 	if answer.Flag {
