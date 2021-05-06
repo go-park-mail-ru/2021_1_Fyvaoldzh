@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 
-	//"github.com/uber/jaeger-client-go"
-	//"github.com/uber/jaeger-lib/metrics"
 	chhttp "kudago/application/chat/delivery/http"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
@@ -123,6 +123,9 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	//	TokenLookup: constants.CSRFHeader,
 	//	CookiePath:  "/",
 	//}))
+
+	prometheus.MustRegister(middleware1.FooCount, middleware1.Hits)
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	server.e = e
 	server.rpcAuth = rpcAuth
