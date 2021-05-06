@@ -35,7 +35,12 @@ func (s Subscription) GetFollowers(id uint64, page int) (models.UserCards, error
 
 	var userCards models.UserCards
 	for _, elem := range users {
-		userCards = append(userCards, *models.ConvertUserCard(elem))
+		newCard := models.ConvertUserCard(elem)
+		newCard.Followers, err = s.repo.CountUserFollowers(newCard.Id)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		userCards = append(userCards, *newCard)
 	}
 
 	return userCards, nil
@@ -50,7 +55,12 @@ func (s Subscription) GetSubscriptions(id uint64, page int) (models.UserCards, e
 
 	var userCards models.UserCards
 	for _, elem := range users {
-		userCards = append(userCards, *models.ConvertUserCard(elem))
+		newCard := models.ConvertUserCard(elem)
+		newCard.Followers, err = s.repo.CountUserFollowers(newCard.Id)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		userCards = append(userCards, *newCard)
 	}
 
 	return userCards, nil

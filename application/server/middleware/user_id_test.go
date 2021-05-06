@@ -1,5 +1,6 @@
-/*package middleware
+package middleware
 
+/*
 import (
 	"kudago/application/microservices/auth/client"
 	"kudago/pkg/constants"
@@ -27,7 +28,7 @@ func setUp(t *testing.T) (echo.Context, *client.MockIAuthClient, Auth) {
 	auth := NewAuth(rpcAuth)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/", nil)
 	c := e.NewContext(req, rec)
 
 	return c, rpcAuth, auth
@@ -50,4 +51,6 @@ func TestUserId_GetSession(t *testing.T) {
 
 	assert.Equal(t, uid, test_uid)
 }
-*/
+
+
+ */
