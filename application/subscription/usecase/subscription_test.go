@@ -23,6 +23,7 @@ var (
 	eventId    uint64 = 1
 	eventId2   uint64 = 2
 	page              = 1
+	num        uint64 = 3
 	evPlanning        = models.EventCard{
 		ID:        eventId,
 		StartDate: evPlanningSQL.StartDate.String(),
@@ -119,6 +120,7 @@ func TestSubscription_GetFollowers(t *testing.T) {
 	rep, uc := setUp(t)
 
 	rep.EXPECT().GetFollowers(userId, page).Return(userCards, nil)
+	rep.EXPECT().CountUserFollowers(userId).Return(num, nil)
 
 	_, err := uc.GetFollowers(userId, page)
 
@@ -141,6 +143,7 @@ func TestSubscription_GetSubscriptions(t *testing.T) {
 	rep, uc := setUp(t)
 
 	rep.EXPECT().GetSubscriptions(userId, page).Return(userCards, nil)
+	rep.EXPECT().CountUserFollowers(userId).Return(num, nil)
 
 	_, err := uc.GetSubscriptions(userId, page)
 
