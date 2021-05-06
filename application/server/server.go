@@ -2,9 +2,10 @@ package server
 
 import (
 	"context"
+	"log"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
 
 	chhttp "kudago/application/chat/delivery/http"
 	ehttp "kudago/application/event/delivery/http"
@@ -23,13 +24,14 @@ import (
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
 
+	middleware1 "kudago/application/server/middleware"
+
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-lib/metrics"
-	middleware1 "kudago/application/server/middleware"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -85,7 +87,6 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	if err != nil {
 		logger.Fatal(err)
 	}
-
 
 	rpcAuth, err := clientAuth.NewAuthClient(constants.AuthServicePort, logger, tracer)
 	if err != nil {
