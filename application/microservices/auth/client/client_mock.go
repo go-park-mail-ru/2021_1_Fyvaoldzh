@@ -34,13 +34,14 @@ func (m *MockIAuthClient) EXPECT() *MockIAuthClientMockRecorder {
 }
 
 // Check mocks base method.
-func (m *MockIAuthClient) Check(value string) (bool, uint64, error) {
+func (m *MockIAuthClient) Check(value string) (bool, uint64, error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Check", value)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(uint64)
 	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret3, _ := ret[3].(int)
+	return ret0, ret1, ret2, ret3
 }
 
 // Check indicates an expected call of Check.
@@ -62,13 +63,14 @@ func (mr *MockIAuthClientMockRecorder) Close() *gomock.Call {
 }
 
 // Login mocks base method.
-func (m *MockIAuthClient) Login(login, password, value string) (uint64, string, error) {
+func (m *MockIAuthClient) Login(login, password, value string) (uint64, string, error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", login, password, value)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret3, _ := ret[3].(int)
+	return ret0, ret1, ret2, ret3
 }
 
 // Login indicates an expected call of Login.
@@ -78,11 +80,12 @@ func (mr *MockIAuthClientMockRecorder) Login(login, password, value interface{})
 }
 
 // Logout mocks base method.
-func (m *MockIAuthClient) Logout(value string) error {
+func (m *MockIAuthClient) Logout(value string) (error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logout", value)
 	ret0, _ := ret[0].(error)
-	return ret0
+	ret1, _ := ret[1].(int)
+	return ret0, ret1
 }
 
 // Logout indicates an expected call of Logout.

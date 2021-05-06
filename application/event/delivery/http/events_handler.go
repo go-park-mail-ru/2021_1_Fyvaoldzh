@@ -63,6 +63,7 @@ func (eh EventHandler) Recommend(c echo.Context) error {
 	}
 
 	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -86,7 +87,7 @@ func (eh EventHandler) GetAllEvents(c echo.Context) error {
 	}
 
 	eh.Logger.LogInfo(c, start, requestId)
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -96,27 +97,32 @@ func (eh EventHandler) GetUserID(c echo.Context) (uint64, error) {
 	cookie, err := c.Cookie(constants.SessionCookieName)
 	if err != nil && cookie != nil {
 		eh.Logger.LogWarn(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusForbidden)
 		return 0, errors.New("user is not authorized")
 	}
 
 	var uid uint64
 	var exists bool
+	var code int
 
 	if cookie != nil {
-		exists, uid, err = eh.rpcAuth.Check(cookie.Value)
+		exists, uid, err, code = eh.rpcAuth.Check(cookie.Value)
 		if err != nil {
 			eh.Logger.LogWarn(c, start, requestId, err)
+			middleware.ErrResponse(c, code)
 			return 0, err
 		}
 
 		if !exists {
 			eh.Logger.LogWarn(c, start, requestId, err)
+			middleware.ErrResponse(c, http.StatusForbidden)
 			return 0, errors.New("user is not authorized")
 		}
-
+		middleware.OkResponse(c)
 		return uid, nil
 	}
 	eh.Logger.LogWarn(c, start, requestId, err)
+	middleware.ErrResponse(c, http.StatusForbidden)
 	return 0, errors.New("user is not authorized")
 }
 
@@ -130,6 +136,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 	eh.sanitizer.SanitizeEvent(&ev)
@@ -147,6 +154,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	}
 
 	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -163,15 +171,18 @@ func (eh EventHandler) GetEvents(c echo.Context) error {
 
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -182,13 +193,16 @@ func (eh EventHandler) Create(c echo.Context) error {
 	newEvent := &models.Event{}
 
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, newEvent); err != nil {
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	if err := eh.UseCase.CreateNewEvent(newEvent); err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
+	middleware.OkResponse(c)
 	return c.JSON(http.StatusOK, *newEvent)
 }
 
@@ -199,9 +213,11 @@ func (eh EventHandler) Delete(c echo.Context) error {
 
 	err := eh.UseCase.Delete(uint64(id))
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
+	middleware.OkResponse(c)
 	return c.String(http.StatusOK, "Event with id "+fmt.Sprint(id)+" successfully deleted \n")
 }
 
@@ -212,14 +228,17 @@ func (eh EventHandler) Save(c echo.Context) error {
 
 	img, err := c.FormFile("image")
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
 	err = eh.UseCase.SaveImage(uint64(id), img)
 
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
+	middleware.OkResponse(c)
 	return c.JSON(http.StatusOK, "Picture changed successfully")
 }
 
@@ -230,14 +249,16 @@ func (eh EventHandler) GetImage(c echo.Context) error {
 
 	file, err := eh.UseCase.GetImage(uint64(id))
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	_, err = c.Response().Write(file)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -259,9 +280,11 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }

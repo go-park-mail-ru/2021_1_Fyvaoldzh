@@ -63,7 +63,7 @@ func NewServer(port string, logger *logger.Logger) *Server {
 
 func (s *Server) ListenAndServe() error {
 	jaegerCfgInstance := jaegercfg.Configuration{
-		ServiceName: "main_server",
+		ServiceName: "auth_server",
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 1,

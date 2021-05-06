@@ -91,7 +91,13 @@ func (sh SubscriptionHandler) Subscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
-	return sh.rpcSub.Subscribe(subscriberId, uint64(subscribedToId))
+	err, code := sh.rpcSub.Subscribe(subscriberId, uint64(subscribedToId))
+	if err != nil {
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh SubscriptionHandler) Unsubscribe(c echo.Context) error {
@@ -103,7 +109,13 @@ func (sh SubscriptionHandler) Unsubscribe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
 	}
 
-	return sh.rpcSub.Unsubscribe(subscriberId, uint64(subscribedToId))
+	err, code := sh.rpcSub.Unsubscribe(subscriberId, uint64(subscribedToId))
+	if err != nil {
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
@@ -112,7 +124,13 @@ func (sh SubscriptionHandler) AddPlanningEvent(c echo.Context) error {
 	userId := c.Get(constants.UserIdKey).(uint64)
 	eventId := c.Get(constants.IdKey).(int)
 
-	return sh.rpcSub.AddPlanningEvent(userId, uint64(eventId))
+	err, code := sh.rpcSub.AddPlanningEvent(userId, uint64(eventId))
+	if err != nil {
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
@@ -121,7 +139,13 @@ func (sh SubscriptionHandler) AddVisitedEvent(c echo.Context) error {
 	userId := c.Get(constants.UserIdKey).(uint64)
 	eventId := c.Get(constants.IdKey).(int)
 
-	return sh.rpcSub.AddVisitedEvent(userId, uint64(eventId))
+	err, code := sh.rpcSub.AddVisitedEvent(userId, uint64(eventId))
+	if err != nil {
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh SubscriptionHandler) RemoveEvent(c echo.Context) error {
@@ -130,7 +154,13 @@ func (sh SubscriptionHandler) RemoveEvent(c echo.Context) error {
 	userId := c.Get(constants.UserIdKey).(uint64)
 	eventId := c.Get(constants.IdKey).(int)
 
-	return sh.rpcSub.RemoveEvent(userId, uint64(eventId))
+	err, code := sh.rpcSub.RemoveEvent(userId, uint64(eventId))
+	if err != nil {
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh SubscriptionHandler) GetFollowers(c echo.Context) error {
@@ -141,16 +171,19 @@ func (sh SubscriptionHandler) GetFollowers(c echo.Context) error {
 
 	users, err := sh.usecase.GetFollowers(uint64(userId), page)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	users = sh.sanitizer.SanitizeUserCards(users)
 	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return err
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
@@ -161,16 +194,19 @@ func (sh SubscriptionHandler) GetSubscriptions(c echo.Context) error {
 
 	users, err := sh.usecase.GetSubscriptions(uint64(userId), page)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	users = sh.sanitizer.SanitizeUserCards(users)
 	if _, err = easyjson.MarshalToWriter(users, c.Response().Writer); err != nil {
 		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return err
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
@@ -184,14 +220,17 @@ func (sh *SubscriptionHandler) IsAdded(c echo.Context) error {
 	answer.IsAdded, err = sh.usecase.IsAddedEvent(userId, uint64(eventId))
 	if err != nil {
 		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
 		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -203,14 +242,17 @@ func (sh SubscriptionHandler) GetPlanningEvents(c echo.Context) error {
 
 	events, err := sh.usecase.GetPlanningEvents(uint64(userId), page)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	events = sh.sanitizer.SanitizeEventCards(events)
 	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
 		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -222,13 +264,17 @@ func (sh SubscriptionHandler) GetVisitedEvents(c echo.Context) error {
 
 	events, err := sh.usecase.GetVisitedEvents(uint64(userId), page)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	events = sh.sanitizer.SanitizeEventCards(events)
 	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
 		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	middleware.OkResponse(c)
+
 	return nil
 }

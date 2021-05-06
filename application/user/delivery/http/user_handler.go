@@ -92,19 +92,22 @@ func (uh *UserHandler) Login(c echo.Context) error {
 	}
 
 	var value string
+	var code int
 	if cookie != nil {
-		_, value, err = uh.rpcAuth.Login(u.Login, u.Password, cookie.Value)
+		_, value, err, code = uh.rpcAuth.Login(u.Login, u.Password, cookie.Value)
 	} else {
-		_, value, err = uh.rpcAuth.Login(u.Login, u.Password, "")
+		_, value, err, code = uh.rpcAuth.Login(u.Login, u.Password, "")
 	}
 	if err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 
 	cookie = generator.CreateCookieWithValue(value)
 	c.SetCookie(cookie)
 
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -115,15 +118,17 @@ func (uh *UserHandler) Logout(c echo.Context) error {
 
 	cookie, _ := c.Cookie(constants.SessionCookieName)
 
-	err := uh.rpcAuth.Logout(cookie.Value)
+	err, code := uh.rpcAuth.Logout(cookie.Value)
 	if err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 
 	cookie.Expires = time.Now().AddDate(0, 0, -1)
 	c.SetCookie(cookie)
 
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -139,13 +144,15 @@ func (uh *UserHandler) Register(c echo.Context) error {
 	}
 
 	if cookie != nil {
-		exists, _, err := uh.rpcAuth.Check(cookie.Value)
+		exists, _, err, code := uh.rpcAuth.Check(cookie.Value)
 		if err != nil {
 			uh.Logger.Warn(err)
+			middleware.ErrResponse(c, code)
 			return err
 		}
 
 		if exists {
+			middleware.ErrResponse(c, http.StatusBadRequest)
 			return echo.NewHTTPError(http.StatusBadRequest, "user is already logged in")
 		}
 	}
@@ -155,24 +162,28 @@ func (uh *UserHandler) Register(c echo.Context) error {
 	err = easyjson.UnmarshalFromReader(c.Request().Body, newData)
 	if err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusBadRequest)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	oldPassword := newData.Password
 	_, err = uh.UseCase.Add(newData)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		uh.Logger.Warn(err)
 		return err
 	}
 
-	_, value, err := uh.rpcAuth.Login(newData.Login, oldPassword, "")
+	_, value, err, code := uh.rpcAuth.Login(newData.Login, oldPassword, "")
 	if err != nil {
+		middleware.ErrResponse(c, code)
 		uh.Logger.Warn(err)
 		return err
 	}
 
 	cookie = generator.CreateCookieWithValue(value)
 	c.SetCookie(cookie)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -187,15 +198,17 @@ func (uh *UserHandler) Update(c echo.Context) error {
 	err := easyjson.UnmarshalFromReader(c.Request().Body, ud)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusBadRequest)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	err = uh.UseCase.Update(uid, ud)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -209,15 +222,17 @@ func (uh *UserHandler) GetOwnProfile(c echo.Context) error {
 	usr, err := uh.UseCase.GetOwnProfile(uid)
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	uh.sanitizer.SanitizeOwnProfile(usr)
 	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -229,15 +244,17 @@ func (uh *UserHandler) GetOtherUserProfile(c echo.Context) error {
 	usr, err := uh.UseCase.GetOtherProfile(uint64(uid))
 	if err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	uh.sanitizer.SanitizeOtherProfile(usr)
 	if _, err = easyjson.MarshalToWriter(usr, c.Response().Writer); err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -249,6 +266,7 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 	img, err := c.FormFile("avatar")
 	if err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusBadRequest)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
@@ -259,11 +277,12 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 	src, err := img.Open()
 	if err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer src.Close()
 	err = uh.UseCase.UploadAvatar(uid, src, img.Filename)
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -277,11 +296,12 @@ func (uh *UserHandler) GetAvatar(c echo.Context) error {
 	file, err := uh.UseCase.GetAvatar(uint64(uid))
 	if err != nil {
 		uh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 
 	c.Response().Write(file)
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -303,7 +323,7 @@ func (uh *UserHandler) GetUsers(c echo.Context) error {
 		uh.Logger.LogError(c, start, requestId, err)
 		return err
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -317,6 +337,7 @@ func (uh UserHandler) FindUsers(c echo.Context) error {
 
 	users, err := uh.UseCase.FindUsers(str, page)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return err
 	}
 	users = uh.sanitizer.SanitizeUserCards(users)
@@ -325,7 +346,7 @@ func (uh UserHandler) FindUsers(c echo.Context) error {
 		uh.Logger.Warn(err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -337,6 +358,7 @@ func (uh *UserHandler) GetActions(c echo.Context) error {
 
 	actions, err := uh.UseCase.GetActions(uid, page)
 	if err != nil {
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		uh.Logger.Warn(err)
 		return err
 	}
@@ -344,8 +366,9 @@ func (uh *UserHandler) GetActions(c echo.Context) error {
 	actions = uh.sanitizer.SanitizeActions(actions)
 	if _, err = easyjson.MarshalToWriter(actions, c.Response().Writer); err != nil {
 		uh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
+	middleware.OkResponse(c)
 	return nil
 }

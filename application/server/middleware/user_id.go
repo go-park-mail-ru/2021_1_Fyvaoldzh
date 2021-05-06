@@ -26,16 +26,20 @@ func (a Auth) GetSession(next echo.HandlerFunc) echo.HandlerFunc {
 
 		var uid uint64
 		var exists bool
+		var code int
 
 		if cookie == nil {
+			ErrResponse(ctx, http.StatusForbidden)
 			return echo.NewHTTPError(http.StatusForbidden, "user is not authorized")
 		}
-		exists, uid, err = a.rpcAuth.Check(cookie.Value)
+		exists, uid, err, code = a.rpcAuth.Check(cookie.Value)
 		if err != nil {
+			ErrResponse(ctx, code)
 			return echo.NewHTTPError(http.StatusInternalServerError, "cannot check cookie")
 		}
 
 		if !exists {
+			ErrResponse(ctx, http.StatusForbidden)
 			return echo.NewHTTPError(http.StatusForbidden, "user is not authorized")
 		}
 

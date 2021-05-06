@@ -34,11 +34,12 @@ func (m *MockISubscriptionClient) EXPECT() *MockISubscriptionClientMockRecorder 
 }
 
 // AddPlanningEvent mocks base method.
-func (m *MockISubscriptionClient) AddPlanningEvent(userId, eventId uint64) error {
+func (m *MockISubscriptionClient) AddPlanningEvent(userId, eventId uint64) (error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddPlanningEvent", userId, eventId)
 	ret0, _ := ret[0].(error)
-	return ret0
+	ret1, _ := ret[1].(int)
+	return ret0, ret1
 }
 
 // AddPlanningEvent indicates an expected call of AddPlanningEvent.
@@ -48,11 +49,12 @@ func (mr *MockISubscriptionClientMockRecorder) AddPlanningEvent(userId, eventId 
 }
 
 // AddVisitedEvent mocks base method.
-func (m *MockISubscriptionClient) AddVisitedEvent(userId, eventId uint64) error {
+func (m *MockISubscriptionClient) AddVisitedEvent(userId, eventId uint64) (error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddVisitedEvent", userId, eventId)
 	ret0, _ := ret[0].(error)
-	return ret0
+	ret1, _ := ret[1].(int)
+	return ret0, ret1
 }
 
 // AddVisitedEvent indicates an expected call of AddVisitedEvent.
@@ -74,11 +76,12 @@ func (mr *MockISubscriptionClientMockRecorder) Close() *gomock.Call {
 }
 
 // RemoveEvent mocks base method.
-func (m *MockISubscriptionClient) RemoveEvent(userId, eventId uint64) error {
+func (m *MockISubscriptionClient) RemoveEvent(userId, eventId uint64) (error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RemoveEvent", userId, eventId)
 	ret0, _ := ret[0].(error)
-	return ret0
+	ret1, _ := ret[1].(int)
+	return ret0, ret1
 }
 
 // RemoveEvent indicates an expected call of RemoveEvent.
@@ -88,11 +91,12 @@ func (mr *MockISubscriptionClientMockRecorder) RemoveEvent(userId, eventId inter
 }
 
 // Subscribe mocks base method.
-func (m *MockISubscriptionClient) Subscribe(subscriberId, subscribedToId uint64) error {
+func (m *MockISubscriptionClient) Subscribe(subscriberId, subscribedToId uint64) (error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", subscriberId, subscribedToId)
 	ret0, _ := ret[0].(error)
-	return ret0
+	ret1, _ := ret[1].(int)
+	return ret0, ret1
 }
 
 // Subscribe indicates an expected call of Subscribe.
@@ -102,11 +106,12 @@ func (mr *MockISubscriptionClientMockRecorder) Subscribe(subscriberId, subscribe
 }
 
 // Unsubscribe mocks base method.
-func (m *MockISubscriptionClient) Unsubscribe(subscriberId, subscribedToId uint64) error {
+func (m *MockISubscriptionClient) Unsubscribe(subscriberId, subscribedToId uint64) (error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Unsubscribe", subscriberId, subscribedToId)
 	ret0, _ := ret[0].(error)
-	return ret0
+	ret1, _ := ret[1].(int)
+	return ret0, ret1
 }
 
 // Unsubscribe indicates an expected call of Unsubscribe.

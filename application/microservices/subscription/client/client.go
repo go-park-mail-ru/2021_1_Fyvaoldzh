@@ -36,7 +36,7 @@ func NewSubscriptionClient(port string, logger logger.Logger, tracer opentracing
 	return &SubscriptionClient{client: proto.NewSubscriptionClient(gConn), gConn: gConn, logger: logger}, nil
 }
 
-func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint64) error {
+func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint64) (error, int) {
 	users := &proto.Users{
 		SubscriberId:   subscriberId,
 		SubscribedToId: subscribedToId,
@@ -45,16 +45,16 @@ func (s *SubscriptionClient) Subscribe(subscriberId uint64, subscribedToId uint6
 	answer, err := s.client.Subscribe(context.Background(), users)
 	if err != nil {
 		s.logger.Warn(err)
-		return err
+		return err, http.StatusInternalServerError
 	}
 	if answer.Flag {
-		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg), http.StatusBadRequest
 	}
 
-	return nil
+	return nil, http.StatusOK
 }
 
-func (s *SubscriptionClient) Unsubscribe(subscriberId uint64, subscribedToId uint64) error {
+func (s *SubscriptionClient) Unsubscribe(subscriberId uint64, subscribedToId uint64) (error, int) {
 	users := &proto.Users{
 		SubscriberId:   subscriberId,
 		SubscribedToId: subscribedToId,
@@ -63,16 +63,16 @@ func (s *SubscriptionClient) Unsubscribe(subscriberId uint64, subscribedToId uin
 	answer, err := s.client.Unsubscribe(context.Background(), users)
 	if err != nil {
 		s.logger.Warn(err)
-		return err
+		return err, http.StatusInternalServerError
 	}
 	if answer.Flag {
-		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg), http.StatusBadRequest
 	}
 
-	return nil
+	return nil, http.StatusOK
 }
 
-func (s *SubscriptionClient) AddPlanningEvent(userId uint64, eventId uint64) error {
+func (s *SubscriptionClient) AddPlanningEvent(userId uint64, eventId uint64) (error, int) {
 	userEvent := &proto.UserEvent{
 		UserId:  userId,
 		EventId: eventId,
@@ -81,16 +81,16 @@ func (s *SubscriptionClient) AddPlanningEvent(userId uint64, eventId uint64) err
 	answer, err := s.client.AddPlanningEvent(context.Background(), userEvent)
 	if err != nil {
 		s.logger.Warn(err)
-		return err
+		return err, http.StatusInternalServerError
 	}
 	if answer.Flag {
-		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg), http.StatusBadRequest
 	}
 
-	return nil
+	return nil, http.StatusOK
 }
 
-func (s *SubscriptionClient) RemoveEvent(userId uint64, eventId uint64) error {
+func (s *SubscriptionClient) RemoveEvent(userId uint64, eventId uint64) (error, int) {
 	userEvent := &proto.UserEvent{
 		UserId:  userId,
 		EventId: eventId,
@@ -99,16 +99,16 @@ func (s *SubscriptionClient) RemoveEvent(userId uint64, eventId uint64) error {
 	answer, err := s.client.RemoveEvent(context.Background(), userEvent)
 	if err != nil {
 		s.logger.Warn(err)
-		return err
+		return err, http.StatusInternalServerError
 	}
 	if answer.Flag {
-		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg), http.StatusBadRequest
 	}
 
-	return nil
+	return nil, http.StatusOK
 }
 
-func (s *SubscriptionClient) AddVisitedEvent(userId uint64, eventId uint64) error {
+func (s *SubscriptionClient) AddVisitedEvent(userId uint64, eventId uint64) (error, int) {
 	userEvent := &proto.UserEvent{
 		UserId:  userId,
 		EventId: eventId,
@@ -117,13 +117,13 @@ func (s *SubscriptionClient) AddVisitedEvent(userId uint64, eventId uint64) erro
 	answer, err := s.client.AddVisitedEvent(context.Background(), userEvent)
 	if err != nil {
 		s.logger.Warn(err)
-		return err
+		return err, http.StatusInternalServerError
 	}
 	if answer.Flag {
-		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg)
+		return echo.NewHTTPError(http.StatusBadRequest, answer.Msg), http.StatusBadRequest
 	}
 
-	return nil
+	return nil, http.StatusOK
 }
 
 func (s *SubscriptionClient) Close() {

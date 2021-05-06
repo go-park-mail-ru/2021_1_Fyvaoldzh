@@ -52,18 +52,21 @@ func (ch ChatHandler) GetDialogues(c echo.Context) error {
 	page := c.Get(constants.PageKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	dialogues, err := ch.rpcChat.GetAllDialogues(uid, page)
+	dialogues, err, code := ch.rpcChat.GetAllDialogues(uid, page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 	dialogues = ch.sanitizer.SanitizeDialogueCards(dialogues)
 
 	if _, err = easyjson.MarshalToWriter(dialogues, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -77,18 +80,21 @@ func (ch ChatHandler) GetOneDialogue(c echo.Context) error {
 	uid := c.Get(constants.UserIdKey).(uint64)
 	id := c.Get(constants.IdKey).(int)
 
-	dialogue, err := ch.rpcChat.GetOneDialogue(uid, uint64(id), page)
+	dialogue, err, code := ch.rpcChat.GetOneDialogue(uid, uint64(id), page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 	ch.sanitizer.SanitizeDialogue(&dialogue)
 
 	if _, err = easyjson.MarshalToWriter(dialogue, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -101,13 +107,15 @@ func (ch ChatHandler) DeleteDialogue(c echo.Context) error {
 	id := c.Get(constants.IdKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.rpcChat.DeleteDialogue(uid, uint64(id))
+	err, code := ch.rpcChat.DeleteDialogue(uid, uint64(id))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -120,6 +128,7 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, newMessageJSON); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
@@ -127,11 +136,13 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 	toInt, err := strconv.Atoi(newMessageJSON.To)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if toInt <= 0 {
 		err := errors.New("user id cannot be less than zero")
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 
@@ -140,13 +151,15 @@ func (ch ChatHandler) SendMessage(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.rpcChat.SendMessage(newMessage, uid)
+	err, code := ch.rpcChat.SendMessage(newMessage, uid)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -159,13 +172,15 @@ func (ch ChatHandler) DeleteMessage(c echo.Context) error {
 	id := c.Get(constants.IdKey).(int)
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.rpcChat.DeleteMessage(uid, uint64(id))
+	err, code := ch.rpcChat.DeleteMessage(uid, uint64(id))
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -178,6 +193,7 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, redactMessageJSON); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
@@ -185,11 +201,13 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 	idInt, err := strconv.Atoi(redactMessageJSON.ID)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if idInt <= 0 {
 		err := errors.New("message id cannot be less than zero")
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 
@@ -198,13 +216,15 @@ func (ch ChatHandler) EditMessage(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err = ch.rpcChat.EditMessage(uid, redactMessage)
+	err, code := ch.rpcChat.EditMessage(uid, redactMessage)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -217,6 +237,7 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 	mailingJSON := &models.MailingJSON{}
 	if err := easyjson.UnmarshalFromReader(c.Request().Body, mailingJSON); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
 
@@ -230,6 +251,7 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 	if mailingJSON.EventID <= 0 {
 		err := errors.New("message id cannot be less than zero")
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusTeapot, err)
 	}
 	mailing.EventID = mailingJSON.EventID
@@ -238,11 +260,13 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 		idInt, err := strconv.Atoi(mailingJSON.To[i])
 		if err != nil {
 			ch.Logger.LogError(c, start, requestId, err)
+			middleware.ErrResponse(c, http.StatusInternalServerError)
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		if idInt <= 0 {
 			err := errors.New("user id cannot be less than zero")
 			ch.Logger.LogError(c, start, requestId, err)
+			middleware.ErrResponse(c, http.StatusTeapot)
 			return echo.NewHTTPError(http.StatusTeapot, err)
 		}
 
@@ -251,13 +275,15 @@ func (ch ChatHandler) Mailing(c echo.Context) error {
 
 	uid := c.Get(constants.UserIdKey).(uint64)
 
-	err := ch.rpcChat.Mailing(uid, mailing)
+	err, code := ch.rpcChat.Mailing(uid, mailing)
 	if err != nil {
+		middleware.ErrResponse(c, code)
 		ch.Logger.LogError(c, start, requestId, err)
 		return err
 	}
 
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
 
@@ -286,17 +312,20 @@ func (ch ChatHandler) Search(c echo.Context) error {
 		return err
 	}
 
-	messages, err := ch.rpcChat.Search(uid, id, str, page)
+	messages, err, code := ch.rpcChat.Search(uid, id, str, page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
 		return err
 	}
 	messages = ch.sanitizer.SanitizeMessages(messages)
 
 	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
 	return nil
 }
