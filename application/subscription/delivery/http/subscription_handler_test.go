@@ -118,7 +118,7 @@ func TestSubscriptionHandler_Subscribe(t *testing.T) {
 	c.Set(constants.UserIdKey, userId)
 	c.Set(constants.IdKey, num)
 
-	rpcSub.EXPECT().Subscribe(userId, numu).Return(nil)
+	rpcSub.EXPECT().Subscribe(userId, numu).Return(nil, 200)
 
 	err := h.Subscribe(c)
 
@@ -142,7 +142,7 @@ func TestSubscriptionHandler_Unsubscribe(t *testing.T) {
 	c.Set(constants.UserIdKey, userId)
 	c.Set(constants.IdKey, num)
 
-	rpcSub.EXPECT().Unsubscribe(userId, numu).Return(nil)
+	rpcSub.EXPECT().Unsubscribe(userId, numu).Return(nil, 200)
 
 	err := h.Unsubscribe(c)
 
@@ -156,7 +156,7 @@ func TestSubscriptionHandler_AddPlanningEvent(t *testing.T) {
 	c.Set(constants.UserIdKey, userId)
 	c.Set(constants.IdKey, num)
 
-	rpcSub.EXPECT().AddPlanningEvent(userId, numu).Return(nil)
+	rpcSub.EXPECT().AddPlanningEvent(userId, numu).Return(nil, 200)
 
 	err := h.AddPlanningEvent(c)
 
@@ -170,7 +170,7 @@ func TestSubscriptionHandler_RemoveEvent(t *testing.T) {
 	c.Set(constants.UserIdKey, userId)
 	c.Set(constants.IdKey, num)
 
-	rpcSub.EXPECT().RemoveEvent(userId, numu).Return(nil)
+	rpcSub.EXPECT().RemoveEvent(userId, numu).Return(nil, 200)
 
 	err := h.RemoveEvent(c)
 
@@ -184,7 +184,7 @@ func TestSubscriptionHandler_AddVisitedEvent(t *testing.T) {
 	c.Set(constants.UserIdKey, userId)
 	c.Set(constants.IdKey, num)
 
-	rpcSub.EXPECT().AddVisitedEvent(userId, numu).Return(nil)
+	rpcSub.EXPECT().AddVisitedEvent(userId, numu).Return(nil, 200)
 
 	err := h.AddVisitedEvent(c)
 

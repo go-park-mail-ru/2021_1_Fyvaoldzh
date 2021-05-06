@@ -514,7 +514,6 @@ func TestChatUseCase_EditMessageError(t *testing.T) {
 func TestChatUseCase_EditMessageNotSender(t *testing.T) {
 	rep, _, _, _, uc := setUp(t)
 	rep.EXPECT().CheckMessage(uint64(test_id)).Return(true, testDialogueMessageSQL, nil)
-	rep.EXPECT().EditMessage(uint64(test_id), test_text).Return(nil)
 
 	err := uc.EditMessage(uint64(test_id2), &testRedactMessage)
 	assert.NotNil(t, err)

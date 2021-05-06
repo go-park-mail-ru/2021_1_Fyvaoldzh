@@ -228,7 +228,7 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 
 func TestEventsHandler_GetDialoguesOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues", http.MethodGet)
-	rpcChat.EXPECT().GetAllDialogues(test_id, test_page).Return(testAllDialogues, nil)
+	rpcChat.EXPECT().GetAllDialogues(test_id, test_page).Return(testAllDialogues, nil, 200)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 
@@ -239,7 +239,7 @@ func TestEventsHandler_GetDialoguesOk(t *testing.T) {
 
 func TestEventsHandler_GetDialoguesError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues", http.MethodGet)
-	rpcChat.EXPECT().GetAllDialogues(test_id, test_page).Return(models.DialogueCards{}, test_err)
+	rpcChat.EXPECT().GetAllDialogues(test_id, test_page).Return(models.DialogueCards{}, test_err, 500)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 
@@ -250,7 +250,7 @@ func TestEventsHandler_GetDialoguesError(t *testing.T) {
 
 func TestEventsHandler_GetOneDialogueOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues/:id", http.MethodGet)
-	rpcChat.EXPECT().GetOneDialogue(test_id, uint64(test_id_param), test_page).Return(testDialogue, nil)
+	rpcChat.EXPECT().GetOneDialogue(test_id, uint64(test_id_param), test_page).Return(testDialogue, nil, 200)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 	c.Set(constants.IdKey, test_id_param)
@@ -262,7 +262,7 @@ func TestEventsHandler_GetOneDialogueOk(t *testing.T) {
 
 func TestEventsHandler_GetOneDialogueError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues/:id", http.MethodGet)
-	rpcChat.EXPECT().GetOneDialogue(test_id, uint64(test_id_param), test_page).Return(models.Dialogue{}, test_err)
+	rpcChat.EXPECT().GetOneDialogue(test_id, uint64(test_id_param), test_page).Return(models.Dialogue{}, test_err, 500)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 	c.Set(constants.IdKey, test_id_param)
@@ -274,7 +274,7 @@ func TestEventsHandler_GetOneDialogueError(t *testing.T) {
 
 func TestEventsHandler_DeleteDialogueOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues/:id", http.MethodDelete)
-	rpcChat.EXPECT().DeleteDialogue(test_id, uint64(test_id_param)).Return(nil)
+	rpcChat.EXPECT().DeleteDialogue(test_id, uint64(test_id_param)).Return(nil, 200)
 	c.Set(constants.UserIdKey, test_id)
 	c.Set(constants.IdKey, test_id_param)
 
@@ -285,7 +285,7 @@ func TestEventsHandler_DeleteDialogueOk(t *testing.T) {
 
 func TestEventsHandler_DeleteDialogueError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues/:id", http.MethodDelete)
-	rpcChat.EXPECT().DeleteDialogue(test_id, uint64(test_id_param)).Return(test_err)
+	rpcChat.EXPECT().DeleteDialogue(test_id, uint64(test_id_param)).Return(test_err, 500)
 	c.Set(constants.UserIdKey, test_id)
 	c.Set(constants.IdKey, test_id_param)
 
@@ -296,7 +296,7 @@ func TestEventsHandler_DeleteDialogueError(t *testing.T) {
 
 func TestEventsHandler_SendMessageOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/send", http.MethodPost)
-	rpcChat.EXPECT().SendMessage(&testNewMessage, test_id).Return(nil)
+	rpcChat.EXPECT().SendMessage(&testNewMessage, test_id).Return(nil, 200)
 	c.Set(constants.UserIdKey, test_id)
 
 	err := h.SendMessage(c)
@@ -332,7 +332,7 @@ func TestEventsHandler_SendMessageLessZero(t *testing.T) {
 
 func TestEventsHandler_SendMessageError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/send", http.MethodPost)
-	rpcChat.EXPECT().SendMessage(&testNewMessage, test_id).Return(test_err)
+	rpcChat.EXPECT().SendMessage(&testNewMessage, test_id).Return(test_err, 500)
 	c.Set(constants.UserIdKey, test_id)
 
 	err := h.SendMessage(c)
@@ -342,7 +342,7 @@ func TestEventsHandler_SendMessageError(t *testing.T) {
 
 func TestEventsHandler_DeleteMessageOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/message/:id", http.MethodDelete)
-	rpcChat.EXPECT().DeleteMessage(test_id, uint64(test_id_param)).Return(nil)
+	rpcChat.EXPECT().DeleteMessage(test_id, uint64(test_id_param)).Return(nil, 200)
 	c.Set(constants.UserIdKey, test_id)
 	c.Set(constants.IdKey, test_id_param)
 
@@ -353,7 +353,7 @@ func TestEventsHandler_DeleteMessageOk(t *testing.T) {
 
 func TestEventsHandler_DeleteMessageError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/message/:id", http.MethodDelete)
-	rpcChat.EXPECT().DeleteMessage(test_id, uint64(test_id_param)).Return(test_err)
+	rpcChat.EXPECT().DeleteMessage(test_id, uint64(test_id_param)).Return(test_err, 500)
 	c.Set(constants.UserIdKey, test_id)
 	c.Set(constants.IdKey, test_id_param)
 
@@ -364,7 +364,7 @@ func TestEventsHandler_DeleteMessageError(t *testing.T) {
 
 func TestEventsHandler_EditMessageOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/message", http.MethodPost)
-	rpcChat.EXPECT().EditMessage(test_id, &testEditMessage).Return(nil)
+	rpcChat.EXPECT().EditMessage(test_id, &testEditMessage).Return(nil, 200)
 	c.Set(constants.UserIdKey, test_id)
 
 	err := h.EditMessage(c)
@@ -400,7 +400,7 @@ func TestEventsHandler_EditMessageLessZero(t *testing.T) {
 
 func TestEventsHandler_EditMessageError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/message", http.MethodPost)
-	rpcChat.EXPECT().EditMessage(test_id, &testEditMessage).Return(test_err)
+	rpcChat.EXPECT().EditMessage(test_id, &testEditMessage).Return(test_err, 500)
 	c.Set(constants.UserIdKey, test_id)
 
 	err := h.EditMessage(c)
@@ -410,7 +410,7 @@ func TestEventsHandler_EditMessageError(t *testing.T) {
 
 func TestEventsHandler_MailingOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/message/mailing", http.MethodPost)
-	rpcChat.EXPECT().Mailing(test_id, &testMailing).Return(nil)
+	rpcChat.EXPECT().Mailing(test_id, &testMailing).Return(nil, 200)
 	c.Set(constants.UserIdKey, test_id)
 
 	err := h.Mailing(c)
@@ -459,7 +459,7 @@ func TestEventsHandler_MailingLessZero(t *testing.T) {
 
 func TestEventsHandler_MailingError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/message/mailing", http.MethodPost)
-	rpcChat.EXPECT().Mailing(test_id, &testMailing).Return(test_err)
+	rpcChat.EXPECT().Mailing(test_id, &testMailing).Return(test_err, 500)
 	c.Set(constants.UserIdKey, test_id)
 
 	err := h.Mailing(c)
@@ -469,7 +469,7 @@ func TestEventsHandler_MailingError(t *testing.T) {
 
 func TestEventsHandler_SearchOk(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues", http.MethodGet)
-	rpcChat.EXPECT().Search(test_id, 0, "", test_page).Return(testMessages, nil)
+	rpcChat.EXPECT().Search(test_id, 0, "", test_page).Return(testMessages, nil, 200)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 	c.SetParamNames("find")
@@ -483,8 +483,8 @@ func TestEventsHandler_SearchOk(t *testing.T) {
 }
 
 func TestEventsHandler_SearchAtoi(t *testing.T) {
-	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues?id='aaa'", http.MethodGet)
-	rpcChat.EXPECT().Search(test_id, 0, "", test_page).Return(testMessages, nil)
+	c, h, _, _ := setUp(t, "/api/v1/dialogues?id='aaa'", http.MethodGet)
+
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 	c.SetParamNames("find")
@@ -498,8 +498,7 @@ func TestEventsHandler_SearchAtoi(t *testing.T) {
 }
 
 func TestEventsHandler_SearchLessZero(t *testing.T) {
-	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues?id=-5", http.MethodGet)
-	rpcChat.EXPECT().Search(test_id, 0, "", test_page).Return(testMessages, nil)
+	c, h, _, _ := setUp(t, "/api/v1/dialogues?id=-5", http.MethodGet)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 	c.SetParamNames("find")
@@ -514,7 +513,7 @@ func TestEventsHandler_SearchLessZero(t *testing.T) {
 
 func TestEventsHandler_SearchError(t *testing.T) {
 	c, h, rpcChat, _ := setUp(t, "/api/v1/dialogues", http.MethodGet)
-	rpcChat.EXPECT().Search(test_id, 0, "", test_page).Return(models.Messages{}, test_err)
+	rpcChat.EXPECT().Search(test_id, 0, "", test_page).Return(models.Messages{}, test_err, 500)
 	c.Set(constants.PageKey, test_page)
 	c.Set(constants.UserIdKey, test_id)
 	c.SetParamNames("find")

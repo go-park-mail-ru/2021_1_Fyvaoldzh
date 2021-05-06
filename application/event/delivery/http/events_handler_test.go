@@ -167,7 +167,7 @@ func TestEventsHandler_GetOneEventOk(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().Check(key).Return(true, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(true, uint64(1), nil, 200)
 	usecase.EXPECT().RecomendSystem(uint64(1), testEvent.Category).Return(nil)
 
 	err := h.GetOneEvent(c)
@@ -205,7 +205,7 @@ func TestEventsHandler_GetOneEventCookieNotExist(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().Check(key).Return(false, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(false, uint64(1), nil, 200)
 
 	err := h.GetOneEvent(c)
 
@@ -224,7 +224,7 @@ func TestEventsHandler_GetOneEventErrorCookie(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().Check(key).Return(true, uint64(1), errors.New("error cookie"))
+	sm.EXPECT().Check(key).Return(true, uint64(1), errors.New("error cookie"), 500)
 
 	err := h.GetOneEvent(c)
 
