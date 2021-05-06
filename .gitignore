@@ -8,6 +8,3 @@
 *.raw
 *.lua
 main
-auth
-chat
-sub
