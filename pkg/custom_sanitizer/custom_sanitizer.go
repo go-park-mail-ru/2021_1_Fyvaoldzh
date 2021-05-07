@@ -1,9 +1,8 @@
 package custom_sanitizer
 
 import (
-	"kudago/application/models"
-
 	"github.com/microcosm-cc/bluemonday"
+	"kudago/application/models"
 )
 
 type CustomSanitizer struct {
@@ -24,8 +23,6 @@ func (cs *CustomSanitizer) SanitizeOwnProfile(profile *models.UserOwnProfile) {
 	profile.City = cs.sanitizer.Sanitize(profile.City)
 	profile.Email = cs.sanitizer.Sanitize(profile.Email)
 	profile.About = cs.sanitizer.Sanitize(profile.About)
-	profile.Planning = cs.SanitizeEventCards(profile.Planning)
-	profile.Visited = cs.SanitizeEventCards(profile.Visited)
 }
 
 func (cs *CustomSanitizer) SanitizeOtherProfile(profile *models.OtherUserProfile) {
@@ -33,8 +30,6 @@ func (cs *CustomSanitizer) SanitizeOtherProfile(profile *models.OtherUserProfile
 	profile.Avatar = cs.sanitizer.Sanitize(profile.Avatar)
 	profile.City = cs.sanitizer.Sanitize(profile.City)
 	profile.About = cs.sanitizer.Sanitize(profile.About)
-	profile.Planning = cs.SanitizeEventCards(profile.Planning)
-	profile.Visited = cs.SanitizeEventCards(profile.Visited)
 }
 
 func (cs *CustomSanitizer) SanitizeEventCards(events models.EventCards) models.EventCards {
@@ -91,4 +86,41 @@ func (cs *CustomSanitizer) SanitizeTags(tags models.Tags) models.Tags {
 		newTags = append(newTags, elem)
 	}
 	return newTags
+}
+
+func (cs *CustomSanitizer) SanitizeActions(actions models.ActionCards) models.ActionCards {
+	var newActions models.ActionCards
+	for _, elem := range actions {
+		elem.Name1 = cs.sanitizer.Sanitize(elem.Name1)
+		elem.Name2 = cs.sanitizer.Sanitize(elem.Name2)
+		newActions = append(newActions, elem)
+	}
+	return newActions
+}
+func (cs *CustomSanitizer) SanitizeDialogueCards(dialogues models.DialogueCards) models.DialogueCards {
+	var sanitizeDialogues models.DialogueCards
+	for _, elem := range dialogues {
+		elem.Interlocutor.Avatar = cs.sanitizer.Sanitize(elem.Interlocutor.Avatar)
+		elem.Interlocutor.Name = cs.sanitizer.Sanitize(elem.Interlocutor.Name)
+		elem.LastMessage.Text = cs.sanitizer.Sanitize(elem.LastMessage.Text)
+		sanitizeDialogues = append(sanitizeDialogues, elem)
+	}
+
+	return sanitizeDialogues
+}
+
+func (cs *CustomSanitizer) SanitizeMessages(messages models.Messages) models.Messages {
+	var sanitizeMessages models.Messages
+	for _, elem := range messages {
+		elem.Text = cs.sanitizer.Sanitize(elem.Text)
+		sanitizeMessages = append(sanitizeMessages, elem)
+	}
+
+	return sanitizeMessages
+}
+
+func (cs *CustomSanitizer) SanitizeDialogue(dialogue *models.Dialogue) {
+	dialogue.Interlocutor.Name = cs.sanitizer.Sanitize(dialogue.Interlocutor.Name)
+	dialogue.Interlocutor.Avatar = cs.sanitizer.Sanitize(dialogue.Interlocutor.Avatar)
+	dialogue.DialogMessages = cs.SanitizeMessages(dialogue.DialogMessages)
 }

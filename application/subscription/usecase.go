@@ -1,12 +1,12 @@
 package subscription
 
+import "kudago/application/models"
+
 type UseCase interface {
-	SubscribeUser(subscriberId uint64, subscribedToId uint64) error
-	UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error
-	AddPlanning(userId uint64, eid uint64) error
-	RemovePlanning(userId uint64, eid uint64) error
-	AddVisited(userId uint64, eid uint64) error
-	RemoveVisited(userId uint64, eid uint64) error
 	UpdateEventStatus(userId uint64, eventId uint64) error
 	IsAddedEvent(userId uint64, eventId uint64) (bool, error)
+	GetFollowers(id uint64, page int) (models.UserCards, error)
+	GetSubscriptions(id uint64, page int) (models.UserCards, error)
+	GetPlanningEvents(id uint64, page int) (models.EventCards, error)
+	GetVisitedEvents(id uint64, page int) (models.EventCards, error)
 }

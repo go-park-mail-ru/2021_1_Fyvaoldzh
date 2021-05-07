@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/georgysavva/scany/pgxscan"
 	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/logger"
 	"net/http"
 
-	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
 )
@@ -24,92 +24,28 @@ func NewSubscriptionDatabase(conn *pgxpool.Pool, logger logger.Logger) subscript
 	return &SubscriptionDatabase{pool: conn, logger: logger}
 }
 
-func (sd SubscriptionDatabase) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
-	_, err := sd.pool.Exec(context.Background(),
-		`INSERT INTO subscriptions (subscriber_id, subscribed_to_id) VALUES ($1, $2)`,
-		subscriberId, subscribedToId)
+func (sd SubscriptionDatabase) CountUserFollowers(id uint64) (uint64, error) {
+	var num uint64
+	err := sd.pool.QueryRow(context.Background(), `SELECT COUNT(subscriber_id)
+		FROM subscriptions WHERE subscribed_to_id = $1`, id).Scan(&num)
 	if err != nil {
 		sd.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return 0, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	return nil
+	return num, nil
 }
 
-func (sd SubscriptionDatabase) UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error {
-	resp, err := sd.pool.Exec(context.Background(),
-		`DELETE FROM subscriptions WHERE subscriber_id = $1 AND subscribed_to_id = $2`,
-		subscriberId, subscribedToId)
+func (sd SubscriptionDatabase) CountUserSubscriptions(id uint64) (uint64, error) {
+	var num uint64
+	err := sd.pool.QueryRow(context.Background(), `SELECT COUNT(subscribed_to_id)
+		FROM subscriptions WHERE subscriber_id = $1`, id).Scan(&num)
 	if err != nil {
 		sd.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return 0, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	if resp.RowsAffected() == 0 {
-		sd.logger.Warn(errors.New("subscription does not exist"))
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"subscription does not exist")
-	}
-
-	return nil
-}
-
-func (sd SubscriptionDatabase) AddPlanning(userId uint64, eventId uint64) error {
-	_, err := sd.pool.Exec(context.Background(),
-		`INSERT INTO user_event (user_id, event_id, is_planning) VALUES ($1, $2, $3)`,
-		userId, eventId, true)
-	if err != nil {
-		sd.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	return nil
-}
-
-func (sd SubscriptionDatabase) RemovePlanning(userId uint64, eventId uint64) error {
-	resp, err := sd.pool.Exec(context.Background(),
-		`DELETE FROM user_event WHERE user_id = $1 AND event_id = $2 AND is_planning = $3`,
-		userId, eventId, true)
-	if err != nil {
-		sd.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if resp.RowsAffected() == 0 {
-		sd.logger.Warn(errors.New("subscription with id " + fmt.Sprint(userId) + "in profile with id" + fmt.Sprint(eventId) + "does not exist in planing"))
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event does not exist in list")
-	}
-
-	return nil
-}
-
-func (sd SubscriptionDatabase) AddVisited(userId uint64, eventId uint64) error {
-	_, err := sd.pool.Exec(context.Background(),
-		`INSERT INTO user_event (user_id, event_id, is_planning) VALUES ($1, $2, $3)`,
-		userId, eventId, false)
-	if err != nil {
-		sd.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	return nil
-}
-
-func (sd SubscriptionDatabase) RemoveVisited(uid uint64, eid uint64) error {
-	resp, err := sd.pool.Exec(context.Background(),
-		`DELETE FROM user_event WHERE user_id = $1 AND event_id = $2 AND is_planning = $3`,
-		uid, eid, false)
-	if err != nil {
-		sd.logger.Warn(err)
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-	if resp.RowsAffected() == 0 {
-		sd.logger.Warn(errors.New("subscription with id " + fmt.Sprint(uid) + "in profile with id" + fmt.Sprint(eid) + "does not exist in visited"))
-		return echo.NewHTTPError(http.StatusBadRequest,
-			"event does not exist in list")
-	}
-
-	return nil
+	return num, nil
 }
 
 func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) error {
@@ -127,60 +63,6 @@ func (sd SubscriptionDatabase) UpdateEventStatus(userId uint64, eventId uint64) 
 	}
 
 	return nil
-}
-
-func (sd SubscriptionDatabase) GetFollowers(id uint64) ([]uint64, error) {
-	var users []uint64
-	err := pgxscan.Select(context.Background(), sd.pool, &users, `SELECT subscriber_id
-		FROM subscriptions WHERE subscribed_to_id = $1`, id)
-	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
-		sd.logger.Debug("got no rows in method GetFollowers with id " + fmt.Sprint(id))
-		return []uint64{}, nil
-	}
-	if err != nil {
-		sd.logger.Warn(err)
-		return []uint64{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	return users, nil
-}
-
-func (sd SubscriptionDatabase) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), sd.pool, &events,
-		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date
-		FROM events e
-		JOIN user_event ON user_id = $1
-		WHERE event_id = e.id AND is_planning = $2`, id, true)
-	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		sd.logger.Debug("got no rows in method GetPlanningEvents with id " + fmt.Sprint(id))
-		return []models.EventCardWithDateSQL{}, nil
-	}
-	if err != nil {
-		sd.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	return events, nil
-}
-
-func (sd SubscriptionDatabase) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
-	err := pgxscan.Select(context.Background(), sd.pool, &events,
-		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date  
-		FROM events e
-		JOIN user_event ON user_id = $1
-		WHERE event_id = e.id AND is_planning = $2`, id, false)
-	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
-		sd.logger.Debug("got no rows in method GetVisitedEvents with id " + fmt.Sprint(id))
-		return []models.EventCardWithDateSQL{}, nil
-	}
-	if err != nil {
-		sd.logger.Warn(err)
-		return []models.EventCardWithDateSQL{}, err
-	}
-
-	return events, nil
 }
 
 func (sd SubscriptionDatabase) GetEventFollowers(eventId uint64) (models.UsersOnEvent, error) {
@@ -219,4 +101,78 @@ func (sd SubscriptionDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool
 	}
 
 	return true, nil
+}
+
+func (sd SubscriptionDatabase) GetFollowers(id uint64, page int) ([]models.UserCardSQL, error) {
+	var users []models.UserCardSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &users,
+		`SELECT u.id, u.name, u.avatar, u.birthday, u.city
+		FROM users u
+		JOIN subscriptions s ON subscribed_to_id = $1 AND u.id = s.subscriber_id
+		LIMIT 10 OFFSET $2`, id, (page-1)*10)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return []models.UserCardSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.UserCardSQL{}, err
+	}
+
+	return users, nil
+}
+
+func (sd SubscriptionDatabase) GetSubscriptions(id uint64, page int) ([]models.UserCardSQL, error) {
+	var users []models.UserCardSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &users,
+		`SELECT u.id, u.name, u.avatar, u.birthday, u.city
+		FROM users u
+		JOIN subscriptions s ON subscriber_id = $1 AND u.id = s.subscribed_to_id
+		LIMIT 10 OFFSET $2`, id, (page-1)*10)
+	if errors.As(err, &sql.ErrNoRows) || len(users) == 0 {
+		return []models.UserCardSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.UserCardSQL{}, err
+	}
+
+	return users, nil
+}
+
+func (sd SubscriptionDatabase) GetPlanningEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &events,
+		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date
+		FROM events e
+		JOIN user_event ON user_id = $1
+		WHERE event_id = e.id AND is_planning = $2
+		LIMIT 10 OFFSET $3`, id, true, (page-1)*10)
+	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.EventCardWithDateSQL{}, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	return events, nil
+}
+
+func (sd SubscriptionDatabase) GetVisitedEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), sd.pool, &events,
+		`SELECT e.id, e.title, e.place, e.description, e.start_date, e.end_date  
+		FROM events e
+		JOIN user_event ON user_id = $1
+		WHERE event_id = e.id AND is_planning = $2
+		LIMIT 10 OFFSET $3`, id, false, (page-1)*10)
+	if errors.As(err, &sql.ErrNoRows) || len(events) == 0 {
+		return []models.EventCardWithDateSQL{}, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return []models.EventCardWithDateSQL{}, err
+	}
+
+	return events, nil
 }

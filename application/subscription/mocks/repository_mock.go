@@ -34,32 +34,34 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
-// AddPlanning mocks base method.
-func (m *MockRepository) AddPlanning(userId, eventId uint64) error {
+// CountUserFollowers mocks base method.
+func (m *MockRepository) CountUserFollowers(id uint64) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPlanning", userId, eventId)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CountUserFollowers", id)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// AddPlanning indicates an expected call of AddPlanning.
-func (mr *MockRepositoryMockRecorder) AddPlanning(userId, eventId interface{}) *gomock.Call {
+// CountUserFollowers indicates an expected call of CountUserFollowers.
+func (mr *MockRepositoryMockRecorder) CountUserFollowers(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPlanning", reflect.TypeOf((*MockRepository)(nil).AddPlanning), userId, eventId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUserFollowers", reflect.TypeOf((*MockRepository)(nil).CountUserFollowers), id)
 }
 
-// AddVisited mocks base method.
-func (m *MockRepository) AddVisited(userId, eventId uint64) error {
+// CountUserSubscriptions mocks base method.
+func (m *MockRepository) CountUserSubscriptions(id uint64) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddVisited", userId, eventId)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "CountUserSubscriptions", id)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// AddVisited indicates an expected call of AddVisited.
-func (mr *MockRepositoryMockRecorder) AddVisited(userId, eventId interface{}) *gomock.Call {
+// CountUserSubscriptions indicates an expected call of CountUserSubscriptions.
+func (mr *MockRepositoryMockRecorder) CountUserSubscriptions(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVisited", reflect.TypeOf((*MockRepository)(nil).AddVisited), userId, eventId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUserSubscriptions", reflect.TypeOf((*MockRepository)(nil).CountUserSubscriptions), id)
 }
 
 // GetEventFollowers mocks base method.
@@ -78,48 +80,63 @@ func (mr *MockRepositoryMockRecorder) GetEventFollowers(eventId interface{}) *go
 }
 
 // GetFollowers mocks base method.
-func (m *MockRepository) GetFollowers(id uint64) ([]uint64, error) {
+func (m *MockRepository) GetFollowers(id uint64, page int) ([]models.UserCardSQL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFollowers", id)
-	ret0, _ := ret[0].([]uint64)
+	ret := m.ctrl.Call(m, "GetFollowers", id, page)
+	ret0, _ := ret[0].([]models.UserCardSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFollowers indicates an expected call of GetFollowers.
-func (mr *MockRepositoryMockRecorder) GetFollowers(id interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetFollowers(id, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowers", reflect.TypeOf((*MockRepository)(nil).GetFollowers), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowers", reflect.TypeOf((*MockRepository)(nil).GetFollowers), id, page)
 }
 
 // GetPlanningEvents mocks base method.
-func (m *MockRepository) GetPlanningEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+func (m *MockRepository) GetPlanningEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPlanningEvents", id)
+	ret := m.ctrl.Call(m, "GetPlanningEvents", id, page)
 	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPlanningEvents indicates an expected call of GetPlanningEvents.
-func (mr *MockRepositoryMockRecorder) GetPlanningEvents(id interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetPlanningEvents(id, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlanningEvents", reflect.TypeOf((*MockRepository)(nil).GetPlanningEvents), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlanningEvents", reflect.TypeOf((*MockRepository)(nil).GetPlanningEvents), id, page)
+}
+
+// GetSubscriptions mocks base method.
+func (m *MockRepository) GetSubscriptions(id uint64, page int) ([]models.UserCardSQL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptions", id, page)
+	ret0, _ := ret[0].([]models.UserCardSQL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptions indicates an expected call of GetSubscriptions.
+func (mr *MockRepositoryMockRecorder) GetSubscriptions(id, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptions", reflect.TypeOf((*MockRepository)(nil).GetSubscriptions), id, page)
 }
 
 // GetVisitedEvents mocks base method.
-func (m *MockRepository) GetVisitedEvents(id uint64) ([]models.EventCardWithDateSQL, error) {
+func (m *MockRepository) GetVisitedEvents(id uint64, page int) ([]models.EventCardWithDateSQL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVisitedEvents", id)
+	ret := m.ctrl.Call(m, "GetVisitedEvents", id, page)
 	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetVisitedEvents indicates an expected call of GetVisitedEvents.
-func (mr *MockRepositoryMockRecorder) GetVisitedEvents(id interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetVisitedEvents(id, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVisitedEvents", reflect.TypeOf((*MockRepository)(nil).GetVisitedEvents), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVisitedEvents", reflect.TypeOf((*MockRepository)(nil).GetVisitedEvents), id, page)
 }
 
 // IsAddedEvent mocks base method.
@@ -135,62 +152,6 @@ func (m *MockRepository) IsAddedEvent(userId, eventId uint64) (bool, error) {
 func (mr *MockRepositoryMockRecorder) IsAddedEvent(userId, eventId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAddedEvent", reflect.TypeOf((*MockRepository)(nil).IsAddedEvent), userId, eventId)
-}
-
-// RemovePlanning mocks base method.
-func (m *MockRepository) RemovePlanning(userId, eventId uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemovePlanning", userId, eventId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemovePlanning indicates an expected call of RemovePlanning.
-func (mr *MockRepositoryMockRecorder) RemovePlanning(userId, eventId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePlanning", reflect.TypeOf((*MockRepository)(nil).RemovePlanning), userId, eventId)
-}
-
-// RemoveVisited mocks base method.
-func (m *MockRepository) RemoveVisited(userId, eventId uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveVisited", userId, eventId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveVisited indicates an expected call of RemoveVisited.
-func (mr *MockRepositoryMockRecorder) RemoveVisited(userId, eventId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVisited", reflect.TypeOf((*MockRepository)(nil).RemoveVisited), userId, eventId)
-}
-
-// SubscribeUser mocks base method.
-func (m *MockRepository) SubscribeUser(subscriberId, subscribedToId uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SubscribeUser", subscriberId, subscribedToId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SubscribeUser indicates an expected call of SubscribeUser.
-func (mr *MockRepositoryMockRecorder) SubscribeUser(subscriberId, subscribedToId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeUser", reflect.TypeOf((*MockRepository)(nil).SubscribeUser), subscriberId, subscribedToId)
-}
-
-// UnsubscribeUser mocks base method.
-func (m *MockRepository) UnsubscribeUser(subscriberId, subscribedToId uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnsubscribeUser", subscriberId, subscribedToId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UnsubscribeUser indicates an expected call of UnsubscribeUser.
-func (mr *MockRepositoryMockRecorder) UnsubscribeUser(subscriberId, subscribedToId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsubscribeUser", reflect.TypeOf((*MockRepository)(nil).UnsubscribeUser), subscriberId, subscribedToId)
 }
 
 // UpdateEventStatus mocks base method.

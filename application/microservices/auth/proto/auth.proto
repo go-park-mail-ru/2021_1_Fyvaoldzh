@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+option go_package = "../proto";
+
+service Auth {
+  rpc Login(User) returns (LoginAnswer) {}
+  rpc Check(Session) returns (CheckAnswer) {}
+  rpc Logout(Session) returns (LogoutAnswer) {}
+}
+
+message LoginAnswer {
+  uint64 userId = 1;
+  string value = 2;
+  bool flag = 3;
+  string msg = 4;
+}
+
+message CheckAnswer {
+  bool answer = 1;
+  uint64 userId = 2;
+}
+
+message User {
+  string login = 1;
+  string password = 2;
+  string value = 3;
+}
+
+message Session {
+  string value = 1;
+}
+
+message LogoutAnswer {
+  bool flag = 1;
+  string msg = 2;
+}

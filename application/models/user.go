@@ -57,34 +57,32 @@ func ConvertUserCard(sqlCard UserCardSQL) *UserCard {
 type UsersOnEvent []UserOnEvent
 
 type OtherUserProfile struct {
-	Uid       uint64
-	Name      string     `json:"name"`
-	Age       uint8      `json:"age"`
-	City      string     `json:"city"`
-	About     string     `json:"about"`
-	Avatar    string     `json:"avatar"`
-	Visited   EventCards `json:"visited"`
-	Planning  EventCards `json:"planning"`
-	Followers []uint64   `json:"followers"`
+	Uid           uint64
+	Name          string `json:"name"`
+	Age           uint8  `json:"age"`
+	City          string `json:"city"`
+	About         string `json:"about"`
+	Avatar        string `json:"avatar"`
+	Followers     uint64 `json:"followers"`
+	Subscriptions uint64 `json:"subscriptions"`
 }
 
 type UserOwnProfile struct {
-	Uid         uint64
-	Name        string     `json:"name"`
-	Login       string     `json:"login"`
-	Birthday    string     `json:"birthday"`
-	City        string     `json:"city"`
-	Email       string     `json:"email"`
-	Visited     EventCards `json:"visited"`
-	Planning    EventCards `json:"planning"`
-	Followers   []uint64   `json:"followers"`
-	About       string     `json:"about"`
-	Avatar      string     `json:"avatar"`
-	OldPassword string     `json:"old_password"`
-	NewPassword string     `json:"new_password"`
+	Uid           uint64
+	Name          string `json:"name"`
+	Login         string `json:"login"`
+	Birthday      string `json:"birthday"`
+	City          string `json:"city"`
+	Email         string `json:"email"`
+	Followers     uint64 `json:"followers"`
+	Subscriptions uint64 `json:"subscriptions"`
+	About         string `json:"about"`
+	Avatar        string `json:"avatar"`
+	OldPassword   string `json:"old_password"`
+	NewPassword   string `json:"new_password"`
 }
 
-type UserData struct {
+type UserDataSQL struct {
 	Id       uint64
 	Name     sql.NullString
 	Login    string
@@ -101,7 +99,7 @@ type UserEvents struct {
 	Eid uint64
 }
 
-func ConvertToOwn(own UserData) *UserOwnProfile {
+func ConvertToOwn(own UserDataSQL) *UserOwnProfile {
 	var usr UserOwnProfile
 	usr.Uid = own.Id
 	usr.About = own.About.String
@@ -110,14 +108,14 @@ func ConvertToOwn(own UserData) *UserOwnProfile {
 	usr.Name = own.Name.String
 	usr.Login = own.Login
 	if own.Birthday.Valid {
-		usr.Birthday = own.Birthday.Time.Format(constants.TimeFormat)
+		usr.Birthday = own.Birthday.Time.Format(constants.DateFormat)
 	}
 	usr.Avatar = own.Avatar.String
 	usr.City = own.City.String
 	return &usr
 }
 
-func ConvertToOther(own UserData) *OtherUserProfile {
+func ConvertToOther(own UserDataSQL) *OtherUserProfile {
 	var usr OtherUserProfile
 	usr.Uid = own.Id
 	usr.About = own.About.String
@@ -138,4 +136,36 @@ type RegData struct {
 	Name     string `json:"name"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
+}
+
+type ActionCard struct {
+	Id1   uint64
+	Name1 string
+	Id2   uint64
+	Name2 string
+	Time  time.Time
+	Type  string
+}
+
+type ActionCardStringTime struct {
+	Id1   uint64 `json:"id_1"`
+	Name1 string `json:"name_1"`
+	Id2   uint64 `json:"id_2"`
+	Name2 string `json:"name_2"`
+	Time  string `json:"time"`
+	Type  string `json:"type"`
+}
+
+//easyjson:json
+type ActionCards []ActionCardStringTime
+
+func ConvertActionCard(card ActionCard) ActionCardStringTime {
+	var newCard ActionCardStringTime
+	newCard.Id1 = card.Id1
+	newCard.Id2 = card.Id2
+	newCard.Name1 = card.Name1
+	newCard.Name2 = card.Name2
+	newCard.Type = card.Type
+	newCard.Time = card.Time.Format(constants.DateTimeFormat)
+	return newCard
 }

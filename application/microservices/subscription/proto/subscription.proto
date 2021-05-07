@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "../proto";
+
+service Subscription {
+  rpc Subscribe(Users) returns (SubscriptionAnswer) {}
+  rpc Unsubscribe(Users) returns (SubscriptionAnswer) {}
+  rpc AddPlanningEvent(UserEvent) returns (SubscriptionAnswer) {}
+  rpc AddVisitedEvent(UserEvent) returns (SubscriptionAnswer) {}
+  rpc RemoveEvent(UserEvent) returns (SubscriptionAnswer) {}
+}
+
+message Users {
+  uint64 subscriberId = 1;
+  uint64 subscribedToId = 2;
+}
+
+message UserEvent {
+  uint64 userId = 1;
+  uint64 eventId = 2;
+}
+
+message SubscriptionAnswer {
+  bool flag = 1;
+  string msg = 2;
+}

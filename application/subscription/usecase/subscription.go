@@ -1,55 +1,21 @@
 package usecase
 
 import (
-	"errors"
+	"github.com/labstack/echo"
+	"kudago/application/models"
 	"kudago/application/subscription"
 	"kudago/pkg/logger"
 	"net/http"
-
-	"github.com/labstack/echo"
+	"time"
 )
 
 type Subscription struct {
 	repo   subscription.Repository
-	logger logger.Logger
+	Logger logger.Logger
 }
 
 func NewSubscription(subRepo subscription.Repository, logger logger.Logger) subscription.UseCase {
-	return &Subscription{repo: subRepo, logger: logger}
-}
-
-func (s Subscription) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
-	if subscriberId == subscribedToId {
-		s.logger.Warn(errors.New("subscriberId == subscribedToId"))
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
-
-	return s.repo.SubscribeUser(subscriberId, subscribedToId)
-}
-
-func (s Subscription) UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error {
-	if subscriberId == subscribedToId {
-		s.logger.Warn(errors.New("subscriberId == subscribedToId"))
-		return echo.NewHTTPError(http.StatusBadRequest, "incorrect data")
-	}
-
-	return s.repo.UnsubscribeUser(subscriberId, subscribedToId)
-}
-
-func (s Subscription) AddPlanning(userId uint64, eventId uint64) error {
-	return s.repo.AddPlanning(userId, eventId)
-}
-
-func (s Subscription) RemovePlanning(userId uint64, eventId uint64) error {
-	return s.repo.RemovePlanning(userId, eventId)
-}
-
-func (s Subscription) AddVisited(userId uint64, eventId uint64) error {
-	return s.repo.AddVisited(userId, eventId)
-}
-
-func (s Subscription) RemoveVisited(userId uint64, eventId uint64) error {
-	return s.repo.RemoveVisited(userId, eventId)
+	return &Subscription{repo: subRepo, Logger: logger}
 }
 
 func (s Subscription) UpdateEventStatus(userId uint64, eventId uint64) error {
@@ -58,4 +24,82 @@ func (s Subscription) UpdateEventStatus(userId uint64, eventId uint64) error {
 
 func (s Subscription) IsAddedEvent(userId uint64, eventId uint64) (bool, error) {
 	return s.repo.IsAddedEvent(userId, eventId)
+}
+
+func (s Subscription) GetFollowers(id uint64, page int) (models.UserCards, error) {
+	users, err := s.repo.GetFollowers(id, page)
+	if err != nil {
+		s.Logger.Warn(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var userCards models.UserCards
+	for _, elem := range users {
+		newCard := models.ConvertUserCard(elem)
+		newCard.Followers, err = s.repo.CountUserFollowers(newCard.Id)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		userCards = append(userCards, *newCard)
+	}
+
+	return userCards, nil
+}
+
+func (s Subscription) GetSubscriptions(id uint64, page int) (models.UserCards, error) {
+	users, err := s.repo.GetSubscriptions(id, page)
+	if err != nil {
+		s.Logger.Warn(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var userCards models.UserCards
+	for _, elem := range users {
+		newCard := models.ConvertUserCard(elem)
+		newCard.Followers, err = s.repo.CountUserFollowers(newCard.Id)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		userCards = append(userCards, *newCard)
+	}
+
+	return userCards, nil
+}
+
+func (s Subscription) GetPlanningEvents(id uint64, page int) (models.EventCards, error) {
+	sqlEvents, err := s.repo.GetPlanningEvents(id, page)
+	if err != nil {
+		s.Logger.Warn(err)
+		return models.EventCards{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var newEvents []models.EventCard
+	for _, elem := range sqlEvents {
+		if elem.EndDate.Before(time.Now()) {
+			err := s.repo.UpdateEventStatus(id, elem.ID)
+			if err != nil {
+				s.Logger.Warn(err)
+				return models.EventCards{}, err
+			}
+		} else {
+			newEvents = append(newEvents, models.ConvertDateCard(elem))
+		}
+	}
+
+	return newEvents, nil
+}
+
+func (s Subscription) GetVisitedEvents(id uint64, page int) (models.EventCards, error) {
+	var events models.EventCards
+	sqlEvents, err := s.repo.GetVisitedEvents(id, page)
+	if err != nil {
+		s.Logger.Warn(err)
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	for _, elem := range sqlEvents {
+		events = append(events, models.ConvertDateCard(elem))
+	}
+
+	return events, nil
 }

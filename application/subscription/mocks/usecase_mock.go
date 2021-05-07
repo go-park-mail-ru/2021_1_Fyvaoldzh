@@ -5,6 +5,7 @@
 package mock_subscription
 
 import (
+	models "kudago/application/models"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -33,32 +34,64 @@ func (m *MockUseCase) EXPECT() *MockUseCaseMockRecorder {
 	return m.recorder
 }
 
-// AddPlanning mocks base method.
-func (m *MockUseCase) AddPlanning(userId, eid uint64) error {
+// GetFollowers mocks base method.
+func (m *MockUseCase) GetFollowers(id uint64, page int) (models.UserCards, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPlanning", userId, eid)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetFollowers", id, page)
+	ret0, _ := ret[0].(models.UserCards)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// AddPlanning indicates an expected call of AddPlanning.
-func (mr *MockUseCaseMockRecorder) AddPlanning(userId, eid interface{}) *gomock.Call {
+// GetFollowers indicates an expected call of GetFollowers.
+func (mr *MockUseCaseMockRecorder) GetFollowers(id, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPlanning", reflect.TypeOf((*MockUseCase)(nil).AddPlanning), userId, eid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFollowers", reflect.TypeOf((*MockUseCase)(nil).GetFollowers), id, page)
 }
 
-// AddVisited mocks base method.
-func (m *MockUseCase) AddVisited(userId, eid uint64) error {
+// GetPlanningEvents mocks base method.
+func (m *MockUseCase) GetPlanningEvents(id uint64, page int) (models.EventCards, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddVisited", userId, eid)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetPlanningEvents", id, page)
+	ret0, _ := ret[0].(models.EventCards)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// AddVisited indicates an expected call of AddVisited.
-func (mr *MockUseCaseMockRecorder) AddVisited(userId, eid interface{}) *gomock.Call {
+// GetPlanningEvents indicates an expected call of GetPlanningEvents.
+func (mr *MockUseCaseMockRecorder) GetPlanningEvents(id, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddVisited", reflect.TypeOf((*MockUseCase)(nil).AddVisited), userId, eid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPlanningEvents", reflect.TypeOf((*MockUseCase)(nil).GetPlanningEvents), id, page)
+}
+
+// GetSubscriptions mocks base method.
+func (m *MockUseCase) GetSubscriptions(id uint64, page int) (models.UserCards, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubscriptions", id, page)
+	ret0, _ := ret[0].(models.UserCards)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSubscriptions indicates an expected call of GetSubscriptions.
+func (mr *MockUseCaseMockRecorder) GetSubscriptions(id, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptions", reflect.TypeOf((*MockUseCase)(nil).GetSubscriptions), id, page)
+}
+
+// GetVisitedEvents mocks base method.
+func (m *MockUseCase) GetVisitedEvents(id uint64, page int) (models.EventCards, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVisitedEvents", id, page)
+	ret0, _ := ret[0].(models.EventCards)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVisitedEvents indicates an expected call of GetVisitedEvents.
+func (mr *MockUseCaseMockRecorder) GetVisitedEvents(id, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVisitedEvents", reflect.TypeOf((*MockUseCase)(nil).GetVisitedEvents), id, page)
 }
 
 // IsAddedEvent mocks base method.
@@ -74,62 +107,6 @@ func (m *MockUseCase) IsAddedEvent(userId, eventId uint64) (bool, error) {
 func (mr *MockUseCaseMockRecorder) IsAddedEvent(userId, eventId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAddedEvent", reflect.TypeOf((*MockUseCase)(nil).IsAddedEvent), userId, eventId)
-}
-
-// RemovePlanning mocks base method.
-func (m *MockUseCase) RemovePlanning(userId, eid uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemovePlanning", userId, eid)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemovePlanning indicates an expected call of RemovePlanning.
-func (mr *MockUseCaseMockRecorder) RemovePlanning(userId, eid interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePlanning", reflect.TypeOf((*MockUseCase)(nil).RemovePlanning), userId, eid)
-}
-
-// RemoveVisited mocks base method.
-func (m *MockUseCase) RemoveVisited(userId, eid uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveVisited", userId, eid)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveVisited indicates an expected call of RemoveVisited.
-func (mr *MockUseCaseMockRecorder) RemoveVisited(userId, eid interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVisited", reflect.TypeOf((*MockUseCase)(nil).RemoveVisited), userId, eid)
-}
-
-// SubscribeUser mocks base method.
-func (m *MockUseCase) SubscribeUser(subscriberId, subscribedToId uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SubscribeUser", subscriberId, subscribedToId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SubscribeUser indicates an expected call of SubscribeUser.
-func (mr *MockUseCaseMockRecorder) SubscribeUser(subscriberId, subscribedToId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeUser", reflect.TypeOf((*MockUseCase)(nil).SubscribeUser), subscriberId, subscribedToId)
-}
-
-// UnsubscribeUser mocks base method.
-func (m *MockUseCase) UnsubscribeUser(subscriberId, subscribedToId uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UnsubscribeUser", subscriberId, subscribedToId)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UnsubscribeUser indicates an expected call of UnsubscribeUser.
-func (mr *MockUseCaseMockRecorder) UnsubscribeUser(subscriberId, subscribedToId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnsubscribeUser", reflect.TypeOf((*MockUseCase)(nil).UnsubscribeUser), subscriberId, subscribedToId)
 }
 
 // UpdateEventStatus mocks base method.

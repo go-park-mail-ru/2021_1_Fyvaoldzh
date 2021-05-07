@@ -15,4 +15,6 @@ type UseCase interface {
 	UploadAvatar(id uint64, img multipart.File, filename string) error
 	GetAvatar(id uint64) ([]byte, error)
 	GetUsers(page int) (models.UserCards, error)
+	FindUsers(str string, page int) (models.UserCards, error)
+	GetActions(id uint64, page int) (models.ActionCards, error)
 }

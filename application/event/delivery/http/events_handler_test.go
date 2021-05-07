@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	mock_infrastructure "kudago/pkg/infrastructure/mocks"
+	"kudago/application/microservices/auth/client"
 	"kudago/pkg/logger"
 	"log"
 	"net/http"
@@ -86,15 +86,14 @@ var testAllEvents = models.EventCards{
 }
 
 func setUp(t *testing.T, url, method string) (echo.Context,
-	EventHandler, *mock_event.MockUseCase, *mock_infrastructure.MockSessionTarantool) {
+	EventHandler, *mock_event.MockUseCase, *client.MockIAuthClient) {
 	e := echo.New()
 	r := e.Router()
 	r.Add(method, url, func(echo.Context) error { return nil })
 
 	ctrl := gomock.NewController(t)
-	_ = mock_event.NewMockRepository(ctrl)
 	usecase := mock_event.NewMockUseCase(ctrl)
-	sm := mock_infrastructure.NewMockSessionTarantool(ctrl)
+	rpcAuth := client.NewMockIAuthClient(ctrl)
 
 	l, err := zap.NewProduction()
 	if err != nil {
@@ -106,7 +105,7 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 
 	handler := EventHandler{
 		UseCase:   usecase,
-		Sm:        sm,
+		rpcAuth:   rpcAuth,
 		Logger:    logger.NewLogger(sugar),
 		sanitizer: cs,
 	}
@@ -133,38 +132,13 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 	c := e.NewContext(req, rec)
 	c.SetPath(url)
 
-	return c, handler, usecase, sm
+	return c, handler, usecase, rpcAuth
 }
 
 func TestEventsHandler_GetAllEventsOk(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page=1", http.MethodGet)
-	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
-
-	err := h.GetAllEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_GetAllEventsAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/?page='aaaa'", http.MethodGet)
-
-	err := h.GetAllEvents(c)
-
-	assert.NotNil(t, err)
-}
-
-func TestEventsHandler_GetAllEventsWithoutPage(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/", http.MethodGet)
 	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
-
-	err := h.GetAllEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_GetAllEventsWithZero(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page=0", http.MethodGet)
-	usecase.EXPECT().GetAllEvents(1).Return(testAllEvents, nil)
+	c.Set(constants.PageKey, 1)
 
 	err := h.GetAllEvents(c)
 
@@ -172,7 +146,8 @@ func TestEventsHandler_GetAllEventsWithZero(t *testing.T) {
 }
 
 func TestEventsHandler_GetAllEventsError(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/?page=1", http.MethodGet)
+	c, h, usecase, _ := setUp(t, "/api/v1/", http.MethodGet)
+	c.Set(constants.PageKey, 1)
 	usecase.EXPECT().GetAllEvents(1).Return(models.EventCards{}, errors.New("get all error"))
 
 	err := h.GetAllEvents(c)
@@ -182,8 +157,7 @@ func TestEventsHandler_GetAllEventsError(t *testing.T) {
 
 func TestEventsHandler_GetOneEventOk(t *testing.T) {
 	c, h, usecase, sm := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 	key := generator.RandStringRunes(constants.CookieLength)
 	newCookie := &http.Cookie{
 		Name:     constants.SessionCookieName,
@@ -193,7 +167,7 @@ func TestEventsHandler_GetOneEventOk(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(true, uint64(1), nil, 200)
 	usecase.EXPECT().RecomendSystem(uint64(1), testEvent.Category).Return(nil)
 
 	err := h.GetOneEvent(c)
@@ -203,8 +177,7 @@ func TestEventsHandler_GetOneEventOk(t *testing.T) {
 
 func TestEventsHandler_GetOneEventWrongCookie(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 	key := generator.RandStringRunes(constants.CookieLength)
 	newCookie := &http.Cookie{
 		Name:     "test_name",
@@ -222,8 +195,7 @@ func TestEventsHandler_GetOneEventWrongCookie(t *testing.T) {
 
 func TestEventsHandler_GetOneEventCookieNotExist(t *testing.T) {
 	c, h, usecase, sm := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 	key := generator.RandStringRunes(constants.CookieLength)
 	newCookie := &http.Cookie{
 		Name:     constants.SessionCookieName,
@@ -233,7 +205,7 @@ func TestEventsHandler_GetOneEventCookieNotExist(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().CheckSession(key).Return(false, uint64(1), nil)
+	sm.EXPECT().Check(key).Return(false, uint64(1), nil, 200)
 
 	err := h.GetOneEvent(c)
 
@@ -242,8 +214,7 @@ func TestEventsHandler_GetOneEventCookieNotExist(t *testing.T) {
 
 func TestEventsHandler_GetOneEventErrorCookie(t *testing.T) {
 	c, h, usecase, sm := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 	key := generator.RandStringRunes(constants.CookieLength)
 	newCookie := &http.Cookie{
 		Name:     constants.SessionCookieName,
@@ -253,27 +224,16 @@ func TestEventsHandler_GetOneEventErrorCookie(t *testing.T) {
 	}
 	c.Request().AddCookie(newCookie)
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(testEvent, nil)
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), errors.New("error cookie"))
+	sm.EXPECT().Check(key).Return(true, uint64(1), errors.New("error cookie"), 500)
 
 	err := h.GetOneEvent(c)
 
 	assert.Nil(t, err)
 }
 
-func TestEventsHandler_GetOneEventAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("aaaa")
-
-	err := h.GetOneEvent(c)
-
-	assert.NotNil(t, err)
-}
-
 func TestEventsHandler_GetOneEventError(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 
 	usecase.EXPECT().GetOneEvent(uint64(1)).Return(models.Event{}, errors.New("get oneEv error"))
 
@@ -284,32 +244,7 @@ func TestEventsHandler_GetOneEventError(t *testing.T) {
 
 func TestEventsHandler_GetEventsOk(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event?page=1", http.MethodGet)
-	usecase.EXPECT().GetEventsByCategory("", 1).Return(testAllEvents, nil)
-
-	err := h.GetEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_GetEventsAtoiErros(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/event?page='aaaa'", http.MethodGet)
-
-	err := h.GetEvents(c)
-
-	assert.NotNil(t, err)
-}
-
-func TestEventsHandler_GetEventsWithoutPage(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/event", http.MethodGet)
-	usecase.EXPECT().GetEventsByCategory("", 1).Return(testAllEvents, nil)
-
-	err := h.GetEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_GetEventsWithZero(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/event?page=0", http.MethodGet)
+	c.Set(constants.PageKey, 1)
 	usecase.EXPECT().GetEventsByCategory("", 1).Return(testAllEvents, nil)
 
 	err := h.GetEvents(c)
@@ -319,6 +254,7 @@ func TestEventsHandler_GetEventsWithZero(t *testing.T) {
 
 func TestEventsHandler_GetEventsError(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event?page=1", http.MethodGet)
+	c.Set(constants.PageKey, 1)
 	usecase.EXPECT().GetEventsByCategory("", 1).Return(models.EventCards{}, errors.New("get events error"))
 
 	err := h.GetEvents(c)
@@ -328,31 +264,7 @@ func TestEventsHandler_GetEventsError(t *testing.T) {
 
 func TestEventsHandler_FindEventsOk(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/search?page=1", http.MethodGet)
-	usecase.EXPECT().FindEvents("", "", 1).Return(testAllEvents, nil)
-
-	err := h.FindEvents(c)
-
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_FindEventsAtoiErros(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/search?page='aaaa'", http.MethodGet)
-
-	err := h.FindEvents(c)
-
-	assert.NotNil(t, err)
-}
-
-func TestEventsHandler_FindEventsWithoutPage(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/search", http.MethodGet)
-	usecase.EXPECT().FindEvents("", "", 1).Return(testAllEvents, nil)
-
-	err := h.FindEvents(c)
-	assert.Nil(t, err)
-}
-
-func TestEventsHandler_FindEventsWithZero(t *testing.T) {
-	c, h, usecase, _ := setUp(t, "/api/v1/search?page=0", http.MethodGet)
+	c.Set(constants.PageKey, 1)
 	usecase.EXPECT().FindEvents("", "", 1).Return(testAllEvents, nil)
 
 	err := h.FindEvents(c)
@@ -362,6 +274,7 @@ func TestEventsHandler_FindEventsWithZero(t *testing.T) {
 
 func TestEventsHandler_FindEventsError(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/search?page=1", http.MethodGet)
+	c.Set(constants.PageKey, 1)
 	usecase.EXPECT().FindEvents("", "", 1).Return(models.EventCards{}, errors.New("get events error"))
 
 	err := h.FindEvents(c)
@@ -371,8 +284,7 @@ func TestEventsHandler_FindEventsError(t *testing.T) {
 
 func TestEventsHandler_GetImageOk(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 	usecase.EXPECT().GetImage(uint64(1)).Return([]byte{}, nil)
 
 	err := h.GetImage(c)
@@ -380,20 +292,9 @@ func TestEventsHandler_GetImageOk(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestEventsHandler_GetImageAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("aaaa")
-
-	err := h.GetImage(c)
-
-	assert.NotNil(t, err)
-}
-
 func TestEventsHandler_GetImageError(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event/:id", http.MethodGet)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 
 	usecase.EXPECT().GetImage(uint64(1)).Return([]byte{}, errors.New("get image error"))
 
@@ -402,33 +303,11 @@ func TestEventsHandler_GetImageError(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-func TestEventsHandler_RecommendNonAuthorize(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/recomend?page=1", http.MethodGet)
-
-	err := h.Recommend(c)
-	assert.NotNil(t, err)
-}
-
-func TestEventsHandler_RecommendAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/recomend?page='aaaa'", http.MethodGet)
-
-	err := h.Recommend(c)
-
-	assert.NotNil(t, err)
-}
-
 func TestEventsHandler_RecommendWithoutPageOk(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/recomend", http.MethodGet)
-	key := generator.RandStringRunes(constants.CookieLength)
-	newCookie := &http.Cookie{
-		Name:     constants.SessionCookieName,
-		Value:    key,
-		Expires:  time.Now().Add(10 * time.Hour),
-		HttpOnly: true,
-	}
-	c.Request().AddCookie(newCookie)
+	c, h, usecase, _ := setUp(t, "/api/v1/recomend", http.MethodGet)
+	c.Set(constants.PageKey, 1)
+	c.Set(constants.UserIdKey, uint64(1))
 
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), nil)
 	usecase.EXPECT().GetRecommended(uint64(1), 1).Return(testAllEvents, nil)
 
 	err := h.Recommend(c)
@@ -436,18 +315,11 @@ func TestEventsHandler_RecommendWithoutPageOk(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestEventsHandler_RecommendWithZeroError(t *testing.T) {
-	c, h, usecase, sm := setUp(t, "/api/v1/recomend?page=0", http.MethodGet)
-	key := generator.RandStringRunes(constants.CookieLength)
-	newCookie := &http.Cookie{
-		Name:     constants.SessionCookieName,
-		Value:    key,
-		Expires:  time.Now().Add(10 * time.Hour),
-		HttpOnly: true,
-	}
-	c.Request().AddCookie(newCookie)
+func TestEventsHandler_RecommendError(t *testing.T) {
+	c, h, usecase, _ := setUp(t, "/api/v1/recomend?page=1", http.MethodGet)
+	c.Set(constants.PageKey, 1)
+	c.Set(constants.UserIdKey, uint64(1))
 
-	sm.EXPECT().CheckSession(key).Return(true, uint64(1), nil)
 	usecase.EXPECT().GetRecommended(uint64(1), 1).Return(models.EventCards{}, errors.New("get recommend error"))
 
 	err := h.Recommend(c)
@@ -477,18 +349,7 @@ func TestEventsHandler_CreateError(t *testing.T) {
 
 func TestEventsHandler_SaveError(t *testing.T) {
 	c, h, _, _ := setUp(t, "/api/v1/save/:id", http.MethodPost)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
-
-	err := h.Save(c)
-
-	assert.NotNil(t, err)
-}
-
-func TestEventsHandler_SaveAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/save/:id", http.MethodPost)
-	c.SetParamNames("id")
-	c.SetParamValues("aaa")
+	c.Set(constants.IdKey, 1)
 
 	err := h.Save(c)
 
@@ -497,8 +358,7 @@ func TestEventsHandler_SaveAtoiError(t *testing.T) {
 
 func TestEventsHandler_DeleteOk(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event/:id", http.MethodDelete)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 
 	usecase.EXPECT().Delete(uint64(1)).Return(nil)
 
@@ -507,20 +367,9 @@ func TestEventsHandler_DeleteOk(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestEventsHandler_DeleteAtoiError(t *testing.T) {
-	c, h, _, _ := setUp(t, "/api/v1/event/:id", http.MethodDelete)
-	c.SetParamNames("id")
-	c.SetParamValues("aaaa")
-
-	err := h.Delete(c)
-
-	assert.NotNil(t, err)
-}
-
 func TestEventsHandler_DeleteError(t *testing.T) {
 	c, h, usecase, _ := setUp(t, "/api/v1/event/:id", http.MethodDelete)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
+	c.Set(constants.IdKey, 1)
 
 	usecase.EXPECT().Delete(uint64(1)).Return(errors.New("get delete error"))
 

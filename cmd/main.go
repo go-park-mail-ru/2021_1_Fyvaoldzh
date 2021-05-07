@@ -1,7 +1,7 @@
 package main
 
 import (
-	"kudago/server"
+	"kudago/application/server"
 	"log"
 
 	"go.uber.org/zap"
@@ -9,17 +9,16 @@ import (
 )
 
 func main() {
-
-	logger, err := zap.NewProduction()
+	lg, err := zap.NewProduction()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func() {
-		if err := logger.Sync(); err != nil {
+		if err := lg.Sync(); err != nil {
 			log.Fatalf(`error '%s' while closing resource`, err)
 		}
 	}()
-	sugar := logger.Sugar()
+	sugar := lg.Sugar()
 	zap.NewAtomicLevelAt(zapcore.DebugLevel)
 
 	/*conf := zap.Config{
@@ -32,6 +31,6 @@ func main() {
 		return nil, err
 	}*/
 
-	e := server.NewServer(sugar)
-	server.ListenAndServe(e)
+	s := server.NewServer(sugar)
+	s.ListenAndServe()
 }

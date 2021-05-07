@@ -2,11 +2,6 @@ package usecase
 
 import (
 	"database/sql"
-	"github.com/golang/mock/gomock"
-	"github.com/labstack/echo"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"image"
 	"image/png"
 	"io/ioutil"
@@ -21,6 +16,12 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/labstack/echo"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var (
@@ -33,7 +34,7 @@ var (
 	badBackPassword        = "1111IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
 	email                  = "email@mail.ru"
 	birthdayStr            = "1999-01-01"
-	birthday, err          = time.Parse(constants.TimeFormat, "1999-01-01")
+	birthday, err          = time.Parse(constants.DateFormat, "1999-01-01")
 	city                   = "City"
 	about                  = "some personal information"
 	avatar                 = "public/users/default.png"
@@ -71,7 +72,7 @@ var (
 		evVisited,
 	}
 
-	followers = []uint64{2, 2, 3}
+	followers = uint64(5)
 )
 
 var testUserFront = &models.User{
@@ -96,12 +97,12 @@ var testUserBadBack = &models.User{
 	Password: badBackPassword,
 }
 
-var testUserData = &models.UserData{
+var testUserData = &models.UserDataSQL{
 	Id:    userId,
 	Login: login,
 }
 
-var testUserDataWithAvatar = &models.UserData{
+var testUserDataWithAvatar = &models.UserDataSQL{
 	Id:     userId,
 	Login:  login,
 	Avatar: sql.NullString{String: imageName, Valid: true},
@@ -109,16 +110,12 @@ var testUserDataWithAvatar = &models.UserData{
 
 var testOtherUserProfile = &models.OtherUserProfile{
 	Uid:       userId,
-	Visited:   eventsVisited,
-	Planning:  eventsPlanning,
 	Followers: followers,
 }
 
 var testOwnUserProfile = &models.UserOwnProfile{
 	Uid:       userId,
 	Login:     login,
-	Visited:   eventsVisited,
-	Planning:  eventsPlanning,
 	Followers: followers,
 }
 var testOwnUserProfileToUpdate = &models.UserOwnProfile{
@@ -132,7 +129,7 @@ var testOwnUserProfileToUpdate = &models.UserOwnProfile{
 	Avatar:   avatar,
 }
 
-var testNewUserData = &models.UserData{
+var testNewUserData = &models.UserDataSQL{
 	Id:       userId,
 	Name:     sql.NullString{String: name, Valid: true},
 	Login:    login,
@@ -152,8 +149,17 @@ var testUserCardSQL = &models.UserCardSQL{
 	Name: name,
 }
 
-var testUserCardsSQL = []models.UserCardSQL{*testUserCardSQL}
+var testActionCard = &models.ActionCard{
+	Id1:   userId,
+	Name1: name,
+	Id2:   userId,
+	Name2: name,
+	Time:  time.Time{},
+	Type:  name,
+}
 
+var testUserCardsSQL = []models.UserCardSQL{*testUserCardSQL}
+var testActionCards = []*models.ActionCard{testActionCard}
 
 func setUp(t *testing.T) (*mock_user.MockRepository, *mock_subscription.MockRepository, user.UseCase) {
 	ctrl := gomock.NewController(t)
@@ -297,32 +303,29 @@ func TestUserUseCase_GetOtherProfileOK(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().GetVisitedEvents(userId).Return(eventsVisitedSQL, nil)
-	repSub.EXPECT().GetFollowers(userId).Return(followers, nil)
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
+	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(gomock.Any()).Return(uint64(1), nil)
 
-	other, err := uc.GetOtherProfile(userId)
+	_, err := uc.GetOtherProfile(userId)
 
 	assert.Nil(t, err)
-	assert.Equal(t, testOtherUserProfile, other)
 }
 
 func TestUserUseCase_GetOtherProfileDBErrorGetByID(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOtherProfile(userId)
 
 	assert.Error(t, err)
 }
 
-func TestUserUseCase_GetOtherProfileDBErrorGetPlanningEvents(t *testing.T) {
+func TestUserUseCase_GetOtherProfileDBErrorCountUserFollowers(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return([]models.EventCardWithDateSQL{},
+	repSub.EXPECT().CountUserFollowers(userId).Return(uint64(0),
 		echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOtherProfile(userId)
@@ -330,41 +333,13 @@ func TestUserUseCase_GetOtherProfileDBErrorGetPlanningEvents(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserUseCase_GetOtherProfileDBErrorGetVisitedEvents(t *testing.T) {
+func TestUserUseCase_GetOtherProfileDBErrorCountSubcriptions(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().GetVisitedEvents(userId).Return([]models.EventCardWithDateSQL{},
+	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(gomock.Any()).Return(uint64(1),
 		echo.NewHTTPError(http.StatusInternalServerError))
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
-
-	_, err := uc.GetOtherProfile(userId)
-
-	assert.Error(t, err)
-}
-
-func TestUserUseCase_GetOtherProfileDBErrorUpdateEventStatus(t *testing.T) {
-	rep, repSub, uc := setUp(t)
-
-	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(echo.NewHTTPError(http.StatusInternalServerError))
-
-	_, err := uc.GetOtherProfile(userId)
-
-	assert.Error(t, err)
-}
-
-func TestUserUseCase_GetOtherProfileDBErrorGetFollowers(t *testing.T) {
-	rep, repSub, uc := setUp(t)
-
-	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().GetVisitedEvents(userId).Return(eventsVisitedSQL, nil)
-	repSub.EXPECT().GetFollowers(userId).Return([]uint64{},
-		echo.NewHTTPError(http.StatusInternalServerError))
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
 
 	_, err := uc.GetOtherProfile(userId)
 
@@ -377,32 +352,29 @@ func TestUserUseCase_GetOwnProfileOK(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().GetVisitedEvents(userId).Return(eventsVisitedSQL, nil)
-	repSub.EXPECT().GetFollowers(userId).Return(followers, nil)
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
+	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(userId).Return(uint64(1), nil)
 
-	own, err := uc.GetOwnProfile(testUserData.Id)
+	_, err := uc.GetOwnProfile(testUserData.Id)
 
 	assert.Nil(t, err)
-	assert.Equal(t, testOwnUserProfile, own)
 }
 
 func TestUserUseCase_GetOwnProfileDBErrorGetByID(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOwnProfile(userId)
 
 	assert.Error(t, err)
 }
 
-func TestUserUseCase_GetOwnProfileDBErrorGetPlanningEvents(t *testing.T) {
+func TestUserUseCase_GetOwnProfileDBErrorCountUserFollowers(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return([]models.EventCardWithDateSQL{},
+	repSub.EXPECT().CountUserFollowers(userId).Return(uint64(0),
 		echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetOwnProfile(userId)
@@ -410,43 +382,15 @@ func TestUserUseCase_GetOwnProfileDBErrorGetPlanningEvents(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestUserUseCase_GetOwnProfileDBErrorGetVisitedEvents(t *testing.T) {
+func TestUserUseCase_GetOwnProfileDBErrorCountSubscriptions(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().GetVisitedEvents(userId).Return([]models.EventCardWithDateSQL{},
+	repSub.EXPECT().CountUserFollowers(userId).Return(followers, nil)
+	repSub.EXPECT().CountUserSubscriptions(userId).Return(uint64(1),
 		echo.NewHTTPError(http.StatusInternalServerError))
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
 
-	_, err := uc.GetOwnProfile(userId)
-
-	assert.Error(t, err)
-}
-
-func TestUserUseCase_GetOwnProfileDBErrorUpdateEventStatus(t *testing.T) {
-	rep, repSub, uc := setUp(t)
-
-	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(echo.NewHTTPError(http.StatusInternalServerError))
-
-	_, err := uc.GetOwnProfile(userId)
-
-	assert.Error(t, err)
-}
-
-func TestUserUseCase_GetOwnProfileDBErrorGetFollowers(t *testing.T) {
-	rep, repSub, uc := setUp(t)
-
-	rep.EXPECT().GetByIdOwn(userId).Return(testUserData, nil)
-	repSub.EXPECT().GetPlanningEvents(userId).Return(eventsPlanningSQL, nil)
-	repSub.EXPECT().GetVisitedEvents(userId).Return(eventsVisitedSQL, nil)
-	repSub.EXPECT().GetFollowers(userId).Return([]uint64{},
-		echo.NewHTTPError(http.StatusInternalServerError))
-	repSub.EXPECT().UpdateEventStatus(userId, eventsPlanningSQL[1].ID).Return(nil)
-
-	_, err := uc.GetOwnProfile(userId)
+	_, err := uc.GetOwnProfile(testUserData.Id)
 
 	assert.Error(t, err)
 }
@@ -468,7 +412,7 @@ func TestUserUseCase_UpdateOK(t *testing.T) {
 func TestUserUseCase_UpdateBDErrorGetByIdOwn(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(testOwnUserProfileToUpdate.Uid).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	err := uc.Update(testOwnUserProfileToUpdate.Uid, testOwnUserProfileToUpdate)
 
@@ -520,7 +464,7 @@ func TestUserUseCase_GetAvatar(t *testing.T) {
 func TestUserUseCase_GetAvatarDBErrorGetByIdOwn(t *testing.T) {
 	rep, _, uc := setUp(t)
 
-	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserData{}, echo.NewHTTPError(http.StatusInternalServerError))
+	rep.EXPECT().GetByIdOwn(userId).Return(&models.UserDataSQL{}, echo.NewHTTPError(http.StatusInternalServerError))
 
 	_, err := uc.GetAvatar(userId)
 
@@ -543,11 +487,91 @@ func TestUserUseCase_GetUsers(t *testing.T) {
 	rep, repSub, uc := setUp(t)
 
 	rep.EXPECT().GetUsers(pageNum).Return(testUserCardsSQL, nil)
-	repSub.EXPECT().GetFollowers(userId).Return([]uint64{userId}, nil)
+	repSub.EXPECT().CountUserFollowers(userId).Return(uint64(1), nil)
 
 	_, err := uc.GetUsers(pageNum)
 
 	assert.Nil(t, err)
+}
+
+func TestUserUseCase_GetUsersDBErrorCountUserFollowers(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().GetUsers(pageNum).Return(testUserCardsSQL, nil)
+	repSub.EXPECT().CountUserFollowers(gomock.Any()).Return(uint64(0), echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetUsers(pageNum)
+
+	assert.Error(t, err)
+}
+
+func TestUserUseCase_GetUsersDBErrorGetUsers(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetUsers(pageNum).Return(testUserCardsSQL,
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetUsers(pageNum)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestUserUseCase_FindUsers(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().FindUsers(name, pageNum).Return(testUserCardsSQL, nil)
+	repSub.EXPECT().CountUserFollowers(gomock.Any()).Return(uint64(1), nil)
+
+	_, err := uc.FindUsers(name, pageNum)
+
+	assert.Nil(t, err)
+}
+
+func TestUserUseCase_FindUsersDBErrorCountUserFollowers(t *testing.T) {
+	rep, repSub, uc := setUp(t)
+
+	rep.EXPECT().FindUsers(name, pageNum).Return(testUserCardsSQL, nil)
+	repSub.EXPECT().CountUserFollowers(gomock.Any()).Return(uint64(0),
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.FindUsers(name, pageNum)
+
+	assert.Error(t, err)
+}
+
+func TestUserUseCase_FindUsersDBErrorFindUsers(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().FindUsers(name, pageNum).Return(testUserCardsSQL, echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.FindUsers(name, pageNum)
+
+	assert.Error(t, err)
+}
+
+///////////////////////////////////////////////////
+
+func TestUserUseCase_GetActions(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetActions(userId, pageNum).Return(testActionCards, nil)
+
+	_, err := uc.GetActions(userId, pageNum)
+
+	assert.Nil(t, err)
+}
+
+func TestUserUseCase_DBErrorGetActions(t *testing.T) {
+	rep, _, uc := setUp(t)
+
+	rep.EXPECT().GetActions(userId, pageNum).Return(testActionCards,
+		echo.NewHTTPError(http.StatusInternalServerError))
+
+	_, err := uc.GetActions(userId, pageNum)
+
+	assert.Error(t, err)
 }
 
 /*
