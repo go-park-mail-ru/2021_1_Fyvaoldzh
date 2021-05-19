@@ -1,8 +1,9 @@
 package custom_sanitizer
 
 import (
-	"github.com/microcosm-cc/bluemonday"
 	"kudago/application/models"
+
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type CustomSanitizer struct {
@@ -123,4 +124,8 @@ func (cs *CustomSanitizer) SanitizeDialogue(dialogue *models.Dialogue) {
 	dialogue.Interlocutor.Name = cs.sanitizer.Sanitize(dialogue.Interlocutor.Name)
 	dialogue.Interlocutor.Avatar = cs.sanitizer.Sanitize(dialogue.Interlocutor.Avatar)
 	dialogue.DialogMessages = cs.SanitizeMessages(dialogue.DialogMessages)
+}
+
+func (cs *CustomSanitizer) SanitizeEventName(name string) string {
+	return cs.sanitizer.Sanitize(name)
 }

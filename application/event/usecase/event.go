@@ -78,6 +78,16 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	return jsonEvent, nil
 }
 
+func (e Event) GetOneEventName(eventId uint64) (string, error) {
+	name, err := e.repo.GetOneEventNameByID(eventId)
+	if err != nil {
+		e.logger.Warn(err)
+		return "", err
+	}
+
+	return name, nil
+}
+
 func (e Event) Delete(eventId uint64) error {
 	return e.repo.DeleteById(eventId)
 }
