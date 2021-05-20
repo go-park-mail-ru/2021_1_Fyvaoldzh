@@ -40,19 +40,6 @@ var (
 		StartDate:   evPlanningSQL.StartDate.String(),
 		EndDate:     evPlanningSQL.EndDate.String(),
 	}
-	evVisitedSQL = models.EventCardWithDateSQL{
-		ID:        2,
-		StartDate: time.Now(),
-		EndDate:   time.Now(),
-	}
-	evVisited = models.EventCard{
-		ID:          2,
-		Title:       "title",
-		Place:       "place",
-		Description: "desc",
-		StartDate:   evVisitedSQL.StartDate.String(),
-		EndDate:     evVisitedSQL.EndDate.String(),
-	}
 
 	eventsPlanning = models.EventCards{
 		evPlanning,
@@ -94,8 +81,7 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 		Logger:  logger.NewLogger(sugar),
 	}
 
-	var req *http.Request
-	req = httptest.NewRequest(http.MethodGet, url, nil)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath(url)

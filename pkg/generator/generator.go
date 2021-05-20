@@ -30,11 +30,7 @@ func CheckHashedPassword(databasePassword string, gotPassword string) bool {
 	hash.Write([]byte(salt + gotPassword))
 	gotPassword = base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
-	if gotPassword != databasePassword[8:] {
-		return false
-	}
-
-	return true
+	return gotPassword == databasePassword[8:]
 }
 
 func CreateCookieValue(n uint8) string {

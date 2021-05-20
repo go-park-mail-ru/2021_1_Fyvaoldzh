@@ -97,10 +97,7 @@ func (c Chat) IsInterlocutor(uid uint64, elem models.EasyDialogueMessageSQL) boo
 }
 
 func (c Chat) IsSenderMessage(uid uint64, elem models.EasyDialogueMessageSQL) bool {
-	if uid != elem.User1 {
-		return false
-	}
-	return true
+	return uid == elem.User1
 }
 
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {

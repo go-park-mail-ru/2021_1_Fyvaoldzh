@@ -281,7 +281,7 @@ func (uh *UserHandler) UploadAvatar(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	defer src.Close()
-	err = uh.UseCase.UploadAvatar(uid, src, img.Filename)
+	_ = uh.UseCase.UploadAvatar(uid, src, img.Filename)
 	middleware.OkResponse(c)
 	return nil
 }
