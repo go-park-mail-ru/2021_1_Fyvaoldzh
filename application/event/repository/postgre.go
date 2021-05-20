@@ -86,6 +86,24 @@ func (ed EventDatabase) GetOneEventByID(eventId uint64) (models.EventSQL, error)
 	return ev[0], nil
 }
 
+func (ed EventDatabase) GetOneEventNameByID(eventId uint64) (string, error) {
+	var ev []string
+	err := pgxscan.Select(context.Background(), ed.pool, &ev,
+		`SELECT title FROM events WHERE id = $1`, eventId)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(ev) == 0 {
+		ed.logger.Debug("no event with id " + fmt.Sprint(eventId))
+		return "", echo.NewHTTPError(http.StatusNotFound, errors.New("Event with id "+fmt.Sprint(eventId)+" not found"))
+	}
+
+	if err != nil {
+		ed.logger.Warn(err)
+		return "", err
+	}
+
+	return ev[0], nil
+}
+
 func (ed EventDatabase) GetTags(eventId uint64) (models.Tags, error) {
 	var parameters models.Tags
 	err := pgxscan.Select(context.Background(), ed.pool, &parameters,

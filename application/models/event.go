@@ -16,6 +16,7 @@ type Event struct {
 	Street      string       `json:"street"`
 	Tags        Tags         `json:"tags"`
 	Category    string       `json:"category"`
+	Сoordinates []float64    `json:"coordinates"`
 	Image       string       `json:"image"`
 	Followers   UsersOnEvent `json:"followers"`
 }
@@ -30,6 +31,8 @@ type EventSQL struct {
 	Subway      sql.NullString
 	Street      sql.NullString
 	Category    string
+	Latitude    sql.NullFloat64
+	Longitude   sql.NullFloat64
 	Image       sql.NullString
 }
 
@@ -95,6 +98,9 @@ func ConvertEvent(old EventSQL) Event {
 	newEvent.Street = old.Street.String
 	newEvent.Category = old.Category
 	newEvent.Image = old.Image.String
+	if old.Latitude.Valid && old.Longitude.Valid {
+		newEvent.Сoordinates = append(newEvent.Сoordinates, old.Latitude.Float64, old.Longitude.Float64)
+	}
 	return newEvent
 }
 

@@ -31,6 +31,7 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents, middleware.GetPage)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent, middleware.GetId)
+	e.GET("/api/v1/event/name/:id", eventHandler.GetOneEventName, middleware.GetId)
 	e.GET("/api/v1/event", eventHandler.GetEvents, middleware.GetPage)
 	e.GET("/api/v1/search", eventHandler.FindEvents, middleware.GetPage)
 	//create & delete & save вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
@@ -38,7 +39,6 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete, middleware.GetId)
 	e.POST("/api/v1/save/:id", eventHandler.Save, middleware.GetId)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage, middleware.GetId)
-	// TODO фикс названия ручки был
 	e.GET("/api/v1/recommend", eventHandler.Recommend, middleware.GetPage, auth.GetSession)
 }
 
@@ -156,6 +156,26 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	eh.Logger.LogInfo(c, start, requestId)
 	middleware.OkResponse(c)
 	return nil
+}
+
+func (eh EventHandler) GetOneEventName(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+	id := c.Get(constants.IdKey).(int)
+
+	name, err := eh.UseCase.GetOneEventName(uint64(id))
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return err
+	}
+	sanName := eh.sanitizer.SanitizeEventName(name)
+
+	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return c.String(http.StatusOK, sanName)
 }
 
 func (eh EventHandler) GetEvents(c echo.Context) error {
