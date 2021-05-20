@@ -18,7 +18,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v1
         with:
-          version: v1.26
+          version: v1.40
 
  # test:
   #  runs-on: ubuntu-latest
@@ -71,10 +71,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
-          #  скрипт такое се
           script: |
-            sudo docker stop $(docker ps -a)
-            sudo docker rm $(docker ps -a)
+            sudo docker stop $(docker ps -a | grep ${{ secrets.DOCKERHUB_USERNAME }})
+            sudo docker rm $(docker ps -a | grep ${{ secrets.DOCKERHUB_USERNAME }})
       - name: pull docker image
         uses: appleboy/ssh-action@master
         with:
