@@ -19,4 +19,5 @@ type UseCase interface {
 	FindEvents(str string, category string, page int) (models.EventCards, error)
 	RecomendSystem(uid uint64, category string) error
 	GetRecommended(uid uint64, page int) (models.EventCards, error)
+	GetNear(coord models.Coordinates, page int) (models.EventCards, error)
 }

@@ -26,6 +26,27 @@ func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository
 	return &EventDatabase{pool: conn, logger: logger}
 }
 
+func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithDateSQL, error) {
+	var events []models.EventCardWithDateSQL
+	err := pgxscan.Select(context.Background(), ed.pool, &events,
+		`SELECT id, title, place, description, start_date, end_date FROM events
+		WHERE end_date > $1
+		ORDER BY pow(($2 - latitude),2) + pow(($3 - longitude),2)
+		LIMIT $4 OFFSET $5`, now, coord.Latitude, coord.Longitude, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
+		ed.logger.Debug("no rows in method GetAllEvents")
+		return []models.EventCardWithDateSQL{}, nil
+	}
+
+	if err != nil {
+		ed.logger.Warn(err)
+		return nil, err
+	}
+
+	return events, nil
+}
+
 func (ed EventDatabase) GetAllEvents(now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
 	var events []models.EventCardWithDateSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
