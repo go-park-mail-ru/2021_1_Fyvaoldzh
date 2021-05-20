@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 var (
@@ -30,27 +29,6 @@ var (
 	login                = "userlogin"
 	name                 = "username"
 	frontPassword        = "123456"
-
-	evPlanningSQL = models.EventCardWithDateSQL{
-		ID:        1,
-		StartDate: time.Now(),
-		EndDate:   time.Now().Add(10 * time.Hour),
-	}
-	evPlanning = models.EventCard{
-		ID:        1,
-		StartDate: evPlanningSQL.StartDate.String(),
-		EndDate:   evPlanningSQL.EndDate.String(),
-	}
-	evVisitedSQL = models.EventCardWithDateSQL{
-		ID:        2,
-		StartDate: time.Now(),
-		EndDate:   time.Now(),
-	}
-	evVisited = models.EventCard{
-		ID:        2,
-		StartDate: evVisitedSQL.StartDate.String(),
-		EndDate:   evVisitedSQL.EndDate.String(),
-	}
 
 	followers = uint64(1)
 )
@@ -66,10 +44,6 @@ var testOtherUserProfile = &models.OtherUserProfile{
 	Followers: followers,
 }
 
-var testUserOnEvent = &models.UserOnEvent{
-	Id:   userId,
-	Name: name,
-}
 
 var testUserFront = &models.User{
 	Login:    login,
