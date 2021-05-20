@@ -54,9 +54,9 @@ jobs:
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8}
       - name: Push the image for auth service
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/auth:${GITHUB_SHA::8}
-      - name: Push the image for films service
+      - name: Push the image for subscription service
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/sub:${GITHUB_SHA::8}
-      - name: Push the image for series service
+      - name: Push the image for chat service
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/chat:${GITHUB_SHA::8}
 
   deploy:
