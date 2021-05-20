@@ -50,12 +50,6 @@ var (
 	eventsVisitedSQL = []models.EventCardWithDateSQL{
 		evVisitedSQL,
 	}
-	eventsPlanning = []models.EventCard{
-		evPlanning,
-	}
-	eventsVisited = []models.EventCard{
-		evVisited,
-	}
 )
 
 var userCardSql = models.UserCardSQL{

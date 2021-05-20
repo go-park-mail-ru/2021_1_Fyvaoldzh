@@ -44,7 +44,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 	script.Steps = append(script.Steps, pgmock.ExpectMessage(&pgproto3.Query{String: ""}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.RowDescription{
 		Fields: []pgproto3.FieldDescription{
-			pgproto3.FieldDescription{
+			{
 				Name:                 []byte("id"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -52,8 +52,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("name"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -61,8 +61,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("login"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -70,8 +70,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("password"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -79,7 +79,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
+						},
 		},
 	}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.DataRow{

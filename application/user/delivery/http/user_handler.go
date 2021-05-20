@@ -300,7 +300,7 @@ func (uh *UserHandler) GetAvatar(c echo.Context) error {
 		return err
 	}
 
-	c.Response().Write(file)
+	_, _ = c.Response().Write(file)
 	middleware.OkResponse(c)
 	return nil
 }

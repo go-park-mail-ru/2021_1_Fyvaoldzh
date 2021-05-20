@@ -73,8 +73,8 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            sudo docker stop $(docker ps -a |grep ${{ secrets.DOCKERHUB_USERNAME }} | awk '{print $1}')
-            sudo docker rm $(docker ps -a |grep ${{ secrets.DOCKERHUB_USERNAME }} | awk '{print $1}')
+            sudo docker stop $(docker ps -a)
+            sudo docker rm $(docker ps -a)
       #      на серверке подтягиваем все наши уже сбилдженные контейнеры
       - name: pull docker image
         uses: appleboy/ssh-action@master
@@ -99,4 +99,4 @@ jobs:
             sudo docker run -d --network="host" -p 3003:3003 --name chat ${{ secrets.DOCKERHUB_USERNAME }}/chat:${GITHUB_SHA::8}
             sudo docker run -d --network="host" -p 3002:3002 --name sub ${{ secrets.DOCKERHUB_USERNAME }}/sub:${GITHUB_SHA::8}
             sudo docker run -d --network="host" -p 3001:3001 --name auth ${{ secrets.DOCKERHUB_USERNAME }}/auth:${GITHUB_SHA::8}
-            sudo docker run -d --network="host" -v /./go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public:/./go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public  -p 8080:8080 --name main ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8}
+            sudo docker run -d --network="host" -v /./go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public:/./go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public  -p 3000:3000 --name main ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8}

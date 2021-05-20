@@ -24,5 +24,5 @@ func main() {
 	l := logger.NewLogger(sugar)
 
 	s := server.NewServer(constants.ChatServicePort, &l)
-	s.ListenAndServe()
+	_ = s.ListenAndServe()
 }

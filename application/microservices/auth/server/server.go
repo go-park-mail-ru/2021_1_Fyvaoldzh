@@ -86,11 +86,11 @@ func (s *Server) ListenAndServe() error {
 		UnaryInterceptor(traceutils.OpenTracingServerInterceptor(tracer)))
 
 	listener, err := net.Listen("tcp", s.port)
-	defer listener.Close()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	defer listener.Close()
 	proto.RegisterAuthServer(gServer, s.auth)
 	log.Println("starting server at " + s.port)
 	err = gServer.Serve(listener)

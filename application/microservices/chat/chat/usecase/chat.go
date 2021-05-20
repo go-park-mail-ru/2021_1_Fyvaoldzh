@@ -206,13 +206,13 @@ func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 	if err != nil {
 		return err
 	}
-	event, err := c.repoEvent.GetOneEventByID(mailing.EventID)
+	ev, err := c.repoEvent.GetOneEventByID(mailing.EventID)
 	if err != nil {
 		return err
 	}
 
 	for _, id := range mailing.To {
-		message := c.AutoMailingConstructor(id, sender.Name, event.Title, fmt.Sprint(event.ID))
+		message := c.AutoMailingConstructor(id, sender.Name, ev.Title, fmt.Sprint(ev.ID))
 		err := c.SendMessage(&message, uid)
 		if err != nil {
 			return err

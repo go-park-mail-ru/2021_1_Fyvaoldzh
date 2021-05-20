@@ -22,10 +22,10 @@ import (
 var (
 	userId        uint64 = 1
 	n                    = 1
-	id            uint64 = 1
+
 	num                  = 2
 	numu          uint64 = 2
-	strId                = "1"
+
 	name                 = "name"
 	evPlanningSQL        = models.EventCardWithDateSQL{
 		ID:        1,
@@ -53,17 +53,9 @@ var (
 		StartDate:   evVisitedSQL.StartDate.String(),
 		EndDate:     evVisitedSQL.EndDate.String(),
 	}
-	eventsPlanningSQL = []models.EventCardWithDateSQL{
-		evPlanningSQL, evVisitedSQL,
-	}
-	eventsVisitedSQL = []models.EventCardWithDateSQL{
-		evVisitedSQL,
-	}
+
 	eventsPlanning = models.EventCards{
 		evPlanning,
-	}
-	eventsVisited = models.EventCards{
-		evVisited,
 	}
 )
 
