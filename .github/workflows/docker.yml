@@ -45,9 +45,9 @@ jobs:
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8} -f Dockerfile .
       - name: Build Docker image for auth service
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/auth:${GITHUB_SHA::8} -f Dockerfile_auth .
-      - name: Build Docker image for films service
+      - name: Build Docker image for subscription service
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/sub:${GITHUB_SHA::8} -f Dockerfile_sub .
-      - name: Build Docker image for series service
+      - name: Build Docker image for chat service
         run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/chat:${GITHUB_SHA::8} -f Dockerfile_chat .
       #      пушим все , что можем в докерхаб
       - name: Push the image for main
