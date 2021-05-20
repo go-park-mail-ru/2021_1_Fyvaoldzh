@@ -20,14 +20,14 @@ func RandStringRunes(n uint8) string {
 func HashPassword(oldPassword string) string {
 	hash := sha256.New()
 	salt := RandStringRunes(constants.SaltLength)
-	hash.Write([]byte(salt + oldPassword))
+	_, _ = hash.Write([]byte(salt + oldPassword))
 	return salt + base64.URLEncoding.EncodeToString(hash.Sum(nil))
 }
 
 func CheckHashedPassword(databasePassword string, gotPassword string) bool {
 	salt := databasePassword[:8]
 	hash := sha256.New()
-	hash.Write([]byte(salt + gotPassword))
+	_, _ = hash.Write([]byte(salt + gotPassword))
 	gotPassword = base64.URLEncoding.EncodeToString(hash.Sum(nil))
 
 	return gotPassword == databasePassword[8:]
