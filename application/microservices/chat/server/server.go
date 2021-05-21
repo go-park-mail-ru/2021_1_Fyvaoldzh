@@ -2,14 +2,6 @@ package server
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
-	traceutils "github.com/opentracing-contrib/go-grpc"
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
-	"github.com/uber/jaeger-lib/metrics"
-	"google.golang.org/grpc"
 	erepo "kudago/application/event/repository"
 	"kudago/application/microservices/chat/chat/repository"
 	"kudago/application/microservices/chat/chat/usecase"
@@ -18,6 +10,15 @@ import (
 	urepo "kudago/application/user/repository"
 	"kudago/pkg/constants"
 	"net"
+
+	"github.com/jackc/pgx/v4/pgxpool"
+	traceutils "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
+	"github.com/uber/jaeger-lib/metrics"
+	"google.golang.org/grpc"
 
 	"kudago/pkg/logger"
 	"log"

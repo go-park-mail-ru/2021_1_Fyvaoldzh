@@ -1,12 +1,13 @@
 package main
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"kudago/application/microservices/chat/server"
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"log"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {

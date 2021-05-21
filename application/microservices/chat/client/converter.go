@@ -5,7 +5,7 @@ import (
 	"kudago/application/models"
 )
 
-func ConvertDialogueCards (cards *proto.DialogueCards) models.DialogueCards {
+func ConvertDialogueCards(cards *proto.DialogueCards) models.DialogueCards {
 	var newCards models.DialogueCards
 	for _, elem := range cards.List {
 		var oneCard models.DialogueCard
@@ -80,7 +80,7 @@ func ConvertDialogueCardsToProto(cards models.DialogueCards) *proto.DialogueCard
 	return &newCards
 }
 
-func ConvertUserOnEventToProto (usr models.UserOnEvent) *proto.UserOnEvent{
+func ConvertUserOnEventToProto(usr models.UserOnEvent) *proto.UserOnEvent {
 	var newUser proto.UserOnEvent
 	newUser.Id = usr.Id
 	newUser.Name = usr.Name
@@ -88,7 +88,7 @@ func ConvertUserOnEventToProto (usr models.UserOnEvent) *proto.UserOnEvent{
 	return &newUser
 }
 
-func ConvertMessageToProto(msg models.Message) *proto.Message{
+func ConvertMessageToProto(msg models.Message) *proto.Message {
 	var newMsg proto.Message
 	newMsg.ID = msg.ID
 	newMsg.Date = msg.Date
