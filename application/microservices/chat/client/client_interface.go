@@ -10,6 +10,6 @@ type IChatClient interface {
 	EditMessage(uid uint64, newMessage *models.RedactMessage) (error, int)
 	DeleteMessage(uid uint64, id uint64) (error, int)
 	Mailing(uid uint64, mailing *models.Mailing) (error, int)
-	Search(uid uint64, id int, str string, page int) (models.Messages, error, int)
+	Search(uid uint64, id int, str string, page int) (models.DialogueCards, error, int)
 	Close()
 }

@@ -10,7 +10,7 @@ service Chat {
   rpc EditMessage(SendEditMessage) returns (Answer) {}
   rpc DeleteMessage(IdId) returns (Answer) {}
   rpc Mailing(MailingIn) returns (Answer) {}
-  rpc Search(SearchIn) returns (Messages) {}
+  rpc Search(SearchIn) returns (DialogueCards) {}
 }
 
 message Ids {

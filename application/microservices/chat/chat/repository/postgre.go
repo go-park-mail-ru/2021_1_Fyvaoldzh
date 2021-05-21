@@ -176,60 +176,51 @@ func (cd ChatDatabase) EditMessage(id uint64, text string) error {
 	return nil
 }
 
-func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error) {
-	var messages models.MessagesSQL
-	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT id, mes_from, mes_to, text,
-	date, redact, read FROM messages
-	WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
+func (cd ChatDatabase) MessagesSearch(uid uint64, str string, page int) (models.DialogueCardsSQL, error) {
+	var dialogues models.DialogueCardsSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
+		`SELECT d.id as ID, d.user_1, d.user_2, m.id as IDMes,
+		m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
+	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
+	WHERE (user_1 = $1 OR user_2 = $1) AND (LOWER(m.text) LIKE '%' || $2 || '%')
 	ORDER BY date DESC
-	LIMIT $3 OFFSET $4`, str, uid, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
-	/*err := pgxscan.Select(context.Background(), cd.pool, &messages,
-	`SELECT id, mes_from, mes_to, text,
-	date, redact, read FROM messages
-	WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
-	ORDER BY date`, str, uid)*/
+	LIMIT $3 OFFSET $4`, uid, str, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
 
-	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
+	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
 		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
-		return models.MessagesSQL{}, nil
+		return models.DialogueCardsSQL{}, nil
 	}
 
 	if err != nil {
 		cd.logger.Warn(err)
-		return models.MessagesSQL{}, err
+		return models.DialogueCardsSQL{}, err
 	}
 
-	return messages, nil
+	return dialogues, nil
 }
 
-func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.MessagesSQL, error) {
-	var messages models.MessagesSQL
-	err := pgxscan.Select(context.Background(), cd.pool, &messages,
-		`SELECT id, mes_from, mes_to, text,
-	date, redact, read FROM messages
-	WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
-	AND id_dialogue = $3
-	ORDER BY date DESC
-	LIMIT $4 OFFSET $5`, str, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
-	/*err := pgxscan.Select(context.Background(), cd.pool, &messages,
-	`SELECT id, mes_from, mes_to, text,
-	date, redact, read FROM messages
-	WHERE (LOWER(text) LIKE '%' || $1 || '%') AND (mes_from = $2 OR mes_to = $2)
-	AND id_dialogue = $3
-	ORDER BY date`, str, uid, id)*/
+func (cd ChatDatabase) DialogueMessagesSearch(uid uint64, id uint64, str string, page int) (models.DialogueCardsSQL, error) {
 
-	if errors.As(err, &pgx.ErrNoRows) || len(messages) == 0 {
+	var dialogues models.DialogueCardsSQL
+	err := pgxscan.Select(context.Background(), cd.pool, &dialogues,
+		`SELECT d.id as ID, d.user_1, d.user_2, m.id as IDMes,
+		m.mes_from, m.mes_to, m.text, m.date, m.redact, m.read
+	FROM dialogues d JOIN messages m on d.id = m.id_dialogue
+	WHERE (user_1 = $1 OR user_2 = $1) AND (LOWER(m.text) LIKE '%' || $2 || '%') AND d.id = $3
+	ORDER BY date DESC
+	LIMIT $4 OFFSET $5`, uid, str, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(dialogues) == 0 {
 		cd.logger.Debug("no rows in method CategorySearch with searchstring " + str)
-		return models.MessagesSQL{}, nil
+		return models.DialogueCardsSQL{}, nil
 	}
 
 	if err != nil {
 		cd.logger.Warn(err)
-		return models.MessagesSQL{}, err
+		return models.DialogueCardsSQL{}, err
 	}
 
-	return messages, nil
+	return dialogues, nil
 }
 
 func (cd ChatDatabase) CheckDialogueUsers(uid1 uint64, uid2 uint64) (bool, models.EasyDialogueMessageSQL, error) {

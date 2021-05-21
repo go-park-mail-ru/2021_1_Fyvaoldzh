@@ -15,5 +15,5 @@ type UseCase interface {
 	EditMessage(uid uint64, newMessage *models.RedactMessage) error
 	AutoMailingConstructor(to uint64, from, eventName, eventID string) models.NewMessage
 	Mailing(uid uint64, mailing *models.Mailing) error
-	Search(uid uint64, id int, str string, page int) (models.Messages, error)
+	Search(uid uint64, id int, str string, page int) (models.DialogueCards, error)
 }

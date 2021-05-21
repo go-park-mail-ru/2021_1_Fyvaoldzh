@@ -312,15 +312,15 @@ func (ch ChatHandler) Search(c echo.Context) error {
 		return err
 	}
 
-	messages, err, code := ch.rpcChat.Search(uid, id, str, page)
+	dialogues, err, code := ch.rpcChat.Search(uid, id, str, page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		middleware.ErrResponse(c, code)
 		return err
 	}
-	messages = ch.sanitizer.SanitizeMessages(messages)
+	dialogues = ch.sanitizer.SanitizeDialogueCards(dialogues)
 
-	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
+	if _, err = easyjson.MarshalToWriter(dialogues, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

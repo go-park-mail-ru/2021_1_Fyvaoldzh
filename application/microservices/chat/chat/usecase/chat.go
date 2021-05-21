@@ -221,46 +221,58 @@ func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 	return nil
 }
 
-func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages, error) {
+func (c Chat) Search(uid uint64, id int, str string, page int) (models.DialogueCards, error) {
 	str = strings.ToLower(str)
 
-	var sqlMessages []models.MessageSQL
+	var sqlDialogues models.DialogueCardsSQL
 	var err error
 	if id == 0 {
-		sqlMessages, err = c.repo.MessagesSearch(uid, str, page)
+		sqlDialogues, err = c.repo.MessagesSearch(uid, str, page)
 		if err != nil {
 			c.logger.Warn(err)
-			return models.Messages{}, err
+			return models.DialogueCards{}, err
 		}
 	} else {
 		isDialogue, dialogue, err := c.repo.CheckDialogueID(uint64(id))
 		if err != nil {
-			return models.Messages{}, err
+			return models.DialogueCards{}, err
 		}
 		if !isDialogue {
-			return models.Messages{}, errors.New("no dialogue with this id")
+			return models.DialogueCards{}, errors.New("no dialogue with this id")
 		}
 
 		isInterlocutor := c.IsInterlocutor(uid, dialogue)
 		if isInterlocutor {
-			sqlMessages, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
+			sqlDialogues, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
 			if err != nil {
 				c.logger.Warn(err)
-				return models.Messages{}, err
+				return models.DialogueCards{}, err
 			}
 		} else {
-			return models.Messages{}, errors.New("user is not interlocutor")
+			return models.DialogueCards{}, errors.New("user is not interlocutor")
 		}
 	}
-	var messages models.Messages
 
-	for i := range sqlMessages {
-		messages = append(messages, models.ConvertMessage(sqlMessages[i], uid))
+	var dialogueCards models.DialogueCards
+
+	for i := range sqlDialogues {
+		var interlocutor models.UserOnEvent
+		if sqlDialogues[i].User1 == uid {
+			interlocutor, err = c.repoUser.GetUserByID(sqlDialogues[i].User2)
+		} else {
+			interlocutor, err = c.repoUser.GetUserByID(sqlDialogues[i].User1)
+		}
+		if err != nil {
+			c.logger.Warn(err)
+			return models.DialogueCards{}, err
+		}
+		dialogueCards = append(dialogueCards, models.ConvertDialogueCard(sqlDialogues[i], uid, interlocutor))
 	}
-	if len(messages) == 0 {
+
+	if len(dialogueCards) == 0 {
 		c.logger.Debug("page" + fmt.Sprint(page) + "is empty")
-		return models.Messages{}, nil
+		return models.DialogueCards{}, nil
 	}
 
-	return messages, nil
+	return dialogueCards, nil
 }

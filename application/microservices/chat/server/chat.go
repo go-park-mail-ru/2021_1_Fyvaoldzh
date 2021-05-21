@@ -42,7 +42,7 @@ func (cs *ChatServer) DeleteDialogue(c context.Context, idId *proto.IdId) (*prot
 	/* TODO ATTENTION
 	если в ошибках падает не 500, то можно вернуть в Answer.
 	поднимаешь флаг, пишешь соо, а на стороне клиента ловишь флаг и выдаешь с 4хх
-	 */
+	*/
 
 	return &proto.Answer{}, nil
 }
@@ -94,12 +94,11 @@ func (cs *ChatServer) Mailing(c context.Context, in *proto.MailingIn) (*proto.An
 	return &proto.Answer{}, nil
 }
 
-func (cs *ChatServer) Search(c context.Context, in *proto.SearchIn) (*proto.Messages, error) {
+func (cs *ChatServer) Search(c context.Context, in *proto.SearchIn) (*proto.DialogueCards, error) {
 	answer, err := cs.usecase.Search(in.Uid, int(in.Id), in.Str, int(in.Page))
 	if err != nil {
 		return nil, err
 	}
 
-	return client.ConvertMessagesToProto(answer), nil
+	return client.ConvertDialogueCardsToProto(answer), nil
 }
-
