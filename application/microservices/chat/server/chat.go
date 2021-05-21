@@ -25,6 +25,15 @@ func (cs *ChatServer) GetAllDialogues(_ context.Context, idPage *proto.IdPage) (
 	return client.ConvertDialogueCardsToProto(answer), nil
 }
 
+func (cs *ChatServer) GetAllNotifications(_ context.Context, idPage *proto.IdPage) (*proto.Notifications, error) {
+	answer, err := cs.usecase.GetAllNotifications(idPage.Id, int(idPage.Page))
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ConvertNotificationsToProto(answer), nil
+}
+
 func (cs *ChatServer) GetOneDialogue(_ context.Context, idIdPage *proto.IdIdPage) (*proto.Dialogue, error) {
 	answer, err := cs.usecase.GetOneDialogue(idIdPage.Id1, idIdPage.Id2, int(idIdPage.Page))
 	if err != nil {

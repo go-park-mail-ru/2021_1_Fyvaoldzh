@@ -57,6 +57,21 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
+func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, error) {
+	notifications, err := c.repo.GetAllNotifications(uid, page, time.Now().Add(5*time.Hour))
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Notifications{}, err
+	}
+
+	if len(notifications) == 0 {
+		c.logger.Debug("page" + fmt.Sprint(page) + "is empty")
+		return models.Notifications{}, nil
+	}
+
+	return notifications, nil
+}
+
 func (c Chat) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogue, error) {
 	interlocutor, err := c.repoUser.GetUserByID(uid2)
 	if err != nil {

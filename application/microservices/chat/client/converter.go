@@ -17,6 +17,18 @@ func ConvertDialogueCards(cards *proto.DialogueCards) models.DialogueCards {
 	return newCards
 }
 
+func ConvertNotifications(cards *proto.Notifications) models.Notifications {
+	var newCards models.Notifications
+	for _, elem := range cards.List {
+		var oneCard models.Notification
+		oneCard.ID = elem.ID
+		oneCard.Title = elem.Title
+		oneCard.Type = elem.Type
+		newCards = append(newCards, oneCard)
+	}
+	return newCards
+}
+
 func ConvertUserOnEvent(usr *proto.UserOnEvent) models.UserOnEvent {
 	var newUser models.UserOnEvent
 	newUser.Id = usr.Id
@@ -73,6 +85,18 @@ func ConvertDialogueCardsToProto(cards models.DialogueCards) *proto.DialogueCard
 		oneCard.ID = elem.ID
 		oneCard.Interlocutor = ConvertUserOnEventToProto(elem.Interlocutor)
 		oneCard.LastMessage = ConvertMessageToProto(elem.LastMessage)
+		newCards.List = append(newCards.List, &oneCard)
+	}
+	return &newCards
+}
+
+func ConvertNotificationsToProto(cards models.Notifications) *proto.Notifications {
+	var newCards proto.Notifications
+	for _, elem := range cards {
+		var oneCard proto.Notification
+		oneCard.ID = elem.ID
+		oneCard.Title = elem.Title
+		oneCard.Type = elem.Type
 		newCards.List = append(newCards.List, &oneCard)
 	}
 	return &newCards

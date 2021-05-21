@@ -7,6 +7,7 @@ import (
 
 type Repository interface {
 	GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error)
+	GetAllNotifications(uid uint64, page int, now time.Time) (models.Notifications, error)
 	GetMessages(id uint64, page int) (models.MessagesSQL, error)
 	CheckDialogueID(id uint64) (bool, models.EasyDialogueMessageSQL, error)
 	GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error)

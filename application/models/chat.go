@@ -2,6 +2,12 @@ package models
 
 import "time"
 
+type Notification struct {
+	ID    uint64 `json:"id"`
+	Type  string `json:"type"`
+	Title string `json:"title"`
+}
+
 type NewMessage struct {
 	To   uint64
 	Text string
@@ -107,7 +113,9 @@ type DialogueCardsSQL []DialogueCardSQL
 //easyjson:json
 type DialoguesSQL []DialogueSQL
 
-//Возможно тут как-то объединить эти функции, что-то типа template?
+//easyjson:json
+type Notifications []Notification
+
 func ConvertMessage(old MessageSQL, uid uint64) Message {
 	var newMessage Message
 	newMessage.ID = old.ID

@@ -11,6 +11,7 @@ service Chat {
   rpc DeleteMessage(IdId) returns (Answer) {}
   rpc Mailing(MailingIn) returns (Answer) {}
   rpc Search(SearchIn) returns (DialogueCards) {}
+  rpc GetAllNotifications(IdPage) returns (Notifications) {}
 }
 
 message Ids {
@@ -50,6 +51,16 @@ message IdIdPage {
   uint64 id1 = 1;
   uint64 id2 = 2;
   int32 page = 3;
+}
+
+message Notification {
+  uint64 ID = 1;
+  string Type = 2;
+  string Title =3;
+}
+
+message Notifications {
+  repeated Notification list = 1;
 }
 
 message DialogueCard {

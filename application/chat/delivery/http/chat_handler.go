@@ -41,6 +41,34 @@ func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 	e.POST("/api/v1/message", chatHandler.EditMessage, auth.GetSession)
 	e.POST("/api/v1/message/mailing", chatHandler.Mailing, auth.GetSession)
 	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/notifications", chatHandler.GetNotifications, auth.GetSession, middleware.GetPage)
+}
+
+func (ch ChatHandler) GetNotifications(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+
+	page := c.Get(constants.PageKey).(int)
+	uid := c.Get(constants.UserIdKey).(uint64)
+
+	notifications, err, code := ch.rpcChat.GetAllNotifications(uid, page)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	notifications = ch.sanitizer.SanitizeNotifications(notifications)
+
+	if _, err = easyjson.MarshalToWriter(notifications, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (ch ChatHandler) GetDialogues(c echo.Context) error {

@@ -57,6 +57,27 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 	return dialogues, nil
 }
 
+func (cd ChatDatabase) GetAllNotifications(uid uint64, page int, now time.Time) (models.Notifications, error) {
+	var notifications models.Notifications
+	err := pgxscan.Select(context.Background(), cd.pool, &notifications,
+		`SELECT id, type, title FROM notifications
+		WHERE id_to = $1 AND date < $2
+		ORDER BY date DESC
+		LIMIT $3 OFFSET $4`, uid, now, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+
+	if errors.As(err, &pgx.ErrNoRows) || len(notifications) == 0 {
+		cd.logger.Debug("no rows in method GetAllEvents")
+		return models.Notifications{}, nil
+	}
+
+	if err != nil {
+		cd.logger.Warn(err)
+		return nil, err
+	}
+
+	return notifications, nil
+}
+
 func (cd ChatDatabase) GetMessages(id uint64, page int) (models.MessagesSQL, error) {
 	var messages models.MessagesSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &messages,
