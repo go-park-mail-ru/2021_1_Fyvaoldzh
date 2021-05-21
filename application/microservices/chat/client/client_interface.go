@@ -11,6 +11,6 @@ type IChatClient interface {
 	DeleteMessage(uid uint64, id uint64) (error, int)
 	Mailing(uid uint64, mailing *models.Mailing) (error, int)
 	Search(uid uint64, id int, str string, page int) (models.DialogueCards, error, int)
-	GetNotifications(uid uint64, page int) (models.Notifications, error, int)
+	GetAllNotifications(uid uint64, page int) (models.Notifications, error, int)
 	Close()
 }
