@@ -138,6 +138,21 @@ func (mr *MockUseCaseMockRecorder) GetOneEvent(eventId interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEvent", reflect.TypeOf((*MockUseCase)(nil).GetOneEvent), eventId)
 }
 
+// GetOneEventName mocks base method.
+func (m *MockUseCase) GetOneEventName(eventId uint64) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOneEventName", eventId)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOneEventName indicates an expected call of GetOneEventName.
+func (mr *MockUseCaseMockRecorder) GetOneEventName(eventId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEventName", reflect.TypeOf((*MockUseCase)(nil).GetOneEventName), eventId)
+}
+
 // GetRecommended mocks base method.
 func (m *MockUseCase) GetRecommended(uid uint64, page int) (models.EventCards, error) {
 	m.ctrl.T.Helper()

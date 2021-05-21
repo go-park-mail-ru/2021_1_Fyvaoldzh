@@ -2861,22 +2861,22 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels30(in *jlexer.Lexer, out *Even
 		case "coordinates":
 			if in.IsNull() {
 				in.Skip()
-				out.Сoordinates = nil
+				out.Coordinates = nil
 			} else {
 				in.Delim('[')
-				if out.Сoordinates == nil {
+				if out.Coordinates == nil {
 					if !in.IsDelim(']') {
-						out.Сoordinates = make([]float64, 0, 8)
+						out.Coordinates = make([]float64, 0, 8)
 					} else {
-						out.Сoordinates = []float64{}
+						out.Coordinates = []float64{}
 					}
 				} else {
-					out.Сoordinates = (out.Сoordinates)[:0]
+					out.Coordinates = (out.Coordinates)[:0]
 				}
 				for !in.IsDelim(']') {
 					var v28 float64
 					v28 = float64(in.Float64())
-					out.Сoordinates = append(out.Сoordinates, v28)
+					out.Coordinates = append(out.Coordinates, v28)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2952,11 +2952,11 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels30(out *jwriter.Writer, in Eve
 	{
 		const prefix string = ",\"coordinates\":"
 		out.RawString(prefix)
-		if in.Сoordinates == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		if in.Coordinates == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {
 			out.RawByte('[')
-			for v29, v30 := range in.Сoordinates {
+			for v29, v30 := range in.Coordinates {
 				if v29 > 0 {
 					out.RawByte(',')
 				}

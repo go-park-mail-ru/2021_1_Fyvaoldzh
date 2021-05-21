@@ -3,7 +3,6 @@ module kudago
 go 1.13
 
 require (
-	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
 	github.com/georgysavva/scany v0.2.7
 	github.com/golang/mock v1.5.0
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect

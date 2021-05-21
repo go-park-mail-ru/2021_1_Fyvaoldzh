@@ -1,0 +1,9 @@
+FROM golang:alpine
+
+COPY . /project
+
+WORKDIR /project
+
+RUN go build -o build/go_auth_service ./application/microservices/auth/cmd/
+
+CMD ["/project/build/go_auth_service"]

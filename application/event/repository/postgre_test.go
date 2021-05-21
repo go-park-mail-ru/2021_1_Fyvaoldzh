@@ -28,7 +28,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 	script.Steps = append(script.Steps, pgmock.ExpectMessage(&pgproto3.Query{String: "SELECT id, title, description, image, start_date, end_date FROM events WHERE end_date > $1 ORDER BY id DESC LIMIT 6 OFFSET $2"}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.RowDescription{
 		Fields: []pgproto3.FieldDescription{
-			pgproto3.FieldDescription{
+			{
 				Name:                 []byte("id"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -36,8 +36,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("title"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -45,8 +45,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("description"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -54,8 +54,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("image"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -63,8 +63,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("start_date"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -72,8 +72,8 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
-			pgproto3.FieldDescription{
+						},
+			{
 				Name:                 []byte("end_date"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -81,7 +81,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-			},
+						},
 		},
 	}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.DataRow{

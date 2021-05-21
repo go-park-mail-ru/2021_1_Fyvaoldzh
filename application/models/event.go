@@ -16,7 +16,7 @@ type Event struct {
 	Street      string       `json:"street"`
 	Tags        Tags         `json:"tags"`
 	Category    string       `json:"category"`
-	Сoordinates []float64    `json:"coordinates"`
+	Coordinates []float64    `json:"coordinates"`
 	Image       string       `json:"image"`
 	Followers   UsersOnEvent `json:"followers"`
 }
@@ -104,7 +104,7 @@ func ConvertEvent(old EventSQL) Event {
 	newEvent.Category = old.Category
 	newEvent.Image = old.Image.String
 	if old.Latitude.Valid && old.Longitude.Valid {
-		newEvent.Сoordinates = append(newEvent.Сoordinates, old.Latitude.Float64, old.Longitude.Float64)
+		newEvent.Coordinates = append(newEvent.Coordinates, old.Latitude.Float64, old.Longitude.Float64)
 	}
 	return newEvent
 }

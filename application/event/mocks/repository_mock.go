@@ -138,6 +138,21 @@ func (mr *MockRepositoryMockRecorder) GetOneEventByID(eventId interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEventByID", reflect.TypeOf((*MockRepository)(nil).GetOneEventByID), eventId)
 }
 
+// GetOneEventNameByID mocks base method.
+func (m *MockRepository) GetOneEventNameByID(eventId uint64) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOneEventNameByID", eventId)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOneEventNameByID indicates an expected call of GetOneEventNameByID.
+func (mr *MockRepositoryMockRecorder) GetOneEventNameByID(eventId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEventNameByID", reflect.TypeOf((*MockRepository)(nil).GetOneEventNameByID), eventId)
+}
+
 // GetPreference mocks base method.
 func (m *MockRepository) GetPreference(uid uint64) (models.Recomend, error) {
 	m.ctrl.T.Helper()

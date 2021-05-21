@@ -16,7 +16,7 @@ func NewChatServer(usecase chat.UseCase) *ChatServer {
 	return &ChatServer{usecase: usecase}
 }
 
-func (cs *ChatServer) GetAllDialogues(c context.Context, idPage *proto.IdPage) (*proto.DialogueCards, error) {
+func (cs *ChatServer) GetAllDialogues(_ context.Context, idPage *proto.IdPage) (*proto.DialogueCards, error) {
 	answer, err := cs.usecase.GetAllDialogues(idPage.Id, int(idPage.Page))
 	if err != nil {
 		return nil, err
@@ -25,7 +25,7 @@ func (cs *ChatServer) GetAllDialogues(c context.Context, idPage *proto.IdPage) (
 	return client.ConvertDialogueCardsToProto(answer), nil
 }
 
-func (cs *ChatServer) GetOneDialogue(c context.Context, idIdPage *proto.IdIdPage) (*proto.Dialogue, error) {
+func (cs *ChatServer) GetOneDialogue(_ context.Context, idIdPage *proto.IdIdPage) (*proto.Dialogue, error) {
 	answer, err := cs.usecase.GetOneDialogue(idIdPage.Id1, idIdPage.Id2, int(idIdPage.Page))
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func (cs *ChatServer) GetOneDialogue(c context.Context, idIdPage *proto.IdIdPage
 	return client.ConvertDialogueToProto(answer), nil
 }
 
-func (cs *ChatServer) DeleteDialogue(c context.Context, idId *proto.IdId) (*proto.Answer, error) {
+func (cs *ChatServer) DeleteDialogue(_ context.Context, idId *proto.IdId) (*proto.Answer, error) {
 	err := cs.usecase.DeleteDialogue(idId.Id1, idId.Id2)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (cs *ChatServer) DeleteDialogue(c context.Context, idId *proto.IdId) (*prot
 	return &proto.Answer{}, nil
 }
 
-func (cs *ChatServer) SendMessage(c context.Context, msg *proto.SendEditMessage) (*proto.Answer, error) {
+func (cs *ChatServer) SendMessage(_ context.Context, msg *proto.SendEditMessage) (*proto.Answer, error) {
 	newMsg := models.NewMessage{
 		To:   msg.Id1,
 		Text: msg.Text,
@@ -60,7 +60,7 @@ func (cs *ChatServer) SendMessage(c context.Context, msg *proto.SendEditMessage)
 	return &proto.Answer{}, nil
 }
 
-func (cs *ChatServer) EditMessage(c context.Context, msg *proto.SendEditMessage) (*proto.Answer, error) {
+func (cs *ChatServer) EditMessage(_ context.Context, msg *proto.SendEditMessage) (*proto.Answer, error) {
 	newMsg := models.RedactMessage{
 		ID:   msg.Id2,
 		Text: msg.Text,
@@ -73,7 +73,7 @@ func (cs *ChatServer) EditMessage(c context.Context, msg *proto.SendEditMessage)
 	return &proto.Answer{}, nil
 }
 
-func (cs *ChatServer) DeleteMessage(c context.Context, msg *proto.IdId) (*proto.Answer, error) {
+func (cs *ChatServer) DeleteMessage(_ context.Context, msg *proto.IdId) (*proto.Answer, error) {
 	err := cs.usecase.DeleteMessage(msg.Id1, msg.Id2)
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (cs *ChatServer) DeleteMessage(c context.Context, msg *proto.IdId) (*proto.
 	return &proto.Answer{}, nil
 }
 
-func (cs *ChatServer) Mailing(c context.Context, in *proto.MailingIn) (*proto.Answer, error) {
+func (cs *ChatServer) Mailing(_ context.Context, in *proto.MailingIn) (*proto.Answer, error) {
 	err := cs.usecase.Mailing(in.UserId, &models.Mailing{
 		EventID: in.EventId,
 		To:      client.ConvertIds(in.To),

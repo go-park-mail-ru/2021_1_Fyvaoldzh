@@ -34,8 +34,6 @@ var (
 	street   = "test_street"
 	category = "test_category"
 	name     = "test_name"
-	ttype    = "test_type"
-	search   = "test_search"
 )
 
 var testTags = models.Tags{

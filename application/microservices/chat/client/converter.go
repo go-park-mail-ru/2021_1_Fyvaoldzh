@@ -62,9 +62,7 @@ func ConvertDialogue(d *proto.Dialogue) models.Dialogue {
 
 func ConvertIdsToProto(massiv []uint64) *proto.Ids {
 	var n proto.Ids
-	for _, elem := range massiv {
-		n.List = append(n.List, elem)
-	}
+	n.List = append(n.List, massiv...)
 	return &n
 }
 
@@ -109,8 +107,6 @@ func ConvertDialogueToProto(d models.Dialogue) *proto.Dialogue {
 
 func ConvertIds(massiv *proto.Ids) []uint64 {
 	var n []uint64
-	for _, elem := range massiv.List {
-		n = append(n, elem)
-	}
+	n = append(n, massiv.List...)
 	return n
 }

@@ -24,20 +24,10 @@ var (
 	eventId2   uint64 = 2
 	page              = 1
 	num        uint64 = 3
-	evPlanning        = models.EventCard{
-		ID:        eventId,
-		StartDate: evPlanningSQL.StartDate.String(),
-		EndDate:   evPlanningSQL.EndDate.String(),
-	}
 	evVisitedSQL = models.EventCardWithDateSQL{
 		ID:        eventId2,
 		StartDate: time.Now(),
 		EndDate:   time.Now(),
-	}
-	evVisited = models.EventCard{
-		ID:        eventId2,
-		StartDate: evVisitedSQL.StartDate.String(),
-		EndDate:   evVisitedSQL.EndDate.String(),
 	}
 	evPlanningSQL = models.EventCardWithDateSQL{
 		ID:        eventId,
@@ -49,12 +39,6 @@ var (
 	}
 	eventsVisitedSQL = []models.EventCardWithDateSQL{
 		evVisitedSQL,
-	}
-	eventsPlanning = []models.EventCard{
-		evPlanning,
-	}
-	eventsVisited = []models.EventCard{
-		evVisited,
 	}
 )
 

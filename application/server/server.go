@@ -73,7 +73,7 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	opentracing.SetGlobalTracer(tracer)
 
 	e := echo.New()
-	logger := logger.NewLogger(l)
+	lg := logger.NewLogger(l)
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"*"},
 		AllowCredentials: true,
@@ -81,44 +81,44 @@ func NewServer(l *zap.SugaredLogger) *Server {
 
 	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
 	if err != nil {
-		logger.Fatal(err)
+		lg.Fatal(err)
 	}
 	err = pool.Ping(context.Background())
 	if err != nil {
-		logger.Fatal(err)
+		lg.Fatal(err)
 	}
 
-	rpcAuth, err := clientAuth.NewAuthClient(constants.AuthServicePort, logger, tracer)
+	rpcAuth, err := clientAuth.NewAuthClient(constants.AuthServicePort, lg, tracer)
 	if err != nil {
-		logger.Fatal(err)
+		lg.Fatal(err)
 	}
 
-	rpcSub, err := clientSub.NewSubscriptionClient(constants.SubscriptionServicePort, logger, tracer)
+	rpcSub, err := clientSub.NewSubscriptionClient(constants.SubscriptionServicePort, lg, tracer)
 	if err != nil {
-		logger.Fatal(err)
+		lg.Fatal(err)
 	}
 
-	rpcChat, err := clientChat.NewChatClient(constants.ChatServicePort, logger, tracer)
+	rpcChat, err := clientChat.NewChatClient(constants.ChatServicePort, lg, tracer)
 	if err != nil {
-		logger.Fatal(err)
+		lg.Fatal(err)
 	}
 
-	userRep := repository.NewUserDatabase(pool, logger)
-	eventRep := erepository.NewEventDatabase(pool, logger)
-	subRep := srepository.NewSubscriptionDatabase(pool, logger)
+	userRep := repository.NewUserDatabase(pool, lg)
+	eventRep := erepository.NewEventDatabase(pool, lg)
+	subRep := srepository.NewSubscriptionDatabase(pool, lg)
 
-	userUC := usecase.NewUser(userRep, subRep, logger)
-	eventUC := eusecase.NewEvent(eventRep, subRep, logger)
-	subscriptionUC := subusecase.NewSubscription(subRep, logger)
+	userUC := usecase.NewUser(userRep, subRep, lg)
+	eventUC := eusecase.NewEvent(eventRep, subRep, lg)
+	subscriptionUC := subusecase.NewSubscription(subRep, lg)
 
 	sanitizer := custom_sanitizer.NewCustomSanitizer(bluemonday.UGCPolicy())
 
 	auth := middleware1.NewAuth(rpcAuth)
 
-	http.CreateUserHandler(e, userUC, rpcAuth, sanitizer, logger, auth)
-	shttp.CreateSubscriptionsHandler(e, rpcAuth, rpcSub, subscriptionUC, sanitizer, logger, auth)
-	ehttp.CreateEventHandler(e, eventUC, rpcAuth, sanitizer, logger, auth)
-	chhttp.CreateChatHandler(e, rpcAuth, sanitizer, logger, auth, rpcChat)
+	http.CreateUserHandler(e, userUC, rpcAuth, sanitizer, lg, auth)
+	shttp.CreateSubscriptionsHandler(e, rpcAuth, rpcSub, subscriptionUC, sanitizer, lg, auth)
+	ehttp.CreateEventHandler(e, eventUC, rpcAuth, sanitizer, lg, auth)
+	chhttp.CreateChatHandler(e, rpcAuth, sanitizer, lg, auth, rpcChat)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,

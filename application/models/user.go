@@ -45,7 +45,7 @@ func ConvertUserCard(sqlCard UserCardSQL) *UserCard {
 	card.Name = sqlCard.Name
 	card.Avatar = sqlCard.Avatar
 	if sqlCard.Birthday.Valid {
-		dif := sqlCard.Birthday.Time.Sub(time.Now())
+		dif := time.Until(sqlCard.Birthday.Time)
 		secdif := math.Abs(dif.Seconds())
 		card.Age = uint8(secdif / 31536000)
 	}
@@ -122,7 +122,7 @@ func ConvertToOther(own UserDataSQL) *OtherUserProfile {
 	//usr.Password = own.Password.String
 	usr.Name = own.Name.String
 	if own.Birthday.Valid {
-		dif := own.Birthday.Time.Sub(time.Now())
+		dif := time.Until(own.Birthday.Time)
 		secdif := math.Abs(dif.Seconds())
 		usr.Age = uint8(secdif / 31536000)
 	}

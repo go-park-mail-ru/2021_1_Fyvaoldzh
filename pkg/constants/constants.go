@@ -7,11 +7,11 @@ const (
 	UserIdKey               = "user_id"
 	PageKey                 = "page"
 	IdKey                   = "id"
-	CSRFHeader              = "header:X-XSRF-TOKEN"
+	//CSRFHeader              = "header:X-XSRF-TOKEN"
 	DBConnect               = "user=postgre dbname=qdago password=fyvaoldzh host=localhost port=5432 sslmode=disable pool_max_conns=10"
 	DateFormat              = "2006-01-02"
 	DateTimeFormat          = "2006-01-02T15:04:05"
-	DefaultAvatar           = "public/default.png"
+	//DefaultAvatar           = "public/default.png"
 	TarantoolAddress        = "127.0.0.1:3301"
 	TarantoolUser           = "admin"
 	AuthServicePort         = ":3001"
@@ -22,9 +22,9 @@ const (
 	UserPicDir              = "public/users/"
 	EventsPicDir            = "public/events/"
 	SaltLength              = 8
-	CookiePath              = "/"
+	//CookiePath              = "/"
 	EventsPerPage           = 6
-	UsersPerPage            = 10
+	//UsersPerPage            = 10
 	ChatPerPage             = 100
 	MailingText             = " приглашает Вас на мероприятие "
 	MailingAddress          = "95.163.180.8:3000/event"

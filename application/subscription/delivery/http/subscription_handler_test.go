@@ -22,10 +22,10 @@ import (
 var (
 	userId        uint64 = 1
 	n                    = 1
-	id            uint64 = 1
+
 	num                  = 2
 	numu          uint64 = 2
-	strId                = "1"
+
 	name                 = "name"
 	evPlanningSQL        = models.EventCardWithDateSQL{
 		ID:        1,
@@ -40,30 +40,9 @@ var (
 		StartDate:   evPlanningSQL.StartDate.String(),
 		EndDate:     evPlanningSQL.EndDate.String(),
 	}
-	evVisitedSQL = models.EventCardWithDateSQL{
-		ID:        2,
-		StartDate: time.Now(),
-		EndDate:   time.Now(),
-	}
-	evVisited = models.EventCard{
-		ID:          2,
-		Title:       "title",
-		Place:       "place",
-		Description: "desc",
-		StartDate:   evVisitedSQL.StartDate.String(),
-		EndDate:     evVisitedSQL.EndDate.String(),
-	}
-	eventsPlanningSQL = []models.EventCardWithDateSQL{
-		evPlanningSQL, evVisitedSQL,
-	}
-	eventsVisitedSQL = []models.EventCardWithDateSQL{
-		evVisitedSQL,
-	}
+
 	eventsPlanning = models.EventCards{
 		evPlanning,
-	}
-	eventsVisited = models.EventCards{
-		evVisited,
 	}
 )
 
@@ -102,8 +81,7 @@ func setUp(t *testing.T, url, method string) (echo.Context,
 		Logger:  logger.NewLogger(sugar),
 	}
 
-	var req *http.Request
-	req = httptest.NewRequest(http.MethodGet, url, nil)
+	req := httptest.NewRequest(http.MethodGet, url, nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetPath(url)

@@ -76,11 +76,11 @@ func (s *Server) ListenAndServe() error {
 		UnaryInterceptor(traceutils.OpenTracingServerInterceptor(tracer)))
 
 	listener, err := net.Listen("tcp", s.port)
-	defer listener.Close()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	defer listener.Close()
 	proto.RegisterChatServer(gServer, s.ss)
 	log.Println("starting server at " + s.port)
 	err = gServer.Serve(listener)

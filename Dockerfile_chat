@@ -1,0 +1,9 @@
+FROM golang:alpine
+
+COPY . /project
+
+WORKDIR /project
+
+RUN go build -o build/go_chat_service ./application/microservices/chat/cmd/
+
+CMD ["/project/build/go_chat_service"]
