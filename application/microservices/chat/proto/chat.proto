@@ -55,8 +55,11 @@ message IdIdPage {
 
 message Notification {
   uint64 ID = 1;
-  string Type = 2;
-  string Title =3;
+  uint64 IDToImage = 2;
+  string Type = 3;
+  string Date = 4;
+  string Text = 5;
+  bool Read = 6;
 }
 
 message Notifications {

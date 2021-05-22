@@ -7,7 +7,7 @@ import (
 
 type Repository interface {
 	GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error)
-	GetAllNotifications(uid uint64, page int, now time.Time) (models.Notifications, error)
+	GetAllNotifications(uid uint64, page int, now time.Time) (models.NotificationsSQL, error)
 	GetMessages(id uint64, page int) (models.MessagesSQL, error)
 	CheckDialogueID(id uint64) (bool, models.EasyDialogueMessageSQL, error)
 	GetEasyMessage(id uint64) (models.EasyDialogueMessageSQL, error)
@@ -21,4 +21,6 @@ type Repository interface {
 	CheckMessage(id uint64) (bool, models.EasyDialogueMessageSQL, error)
 	NewDialogue(uid1 uint64, uid2 uint64) (uint64, error)
 	ReadMessages(id uint64, page int, uid uint64) error
+	ReadNotifications(uid uint64, page int, now time.Time) error
+	AddMailNotification(id uint64, idTo uint64, now time.Time) error
 }

@@ -98,6 +98,19 @@ func (cs *CustomSanitizer) SanitizeActions(actions models.ActionCards) models.Ac
 	}
 	return newActions
 }
+
+func (cs *CustomSanitizer) SanitizeNotifications(notifications models.Notifications) models.Notifications {
+	var sanitizeNotifications models.Notifications
+	for _, elem := range notifications {
+		elem.Text = cs.sanitizer.Sanitize(elem.Text)
+		elem.Date = cs.sanitizer.Sanitize(elem.Date)
+		elem.Type = cs.sanitizer.Sanitize(elem.Type)
+		sanitizeNotifications = append(sanitizeNotifications, elem)
+	}
+
+	return sanitizeNotifications
+}
+
 func (cs *CustomSanitizer) SanitizeDialogueCards(dialogues models.DialogueCards) models.DialogueCards {
 	var sanitizeDialogues models.DialogueCards
 	for _, elem := range dialogues {

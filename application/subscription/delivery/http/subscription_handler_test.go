@@ -20,14 +20,14 @@ import (
 )
 
 var (
-	userId        uint64 = 1
-	n                    = 1
+	userId uint64 = 1
+	n             = 1
 
-	num                  = 2
-	numu          uint64 = 2
+	num         = 2
+	numu uint64 = 2
 
-	name                 = "name"
-	evPlanningSQL        = models.EventCardWithDateSQL{
+	name          = "name"
+	evPlanningSQL = models.EventCardWithDateSQL{
 		ID:        1,
 		StartDate: time.Now(),
 		EndDate:   time.Now().Add(10 * time.Hour),

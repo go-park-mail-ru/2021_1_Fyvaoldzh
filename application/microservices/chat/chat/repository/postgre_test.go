@@ -61,7 +61,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("id_dialogue"),
 				TableOID:             0,
@@ -70,7 +70,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("mes_from"),
 				TableOID:             0,
@@ -79,7 +79,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("mes_to"),
 				TableOID:             0,
@@ -88,7 +88,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("text"),
 				TableOID:             0,
@@ -97,7 +97,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("date"),
 				TableOID:             0,
@@ -106,7 +106,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("redact"),
 				TableOID:             0,
@@ -115,7 +115,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         1,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("read"),
 				TableOID:             0,
@@ -124,7 +124,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         1,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 		},
 	}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.DataRow{

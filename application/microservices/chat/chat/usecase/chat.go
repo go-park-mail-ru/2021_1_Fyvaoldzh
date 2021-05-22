@@ -57,11 +57,71 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
+func (c Chat) AutoNotificationConstructor(notification *models.Notification, title string) {
+	if notification.Type == constants.MailNotif {
+		notification.Text = title + constants.MailNotifText
+	}
+	if notification.Type == constants.EventNotif {
+		notification.Text = constants.EventNotifText1 + title + constants.EventNotifText2 + notification.Date
+	}
+}
+
+//TODO: Разделить немного функцию
 func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, error) {
-	notifications, err := c.repo.GetAllNotifications(uid, page, time.Now().Add(5*time.Hour))
+	flagTime := time.Now().Add(5 * time.Hour)
+	notificationsSQL, err := c.repo.GetAllNotifications(uid, page, flagTime)
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Notifications{}, err
+	}
+
+	err = c.repo.ReadNotifications(uid, page, flagTime)
+	if err != nil {
+		c.logger.Warn(err)
+	}
+
+	var notifications models.Notifications
+
+	for i := range notificationsSQL {
+		var newNotif models.Notification
+		if notificationsSQL[i].Type == constants.MailNotif {
+			isDialogue, dialogue, err := c.repo.CheckDialogueID(notificationsSQL[i].ID)
+			if err != nil {
+				c.logger.Warn(err)
+				continue
+			}
+			if !isDialogue {
+				c.logger.Warn(err)
+				continue
+			}
+
+			if dialogue.User1 == uid {
+				newNotif = models.ConvertNotification(notificationsSQL[i], dialogue.User2)
+				interlocutor, err := c.repoUser.GetUserByID(dialogue.User2)
+				if err != nil {
+					c.logger.Warn(err)
+					continue
+				}
+				c.AutoNotificationConstructor(&newNotif, interlocutor.Name)
+			} else {
+				newNotif = models.ConvertNotification(notificationsSQL[i], dialogue.User1)
+				interlocutor, err := c.repoUser.GetUserByID(dialogue.User1)
+				if err != nil {
+					c.logger.Warn(err)
+					continue
+				}
+				c.AutoNotificationConstructor(&newNotif, interlocutor.Name)
+			}
+		} else {
+			newNotif = models.ConvertNotification(notificationsSQL[i], notificationsSQL[i].ID)
+			event, err := c.repoEvent.GetOneEventByID(notificationsSQL[i].ID)
+			if err != nil {
+				c.logger.Warn(err)
+				continue
+			}
+			c.AutoNotificationConstructor(&newNotif, event.Title)
+		}
+		notifications = append(notifications, newNotif)
 	}
 
 	if len(notifications) == 0 {
@@ -216,10 +276,12 @@ func (c Chat) AutoMailingConstructor(to uint64, from, eventName, eventID string)
 func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 	sender, err := c.repoUser.GetUserByID(uid)
 	if err != nil {
+		c.logger.Warn(err)
 		return err
 	}
 	ev, err := c.repoEvent.GetOneEventByID(mailing.EventID)
 	if err != nil {
+		c.logger.Warn(err)
 		return err
 	}
 
@@ -227,7 +289,23 @@ func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 		message := c.AutoMailingConstructor(id, sender.Name, ev.Title, fmt.Sprint(ev.ID))
 		err := c.SendMessage(&message, uid)
 		if err != nil {
+			c.logger.Warn(err)
 			return err
+		}
+
+		isDialogue, dialogue, err := c.repo.CheckDialogueUsers(uid, message.To)
+		if err != nil {
+			c.logger.Warn(err)
+			continue
+		}
+		if !isDialogue {
+			c.logger.Warn(errors.New("cannot create notification"))
+			continue
+		}
+
+		err = c.repo.AddMailNotification(dialogue.ID, message.To, time.Now())
+		if err != nil {
+			c.logger.Warn(err)
 		}
 	}
 	return nil

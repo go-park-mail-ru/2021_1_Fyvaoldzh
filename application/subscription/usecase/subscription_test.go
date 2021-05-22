@@ -19,12 +19,12 @@ import (
 )
 
 var (
-	userId     uint64 = 1
-	eventId    uint64 = 1
-	eventId2   uint64 = 2
-	page              = 1
-	num        uint64 = 3
-	evVisitedSQL = models.EventCardWithDateSQL{
+	userId       uint64 = 1
+	eventId      uint64 = 1
+	eventId2     uint64 = 2
+	page                = 1
+	num          uint64 = 3
+	evVisitedSQL        = models.EventCardWithDateSQL{
 		ID:        eventId2,
 		StartDate: time.Now(),
 		EndDate:   time.Now(),

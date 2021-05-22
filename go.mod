@@ -28,6 +28,7 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20210423174036-e997de6604e2 // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
+	golang.org/x/tools/gopls v0.6.11 // indirect
 	google.golang.org/genproto v0.0.0-20210423144448-3a41ef94ed2b // indirect
 	google.golang.org/grpc v1.37.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 // indirect

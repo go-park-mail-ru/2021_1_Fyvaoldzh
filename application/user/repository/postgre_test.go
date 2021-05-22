@@ -73,7 +73,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         8,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("name"),
 				TableOID:             0,
@@ -82,7 +82,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("login"),
 				TableOID:             0,
@@ -91,7 +91,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 			{
 				Name:                 []byte("password"),
 				TableOID:             0,
@@ -100,7 +100,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				DataTypeSize:         60,
 				TypeModifier:         -1,
 				Format:               0,
-						},
+			},
 		},
 	}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.DataRow{

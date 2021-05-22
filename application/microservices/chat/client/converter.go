@@ -22,8 +22,11 @@ func ConvertNotifications(cards *proto.Notifications) models.Notifications {
 	for _, elem := range cards.List {
 		var oneCard models.Notification
 		oneCard.ID = elem.ID
-		oneCard.Title = elem.Title
+		oneCard.IDToImage = elem.IDToImage
 		oneCard.Type = elem.Type
+		oneCard.Date = elem.Date
+		oneCard.Text = elem.Text
+		oneCard.Read = elem.Read
 		newCards = append(newCards, oneCard)
 	}
 	return newCards
@@ -95,8 +98,11 @@ func ConvertNotificationsToProto(cards models.Notifications) *proto.Notification
 	for _, elem := range cards {
 		var oneCard proto.Notification
 		oneCard.ID = elem.ID
-		oneCard.Title = elem.Title
+		oneCard.IDToImage = elem.IDToImage
 		oneCard.Type = elem.Type
+		oneCard.Date = elem.Date
+		oneCard.Text = elem.Text
+		oneCard.Read = elem.Read
 		newCards.List = append(newCards.List, &oneCard)
 	}
 	return &newCards
