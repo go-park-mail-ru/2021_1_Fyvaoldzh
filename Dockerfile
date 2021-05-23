@@ -1,4 +1,3 @@
-
 FROM golang:alpine
 
 COPY . /project
