@@ -9,4 +9,5 @@ type UseCase interface {
 	GetSubscriptions(id uint64, page int) (models.UserCards, error)
 	GetPlanningEvents(id uint64, page int) (models.EventCards, error)
 	GetVisitedEvents(id uint64, page int) (models.EventCards, error)
+	IsSubscribedUser(subscriberId uint64, subscribedToId uint64) (bool, error)
 }

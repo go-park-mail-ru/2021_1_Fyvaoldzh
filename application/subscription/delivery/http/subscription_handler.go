@@ -66,6 +66,10 @@ func CreateSubscriptionsHandler(e *echo.Echo,
 		subscriptionHandler.GetSubscriptions,
 		middleware.GetPage,
 		middleware.GetId)
+	e.GET("/api/v1/is_followed/:id",
+		subscriptionHandler.IsFollowed,
+		a.GetSession,
+		middleware.GetId)
 	e.GET("/api/v1/event/is_added/:id",
 		subscriptionHandler.IsAdded,
 		a.GetSession,
@@ -276,5 +280,30 @@ func (sh SubscriptionHandler) GetVisitedEvents(c echo.Context) error {
 	}
 	middleware.OkResponse(c)
 
+	return nil
+}
+
+func (sh SubscriptionHandler) IsFollowed(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	subscribedToId := c.Get(constants.IdKey).(int)
+	subscriberId := c.Get(constants.UserIdKey).(uint64)
+
+	var err error
+	var answer models.IsFollowed
+	answer.IsFollowed, err = sh.usecase.IsSubscribedUser(subscriberId, uint64(subscribedToId))
+	if err != nil {
+		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(answer, c.Response().Writer); err != nil {
+		sh.Logger.Warn(err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	middleware.OkResponse(c)
 	return nil
 }
