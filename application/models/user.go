@@ -169,3 +169,7 @@ func ConvertActionCard(card ActionCard) ActionCardStringTime {
 	newCard.Time = card.Time.Format(constants.DateTimeFormat)
 	return newCard
 }
+
+type IsFollowed struct {
+	IsFollowed bool `json:"isFollowed"`
+}
