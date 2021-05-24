@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"kudago/application/microservices/subscription/subscription"
+	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"time"
 )
@@ -183,4 +184,43 @@ func (sd SubscriptionDatabase) CheckEventInList(eventId uint64) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (sd SubscriptionDatabase) GetTimeEvent(eventId uint64) (time.Time, error) {
+	var date time.Time
+	err := sd.pool.
+		QueryRow(context.Background(),
+			`SELECT start_date
+			FROM events WHERE id = $1`,
+			eventId).Scan(&date)
+	if err != nil {
+		sd.logger.Warn(err)
+		return time.Time{}, status.Error(codes.Internal, err.Error())
+	}
+
+	return date, nil
+}
+
+func (sd SubscriptionDatabase) AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO notifications 
+		VALUES ($1, $2, $3, $4, default)`,
+		eventId, constants.EventNotif, userId, eventDate)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+	return nil
+}
+
+func (sd SubscriptionDatabase) RemovePlanningNotification(eventId uint64, userId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM notifications WHERE id = $1 AND id_to = $2 AND type = $3`,
+		eventId, userId, constants.EventNotif)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
 }
