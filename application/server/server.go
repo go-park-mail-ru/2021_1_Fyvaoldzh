@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	kudago_http "kudago/application/api_kudago/delivery/http"
+	kudago_client "kudago/application/microservices/api_kudago/client"
 	"log"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -45,6 +47,7 @@ type Server struct {
 	rpcAuth clientAuth.IAuthClient
 	rpcSub  clientSub.ISubscriptionClient
 	rpcChat clientChat.IChatClient
+	rpcKudago *kudago_client.KudagoClient
 	e       *echo.Echo
 }
 
@@ -103,6 +106,11 @@ func NewServer(l *zap.SugaredLogger) *Server {
 		lg.Fatal(err)
 	}
 
+	rpcKudago, err := kudago_client.NewKudagoClient(constants.KudagoServicePort, lg, tracer)
+	if err != nil {
+		lg.Fatal(err)
+	}
+
 	userRep := repository.NewUserDatabase(pool, lg)
 	eventRep := erepository.NewEventDatabase(pool, lg)
 	subRep := srepository.NewSubscriptionDatabase(pool, lg)
@@ -119,6 +127,7 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	shttp.CreateSubscriptionsHandler(e, rpcAuth, rpcSub, subscriptionUC, sanitizer, lg, auth)
 	ehttp.CreateEventHandler(e, eventUC, rpcAuth, sanitizer, lg, auth)
 	chhttp.CreateChatHandler(e, rpcAuth, sanitizer, lg, auth, rpcChat)
+	kudago_http.CreateKudagoHandler(e, rpcKudago, lg)
 
 	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 	//	TokenLookup: constants.CSRFHeader,
@@ -132,6 +141,7 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	server.rpcAuth = rpcAuth
 	server.rpcSub = rpcSub
 	server.rpcChat = rpcChat
+	server.rpcKudago = rpcKudago
 	return &server
 }
 
@@ -140,4 +150,5 @@ func (s Server) ListenAndServe() {
 	defer s.rpcAuth.Close()
 	defer s.rpcSub.Close()
 	defer s.rpcChat.Close()
+	defer s.rpcKudago.Close()
 }

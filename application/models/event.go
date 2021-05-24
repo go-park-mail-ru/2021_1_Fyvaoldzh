@@ -19,6 +19,8 @@ type Event struct {
 	Coordinates []float64    `json:"coordinates"`
 	Image       string       `json:"image"`
 	Followers   UsersOnEvent `json:"followers"`
+	Latitude    float64
+	Longitude   float64
 }
 
 type EventSQL struct {
