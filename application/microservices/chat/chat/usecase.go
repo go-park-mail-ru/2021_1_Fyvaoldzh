@@ -9,6 +9,7 @@ type UseCase interface {
 	IsSenderMessage(uid uint64, elem models.EasyDialogueMessageSQL) bool
 	GetAllDialogues(uid uint64, page int) (models.DialogueCards, error)
 	GetAllNotifications(uid uint64, page int) (models.Notifications, error)
+	GetAllCounts(uid uint64) (models.Counts, error)
 	GetOneDialogue(uid uint64, id uint64, page int) (models.Dialogue, error)
 	DeleteDialogue(uid uint64, id uint64) error
 	SendMessage(newMessage *models.NewMessage, uid uint64) error

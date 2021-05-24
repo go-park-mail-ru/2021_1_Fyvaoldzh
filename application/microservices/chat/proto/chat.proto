@@ -12,6 +12,11 @@ service Chat {
   rpc Mailing(MailingIn) returns (Answer) {}
   rpc Search(SearchIn) returns (DialogueCards) {}
   rpc GetAllNotifications(IdPage) returns (Notifications) {}
+  rpc GetAllCounts(Id) returns (Counts) {}
+}
+
+message Id {
+  uint64 id = 1;
 }
 
 message Ids {
@@ -51,6 +56,11 @@ message IdIdPage {
   uint64 id1 = 1;
   uint64 id2 = 2;
   int32 page = 3;
+}
+
+message Counts {
+  uint64 Notifications = 1;
+  uint64 Chat = 2;
 }
 
 message Notification {

@@ -41,6 +41,32 @@ func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 	e.POST("/api/v1/message/mailing", chatHandler.Mailing, auth.GetSession)
 	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession, middleware.GetPage)
 	e.GET("/api/v1/notifications", chatHandler.GetNotifications, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/counts", chatHandler.GetCounts, auth.GetSession)
+}
+
+func (ch ChatHandler) GetCounts(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+
+	uid := c.Get(constants.UserIdKey).(uint64)
+
+	counts, err, code := ch.rpcChat.GetAllCounts(uid)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(counts, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (ch ChatHandler) GetNotifications(c echo.Context) error {

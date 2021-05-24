@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/tarantool/go-tarantool"
 	"log"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -103,7 +104,20 @@ func NewServer(l *zap.SugaredLogger) *Server {
 		lg.Fatal(err)
 	}
 
-	userRep := repository.NewUserDatabase(pool, lg)
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
+	if err != nil {
+		lg.Fatal(err)
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		lg.Fatal(err)
+	}
+
+	userRep := repository.NewUserDatabase(pool, conn, lg)
 	eventRep := erepository.NewEventDatabase(pool, lg)
 	subRep := srepository.NewSubscriptionDatabase(pool, lg)
 

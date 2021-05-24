@@ -67,6 +67,17 @@ func (c *ChatClient) GetAllNotifications(uid uint64, page int) (models.Notificat
 	return ConvertNotifications(notifications), nil, http.StatusOK
 }
 
+func (c *ChatClient) GetAllCounts(uid uint64) (models.Counts, error, int) {
+	id := &chat_proto.Id{Id: uid}
+
+	counts, err := c.client.GetAllCounts(context.Background(), id)
+	if err != nil {
+		return models.Counts{}, err, http.StatusInternalServerError
+	}
+
+	return ConvertCounts(counts), nil, http.StatusOK
+}
+
 func (c *ChatClient) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogue, error, int) {
 	idIdPage := &chat_proto.IdIdPage{
 		Id1:  uid1,

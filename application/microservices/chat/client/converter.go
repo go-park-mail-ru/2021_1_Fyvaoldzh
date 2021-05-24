@@ -17,6 +17,13 @@ func ConvertDialogueCards(cards *proto.DialogueCards) models.DialogueCards {
 	return newCards
 }
 
+func ConvertCounts(cards *proto.Counts) models.Counts {
+	var newCards models.Counts
+	newCards.Chat = cards.Chat
+	newCards.Notifications = cards.Notifications
+	return newCards
+}
+
 func ConvertNotifications(cards *proto.Notifications) models.Notifications {
 	var newCards models.Notifications
 	for _, elem := range cards.List {
@@ -105,6 +112,13 @@ func ConvertNotificationsToProto(cards models.Notifications) *proto.Notification
 		oneCard.Read = elem.Read
 		newCards.List = append(newCards.List, &oneCard)
 	}
+	return &newCards
+}
+
+func ConvertCountsToProto(cards models.Counts) *proto.Counts {
+	var newCards proto.Counts
+	newCards.Chat = cards.Chat
+	newCards.Notifications = cards.Notifications
 	return &newCards
 }
 

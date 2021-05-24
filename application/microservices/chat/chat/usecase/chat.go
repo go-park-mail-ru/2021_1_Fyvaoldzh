@@ -27,6 +27,16 @@ func NewChat(c chat.Repository, repoSubscription subscription.Repository,
 	return &Chat{repo: c, repoSub: repoSubscription, repoUser: repoUser, repoEvent: repoEvent, logger: logger}
 }
 
+func (c Chat) GetAllCounts(uid uint64) (models.Counts, error) {
+	counts, err := c.repo.GetAllCounts(uid)
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Counts{}, err
+	}
+
+	return counts, nil
+}
+
 func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error) {
 	dialogues, err := c.repo.GetAllDialogues(uid, page)
 	if err != nil {

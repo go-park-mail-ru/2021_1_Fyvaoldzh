@@ -402,3 +402,31 @@ func (cd ChatDatabase) DecrementCountMessages(id uint64, count int64) error {
 
 	return nil
 }
+
+func (cd ChatDatabase) GetAllCounts(uid uint64) (models.Counts, error) {
+	var counts models.Counts
+	resp, err := cd.ttool.Select(constants.TarantoolSpaceName2,
+		"primary", 0, 1, tarantool.IterEq, []interface{}{uid})
+
+	if err != nil {
+		cd.logger.Warn(err)
+		return models.Counts{}, err
+	}
+
+	data := resp.Data[0]
+	d, ok := data.([]interface{})
+	if !ok {
+		return models.Counts{}, errors.New("cast error")
+	}
+
+	counts.Notifications, ok = d[1].(uint64)
+	if !ok {
+		errors.New("cast error")
+	}
+	counts.Chat, ok = d[2].(uint64)
+	if !ok {
+		errors.New("cast error")
+	}
+
+	return counts, nil
+}

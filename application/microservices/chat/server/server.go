@@ -56,7 +56,7 @@ func NewServer(port string, logger *logger.Logger) *Server {
 	cRepo := repository.NewChatDatabase(pool, conn, *logger)
 	sRepo := srepo.NewSubscriptionDatabase(pool, *logger)
 	eRepo := erepo.NewEventDatabase(pool, *logger)
-	uRepo := urepo.NewUserDatabase(pool, *logger)
+	uRepo := urepo.NewUserDatabase(pool, conn, *logger)
 	cUseCase := usecase.NewChat(cRepo, sRepo, uRepo, eRepo, *logger)
 
 	return &Server{

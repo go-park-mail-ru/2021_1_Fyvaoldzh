@@ -4045,7 +4045,80 @@ func (v *Dialogue) UnmarshalJSON(data []byte) error {
 func (v *Dialogue) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonD2b7633eDecodeKudagoApplicationModels43(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels44(in *jlexer.Lexer, out *Coordinates) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels44(in *jlexer.Lexer, out *Counts) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "notifications":
+			out.Notifications = uint64(in.Uint64())
+		case "chat":
+			out.Chat = uint64(in.Uint64())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonD2b7633eEncodeKudagoApplicationModels44(out *jwriter.Writer, in Counts) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"notifications\":"
+		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.Notifications))
+	}
+	{
+		const prefix string = ",\"chat\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.Chat))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v Counts) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonD2b7633eEncodeKudagoApplicationModels44(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v Counts) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonD2b7633eEncodeKudagoApplicationModels44(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *Counts) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonD2b7633eDecodeKudagoApplicationModels44(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *Counts) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonD2b7633eDecodeKudagoApplicationModels44(l, v)
+}
+func easyjsonD2b7633eDecodeKudagoApplicationModels45(in *jlexer.Lexer, out *Coordinates) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4078,7 +4151,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels44(in *jlexer.Lexer, out *Coor
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels44(out *jwriter.Writer, in Coordinates) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels45(out *jwriter.Writer, in Coordinates) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -4098,27 +4171,27 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels44(out *jwriter.Writer, in Coo
 // MarshalJSON supports json.Marshaler interface
 func (v Coordinates) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeKudagoApplicationModels44(&w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels45(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Coordinates) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeKudagoApplicationModels44(w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels45(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Coordinates) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeKudagoApplicationModels44(&r, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels45(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Coordinates) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeKudagoApplicationModels44(l, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels45(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels45(in *jlexer.Lexer, out *ActionCards) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels46(in *jlexer.Lexer, out *ActionCards) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		in.Skip()
@@ -4146,7 +4219,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels45(in *jlexer.Lexer, out *Acti
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels45(out *jwriter.Writer, in ActionCards) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels46(out *jwriter.Writer, in ActionCards) {
 	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 		out.RawString("null")
 	} else {
@@ -4164,27 +4237,27 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels45(out *jwriter.Writer, in Act
 // MarshalJSON supports json.Marshaler interface
 func (v ActionCards) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeKudagoApplicationModels45(&w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels46(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ActionCards) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeKudagoApplicationModels45(w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels46(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ActionCards) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeKudagoApplicationModels45(&r, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels46(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ActionCards) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeKudagoApplicationModels45(l, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels46(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels46(in *jlexer.Lexer, out *ActionCardStringTime) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels47(in *jlexer.Lexer, out *ActionCardStringTime) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4225,7 +4298,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels46(in *jlexer.Lexer, out *Acti
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels46(out *jwriter.Writer, in ActionCardStringTime) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels47(out *jwriter.Writer, in ActionCardStringTime) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -4265,27 +4338,27 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels46(out *jwriter.Writer, in Act
 // MarshalJSON supports json.Marshaler interface
 func (v ActionCardStringTime) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeKudagoApplicationModels46(&w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels47(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ActionCardStringTime) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeKudagoApplicationModels46(w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels47(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ActionCardStringTime) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeKudagoApplicationModels46(&r, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels47(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ActionCardStringTime) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeKudagoApplicationModels46(l, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels47(l, v)
 }
-func easyjsonD2b7633eDecodeKudagoApplicationModels47(in *jlexer.Lexer, out *ActionCard) {
+func easyjsonD2b7633eDecodeKudagoApplicationModels48(in *jlexer.Lexer, out *ActionCard) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -4328,7 +4401,7 @@ func easyjsonD2b7633eDecodeKudagoApplicationModels47(in *jlexer.Lexer, out *Acti
 		in.Consumed()
 	}
 }
-func easyjsonD2b7633eEncodeKudagoApplicationModels47(out *jwriter.Writer, in ActionCard) {
+func easyjsonD2b7633eEncodeKudagoApplicationModels48(out *jwriter.Writer, in ActionCard) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -4368,23 +4441,23 @@ func easyjsonD2b7633eEncodeKudagoApplicationModels47(out *jwriter.Writer, in Act
 // MarshalJSON supports json.Marshaler interface
 func (v ActionCard) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonD2b7633eEncodeKudagoApplicationModels47(&w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels48(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ActionCard) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonD2b7633eEncodeKudagoApplicationModels47(w, v)
+	easyjsonD2b7633eEncodeKudagoApplicationModels48(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ActionCard) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonD2b7633eDecodeKudagoApplicationModels47(&r, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels48(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ActionCard) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonD2b7633eDecodeKudagoApplicationModels47(l, v)
+	easyjsonD2b7633eDecodeKudagoApplicationModels48(l, v)
 }

@@ -2,6 +2,11 @@ package models
 
 import "time"
 
+type Counts struct {
+	Notifications uint64 `json:"notifications"`
+	Chat          uint64 `json:"chat"`
+}
+
 type NotificationSQL struct {
 	ID   uint64
 	Type string

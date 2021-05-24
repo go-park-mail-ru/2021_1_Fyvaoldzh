@@ -27,6 +27,7 @@ type ChatClient interface {
 	Mailing(ctx context.Context, in *MailingIn, opts ...grpc.CallOption) (*Answer, error)
 	Search(ctx context.Context, in *SearchIn, opts ...grpc.CallOption) (*DialogueCards, error)
 	GetAllNotifications(ctx context.Context, in *IdPage, opts ...grpc.CallOption) (*Notifications, error)
+	GetAllCounts(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Counts, error)
 }
 
 type chatClient struct {
@@ -118,6 +119,15 @@ func (c *chatClient) GetAllNotifications(ctx context.Context, in *IdPage, opts .
 	return out, nil
 }
 
+func (c *chatClient) GetAllCounts(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Counts, error) {
+	out := new(Counts)
+	err := c.cc.Invoke(ctx, "/Chat/GetAllCounts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServer is the server API for Chat service.
 // All implementations must embed UnimplementedChatServer
 // for forward compatibility
@@ -131,6 +141,7 @@ type ChatServer interface {
 	Mailing(context.Context, *MailingIn) (*Answer, error)
 	Search(context.Context, *SearchIn) (*DialogueCards, error)
 	GetAllNotifications(context.Context, *IdPage) (*Notifications, error)
+	GetAllCounts(context.Context, *Id) (*Counts, error)
 	//mustEmbedUnimplementedChatServer()
 }
 
@@ -164,6 +175,9 @@ func (UnimplementedChatServer) Search(context.Context, *SearchIn) (*DialogueCard
 }
 func (UnimplementedChatServer) GetAllNotifications(context.Context, *IdPage) (*Notifications, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllNotifications not implemented")
+}
+func (UnimplementedChatServer) GetAllCounts(context.Context, *Id) (*Counts, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllCounts not implemented")
 }
 func (UnimplementedChatServer) mustEmbedUnimplementedChatServer() {}
 
@@ -340,6 +354,24 @@ func _Chat_GetAllNotifications_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Chat_GetAllCounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Id)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServer).GetAllCounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Chat/GetAllCounts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServer).GetAllCounts(ctx, req.(*Id))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Chat_ServiceDesc is the grpc.ServiceDesc for Chat service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -382,6 +414,10 @@ var Chat_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllNotifications",
 			Handler:    _Chat_GetAllNotifications_Handler,
+		},
+		{
+			MethodName: "GetAllCounts",
+			Handler:    _Chat_GetAllCounts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
