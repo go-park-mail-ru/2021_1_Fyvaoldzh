@@ -352,11 +352,30 @@ func (cd ChatDatabase) AddCountNotification(id uint64) error {
 }
 
 func (cd ChatDatabase) SetZeroCountNotifications(id uint64) error {
-	_, err := cd.ttool.Replace(constants.TarantoolSpaceName2, []interface{}{id, 0, 0})
+	resp, err := cd.ttool.Select(constants.TarantoolSpaceName2,
+		"primary", 0, 1, tarantool.IterEq, []interface{}{id})
+
 	if err != nil {
 		cd.logger.Warn(err)
 		return err
 	}
 
-	return nil
+	data := resp.Data[0]
+	d, ok := data.([]interface{})
+	if !ok {
+		return errors.New("cast error")
+	}
+
+	count, ok := d[2].(uint64)
+	if !ok {
+		errors.New("cast error")
+	}
+
+	_, err = cd.ttool.Replace(constants.TarantoolSpaceName2, []interface{}{id, 0, count})
+	if err != nil {
+		cd.logger.Warn(err)
+		return err
+	}
+
+	return errors.New("got no data in tarantool")
 }
