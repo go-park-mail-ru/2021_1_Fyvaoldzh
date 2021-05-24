@@ -89,6 +89,11 @@ func (s Subscription) AddPlanning(userId uint64, eventId uint64) (bool, string, 
 		s.logger.Warn(err)
 	}
 
+	err = s.repo.AddCountNotification(userId)
+	if err != nil {
+		s.logger.Warn(err)
+	}
+
 	return false, "", nil
 }
 

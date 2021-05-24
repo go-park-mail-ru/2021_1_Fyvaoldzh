@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/tarantool/go-tarantool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"kudago/application/microservices/subscription/subscription"
@@ -15,11 +16,12 @@ import (
 
 type SubscriptionDatabase struct {
 	pool   *pgxpool.Pool
+	ttool  *tarantool.Connection
 	logger logger.Logger
 }
 
-func NewSubscriptionDatabase(conn *pgxpool.Pool, logger logger.Logger) subscription.Repository {
-	return &SubscriptionDatabase{pool: conn, logger: logger}
+func NewSubscriptionDatabase(conn *pgxpool.Pool, ttool *tarantool.Connection, logger logger.Logger) subscription.Repository {
+	return &SubscriptionDatabase{pool: conn, ttool: ttool, logger: logger}
 }
 
 func (sd SubscriptionDatabase) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
@@ -220,6 +222,17 @@ func (sd SubscriptionDatabase) RemovePlanningNotification(eventId uint64, userId
 	if err != nil {
 		sd.logger.Warn(err)
 		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) AddCountNotification(id uint64) error {
+	_, err := sd.ttool.Update(constants.TarantoolSpaceName2, "primary",
+		[]interface{}{id}, []interface{}{[]interface{}{"+", constants.TarantoolNotifications, 1}})
+	if err != nil {
+		sd.logger.Warn(err)
+		return err
 	}
 
 	return nil

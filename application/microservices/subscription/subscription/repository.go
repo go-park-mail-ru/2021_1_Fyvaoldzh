@@ -18,4 +18,5 @@ type Repository interface {
 	GetTimeEvent(eventId uint64) (time.Time, error)
 	AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time) error
 	RemovePlanningNotification(eventId uint64, userId uint64) error
+	AddCountNotification(id uint64) error
 }
