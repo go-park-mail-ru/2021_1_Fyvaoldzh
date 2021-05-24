@@ -117,7 +117,7 @@ func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, e
 					c.logger.Warn(err)
 					continue
 				}
-				c.AutoNotificationConstructor(&newNotif, interlocutor.Name)
+				newNotif.Text = interlocutor.Name
 			} else {
 				newNotif = models.ConvertNotification(notificationsSQL[i], dialogue.User1)
 				interlocutor, err := c.repoUser.GetUserByID(dialogue.User1)
@@ -125,7 +125,7 @@ func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, e
 					c.logger.Warn(err)
 					continue
 				}
-				c.AutoNotificationConstructor(&newNotif, interlocutor.Name)
+				newNotif.Text = interlocutor.Name
 			}
 		} else {
 			newNotif = models.ConvertNotification(notificationsSQL[i], notificationsSQL[i].ID)
@@ -134,7 +134,7 @@ func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, e
 				c.logger.Warn(err)
 				continue
 			}
-			c.AutoNotificationConstructor(&newNotif, eventNot.Title)
+			newNotif.Text = eventNot.Title
 		}
 		notifications = append(notifications, newNotif)
 	}
