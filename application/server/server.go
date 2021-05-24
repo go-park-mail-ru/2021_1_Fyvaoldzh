@@ -2,17 +2,15 @@ package server
 
 import (
 	"context"
-	kudago_http "kudago/application/api_kudago/delivery/http"
-	kudago_client "kudago/application/microservices/api_kudago/client"
-	"log"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-
+	"github.com/tarantool/go-tarantool"
+	kudago_http "kudago/application/api_kudago/delivery/http"
 	chhttp "kudago/application/chat/delivery/http"
 	ehttp "kudago/application/event/delivery/http"
 	erepository "kudago/application/event/repository"
 	eusecase "kudago/application/event/usecase"
+	kudago_client "kudago/application/microservices/api_kudago/client"
 	clientAuth "kudago/application/microservices/auth/client"
 	clientChat "kudago/application/microservices/chat/client"
 	clientSub "kudago/application/microservices/subscription/client"
@@ -25,21 +23,21 @@ import (
 	"kudago/pkg/constants"
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
+	"log"
 
 	middleware1 "kudago/application/server/middleware"
-
-	"github.com/microcosm-cc/bluemonday"
-	"github.com/opentracing/opentracing-go"
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
-	"github.com/uber/jaeger-lib/metrics"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	_ "github.com/lib/pq"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
+	"github.com/uber/jaeger-lib/metrics"
 	"go.uber.org/zap"
 )
 
@@ -107,11 +105,20 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	}
 
 	rpcKudago, err := kudago_client.NewKudagoClient(constants.KudagoServicePort, lg, tracer)
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
 	if err != nil {
 		lg.Fatal(err)
 	}
 
-	userRep := repository.NewUserDatabase(pool, lg)
+	_, err = conn.Ping()
+	if err != nil {
+		lg.Fatal(err)
+	}
+
+	userRep := repository.NewUserDatabase(pool, conn, lg)
 	eventRep := erepository.NewEventDatabase(pool, lg)
 	subRep := srepository.NewSubscriptionDatabase(pool, lg)
 

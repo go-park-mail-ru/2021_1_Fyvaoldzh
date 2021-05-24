@@ -25,6 +25,24 @@ func (cs *ChatServer) GetAllDialogues(_ context.Context, idPage *proto.IdPage) (
 	return client.ConvertDialogueCardsToProto(answer), nil
 }
 
+func (cs *ChatServer) GetAllNotifications(_ context.Context, idPage *proto.IdPage) (*proto.Notifications, error) {
+	answer, err := cs.usecase.GetAllNotifications(idPage.Id, int(idPage.Page))
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ConvertNotificationsToProto(answer), nil
+}
+
+func (cs *ChatServer) GetAllCounts(_ context.Context, id *proto.Id) (*proto.Counts, error) {
+	answer, err := cs.usecase.GetAllCounts(id.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ConvertCountsToProto(answer), nil
+}
+
 func (cs *ChatServer) GetOneDialogue(_ context.Context, idIdPage *proto.IdIdPage) (*proto.Dialogue, error) {
 	answer, err := cs.usecase.GetOneDialogue(idIdPage.Id1, idIdPage.Id2, int(idIdPage.Page))
 	if err != nil {
@@ -42,7 +60,7 @@ func (cs *ChatServer) DeleteDialogue(_ context.Context, idId *proto.IdId) (*prot
 	/* TODO ATTENTION
 	если в ошибках падает не 500, то можно вернуть в Answer.
 	поднимаешь флаг, пишешь соо, а на стороне клиента ловишь флаг и выдаешь с 4хх
-	 */
+	*/
 
 	return &proto.Answer{}, nil
 }
@@ -94,12 +112,11 @@ func (cs *ChatServer) Mailing(_ context.Context, in *proto.MailingIn) (*proto.An
 	return &proto.Answer{}, nil
 }
 
-func (cs *ChatServer) Search(_ context.Context, in *proto.SearchIn) (*proto.Messages, error) {
+func (cs *ChatServer) Search(c context.Context, in *proto.SearchIn) (*proto.DialogueCards, error) {
 	answer, err := cs.usecase.Search(in.Uid, int(in.Id), in.Str, int(in.Page))
 	if err != nil {
 		return nil, err
 	}
 
-	return client.ConvertMessagesToProto(answer), nil
+	return client.ConvertDialogueCardsToProto(answer), nil
 }
-

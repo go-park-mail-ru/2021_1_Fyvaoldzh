@@ -20,7 +20,6 @@ type AuthClient struct {
 	client proto.AuthClient
 	gConn  *grpc.ClientConn
 	logger logger.Logger
-
 }
 
 func NewAuthClient(port string, logger logger.Logger, tracer opentracing.Tracer) (IAuthClient, error) {

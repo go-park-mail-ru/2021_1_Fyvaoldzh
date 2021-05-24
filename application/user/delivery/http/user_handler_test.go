@@ -23,12 +23,12 @@ import (
 )
 
 var (
-	pageNum              = 1
-	userId        uint64 = 1
+	pageNum        = 1
+	userId  uint64 = 1
 
-	login                = "userlogin"
-	name                 = "username"
-	frontPassword        = "123456"
+	login         = "userlogin"
+	name          = "username"
+	frontPassword = "123456"
 
 	followers = uint64(1)
 )
@@ -43,7 +43,6 @@ var testOtherUserProfile = &models.OtherUserProfile{
 	Uid:       userId,
 	Followers: followers,
 }
-
 
 var testUserFront = &models.User{
 	Login:    login,

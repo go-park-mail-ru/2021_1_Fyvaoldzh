@@ -73,6 +73,11 @@ type Recomend struct {
 	Concert uint64 `json:"concert"`
 }
 
+type Coordinates struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
 func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	var newCard EventCard
 	newCard.ID = old.ID

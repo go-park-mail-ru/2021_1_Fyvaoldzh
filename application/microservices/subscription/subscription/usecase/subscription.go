@@ -78,6 +78,22 @@ func (s Subscription) AddPlanning(userId uint64, eventId uint64) (bool, string, 
 	if err != nil {
 		return false, "", err
 	}
+
+	eventDate, err := s.repo.GetTimeEvent(eventId)
+	if err != nil {
+		s.logger.Warn(err)
+	}
+
+	err = s.repo.AddPlanningNotification(eventId, userId, eventDate)
+	if err != nil {
+		s.logger.Warn(err)
+	}
+
+	err = s.repo.AddCountNotification(userId)
+	if err != nil {
+		s.logger.Warn(err)
+	}
+
 	return false, "", nil
 }
 
@@ -126,6 +142,12 @@ func (s Subscription) RemoveEvent(userId uint64, eventId uint64) (bool, string, 
 	if err != nil {
 		return false, "", err
 	}
+
+	err = s.repo.RemovePlanningNotification(eventId, userId)
+	if err != nil {
+		s.logger.Warn(err)
+	}
+
 	return false, "", nil
 
 }

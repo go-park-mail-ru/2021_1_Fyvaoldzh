@@ -30,6 +30,26 @@ func NewEvent(e event.Repository, repoSubscription subscription.Repository, logg
 	return &Event{repo: e, repoSub: repoSubscription, logger: logger}
 }
 
+func (e Event) GetNear(coord models.Coordinates, page int) (models.EventCards, error) {
+	sqlEvents, err := e.repo.GetNearEvents(time.Now(), coord, page)
+	if err != nil {
+		e.logger.Warn(err)
+		return models.EventCards{}, err
+	}
+
+	var pageEvents models.EventCards
+
+	for i := range sqlEvents {
+		pageEvents = append(pageEvents, models.ConvertDateCard(sqlEvents[i]))
+	}
+	if len(pageEvents) == 0 {
+		e.logger.Debug("page" + fmt.Sprint(page) + "is empty")
+		return models.EventCards{}, nil
+	}
+
+	return pageEvents, nil
+}
+
 func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetAllEvents(time.Now(), page)
 	if err != nil {

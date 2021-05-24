@@ -5,6 +5,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	traceutils "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
+	"github.com/tarantool/go-tarantool"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
@@ -35,7 +36,20 @@ func NewServer(port string, logger *logger.Logger) *Server {
 		logger.Fatal(err)
 	}
 
-	sRepo := srepo.NewSubscriptionDatabase(pool, *logger)
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	sRepo := srepo.NewSubscriptionDatabase(pool, conn, *logger)
 	sUseCase := subscriptions.NewSubscription(sRepo, *logger)
 
 	return &Server{
