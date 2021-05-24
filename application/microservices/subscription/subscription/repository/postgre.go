@@ -187,7 +187,7 @@ func (sd SubscriptionDatabase) CheckEventInList(eventId uint64) (bool, error) {
 }
 
 func (sd SubscriptionDatabase) GetTimeEvent(eventId uint64) (time.Time, error) {
-	var date time.Time
+	var date sql.NullTime
 	err := sd.pool.
 		QueryRow(context.Background(),
 			`SELECT start_date
@@ -198,7 +198,7 @@ func (sd SubscriptionDatabase) GetTimeEvent(eventId uint64) (time.Time, error) {
 		return time.Time{}, status.Error(codes.Internal, err.Error())
 	}
 
-	return date, nil
+	return date.Time, nil
 }
 
 func (sd SubscriptionDatabase) AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time) error {

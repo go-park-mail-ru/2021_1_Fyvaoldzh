@@ -23,4 +23,6 @@ type Repository interface {
 	ReadMessages(id uint64, page int, uid uint64) error
 	ReadNotifications(uid uint64, page int, now time.Time) error
 	AddMailNotification(id uint64, idTo uint64, now time.Time) error
+	AddCountNotification(id uint64) error
+	SetZeroCountNotifications(id uint64) error
 }

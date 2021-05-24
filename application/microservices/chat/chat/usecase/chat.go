@@ -80,6 +80,11 @@ func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, e
 		c.logger.Warn(err)
 	}
 
+	err = c.repo.SetZeroCountNotifications(uid)
+	if err != nil {
+		c.logger.Warn(err)
+	}
+
 	var notifications models.Notifications
 
 	for i := range notificationsSQL {
@@ -304,6 +309,10 @@ func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 		}
 
 		err = c.repo.AddMailNotification(dialogue.ID, message.To, time.Now())
+		if err != nil {
+			c.logger.Warn(err)
+		}
+		err = c.repo.AddCountNotification(message.To)
 		if err != nil {
 			c.logger.Warn(err)
 		}

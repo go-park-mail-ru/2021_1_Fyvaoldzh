@@ -32,7 +32,6 @@ func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 
 	chatHandler := ChatHandler{rpcChat: rpcC, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 
-	//TODO групповой чат
 	e.GET("/api/v1/dialogues", chatHandler.GetDialogues, auth.GetSession, middleware.GetPage)
 	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue, auth.GetSession, middleware.GetPage, middleware.GetId) //Здесь id собеседника, по просьбе Димы
 	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue, auth.GetSession, middleware.GetId)                  //Везде дальше и здесь id сообщения/диалога

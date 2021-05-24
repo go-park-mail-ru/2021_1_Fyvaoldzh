@@ -19,6 +19,9 @@ const (
 	ChatServicePort         = ":3003"
 	TarantoolPassword       = "fyvaoldzh"
 	TarantoolSpaceName      = "qdago"
+	TarantoolSpaceName2     = "user_count"
+	TarantoolNotifications  = "notifications"
+	TarantoolMessages       = "chat"
 	UserPicDir              = "public/users/"
 	EventsPicDir            = "public/events/"
 	SaltLength              = 8

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/tarantool/go-tarantool"
 	erepo "kudago/application/event/repository"
 	"kudago/application/microservices/chat/chat/repository"
 	"kudago/application/microservices/chat/chat/usecase"
@@ -39,7 +40,20 @@ func NewServer(port string, logger *logger.Logger) *Server {
 		logger.Fatal(err)
 	}
 
-	cRepo := repository.NewChatDatabase(pool, *logger)
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	cRepo := repository.NewChatDatabase(pool, conn, *logger)
 	sRepo := srepo.NewSubscriptionDatabase(pool, *logger)
 	eRepo := erepo.NewEventDatabase(pool, *logger)
 	uRepo := urepo.NewUserDatabase(pool, *logger)

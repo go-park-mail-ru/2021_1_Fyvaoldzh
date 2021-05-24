@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/tarantool/go-tarantool"
 	"kudago/application/microservices/chat/chat"
 	"kudago/application/models"
 	"kudago/pkg/constants"
@@ -19,11 +20,12 @@ import (
 
 type ChatDatabase struct {
 	pool   *pgxpool.Pool
+	ttool  *tarantool.Connection
 	logger logger.Logger
 }
 
-func NewChatDatabase(conn *pgxpool.Pool, logger logger.Logger) chat.Repository {
-	return &ChatDatabase{pool: conn, logger: logger}
+func NewChatDatabase(conn *pgxpool.Pool, ttool *tarantool.Connection, logger logger.Logger) chat.Repository {
+	return &ChatDatabase{pool: conn, ttool: ttool, logger: logger}
 }
 
 func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
@@ -330,6 +332,27 @@ func (cd ChatDatabase) AddMailNotification(id uint64, idTo uint64, now time.Time
 		`INSERT INTO notifications 
 		VALUES ($1, $2, $3, $4, default)`,
 		id, constants.MailNotif, idTo, now)
+	if err != nil {
+		cd.logger.Warn(err)
+		return err
+	}
+
+	return nil
+}
+
+func (cd ChatDatabase) AddCountNotification(id uint64) error {
+	_, err := cd.ttool.Update(constants.TarantoolSpaceName2, "primary",
+		[]interface{}{id}, []interface{}{[]interface{}{"+", constants.TarantoolNotifications, 1}})
+	if err != nil {
+		cd.logger.Warn(err)
+		return err
+	}
+
+	return nil
+}
+
+func (cd ChatDatabase) SetZeroCountNotifications(id uint64) error {
+	_, err := cd.ttool.Replace(constants.TarantoolSpaceName2, []interface{}{id, 0, 0})
 	if err != nil {
 		cd.logger.Warn(err)
 		return err
