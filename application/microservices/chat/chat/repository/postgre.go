@@ -62,7 +62,7 @@ func (cd ChatDatabase) GetAllDialogues(uid uint64, page int) (models.DialogueCar
 func (cd ChatDatabase) GetAllNotifications(uid uint64, page int, now time.Time) (models.NotificationsSQL, error) {
 	var notifications models.NotificationsSQL
 	err := pgxscan.Select(context.Background(), cd.pool, &notifications,
-		`SELECT id, type, date, read FROM notifications
+		`SELECT id, type, date_create as date, read FROM notifications
 		WHERE id_to = $1 AND date < $2
 		ORDER BY read, date DESC
 		LIMIT $3 OFFSET $4`, uid, now, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
@@ -331,7 +331,7 @@ func (cd ChatDatabase) ReadNotifications(uid uint64, page int, now time.Time) er
 func (cd ChatDatabase) AddMailNotification(id uint64, idTo uint64, now time.Time) error {
 	_, err := cd.pool.Exec(context.Background(),
 		`INSERT INTO notifications 
-		VALUES ($1, $2, $3, $4, default)`,
+		VALUES ($1, $2, $3, $4, $4, default)`,
 		id, constants.MailNotif, idTo, now)
 	if err != nil {
 		cd.logger.Warn(err)

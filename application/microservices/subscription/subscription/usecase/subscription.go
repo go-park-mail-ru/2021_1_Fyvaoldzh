@@ -3,6 +3,7 @@ package usecase
 import (
 	"kudago/application/microservices/subscription/subscription"
 	"kudago/pkg/logger"
+	"time"
 )
 
 type Subscription struct {
@@ -84,7 +85,7 @@ func (s Subscription) AddPlanning(userId uint64, eventId uint64) (bool, string, 
 		s.logger.Warn(err)
 	}
 
-	err = s.repo.AddPlanningNotification(eventId, userId, eventDate)
+	err = s.repo.AddPlanningNotification(eventId, userId, eventDate, time.Now())
 	if err != nil {
 		s.logger.Warn(err)
 	}

@@ -72,7 +72,7 @@ func (c Chat) AutoNotificationConstructor(notification *models.Notification, tit
 		notification.Text = title + constants.MailNotifText
 	}
 	if notification.Type == constants.EventNotif {
-		notification.Text = constants.EventNotifText1 + title + constants.EventNotifText2 + notification.Date
+		notification.Text = constants.EventNotifText1 + title + constants.EventNotifText2
 	}
 }
 
@@ -129,12 +129,12 @@ func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, e
 			}
 		} else {
 			newNotif = models.ConvertNotification(notificationsSQL[i], notificationsSQL[i].ID)
-			event, err := c.repoEvent.GetOneEventByID(notificationsSQL[i].ID)
+			eventNot, err := c.repoEvent.GetOneEventByID(notificationsSQL[i].ID)
 			if err != nil {
 				c.logger.Warn(err)
 				continue
 			}
-			c.AutoNotificationConstructor(&newNotif, event.Title)
+			c.AutoNotificationConstructor(&newNotif, eventNot.Title)
 		}
 		notifications = append(notifications, newNotif)
 	}

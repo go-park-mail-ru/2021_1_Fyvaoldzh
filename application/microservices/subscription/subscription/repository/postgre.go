@@ -203,11 +203,12 @@ func (sd SubscriptionDatabase) GetTimeEvent(eventId uint64) (time.Time, error) {
 	return date.Time, nil
 }
 
-func (sd SubscriptionDatabase) AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time) error {
+func (sd SubscriptionDatabase) AddPlanningNotification(eventId uint64, userId uint64,
+	eventDate time.Time, now time.Time) error {
 	_, err := sd.pool.Exec(context.Background(),
 		`INSERT INTO notifications 
-		VALUES ($1, $2, $3, $4, default)`,
-		eventId, constants.EventNotif, userId, eventDate)
+		VALUES ($1, $2, $3, $4, $5, default)`,
+		eventId, constants.EventNotif, userId, eventDate, now)
 	if err != nil {
 		sd.logger.Warn(err)
 		return status.Error(codes.Internal, err.Error())

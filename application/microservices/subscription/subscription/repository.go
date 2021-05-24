@@ -16,7 +16,7 @@ type Repository interface {
 	RemoveSubscriptionAction(userId uint64, eventId uint64) error
 	RemoveUserEventAction(userId uint64, eventId uint64) error
 	GetTimeEvent(eventId uint64) (time.Time, error)
-	AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time) error
+	AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time, now time.Time) error
 	RemovePlanningNotification(eventId uint64, userId uint64) error
 	AddCountNotification(id uint64) error
 }

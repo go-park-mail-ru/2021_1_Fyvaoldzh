@@ -35,7 +35,7 @@ const (
 	MailNotifText   = " приглашает Вас посетить новое мероприятие"
 	EventNotif      = "Event"
 	EventNotifText1 = "Не забудьте посетить мероприятие "
-	EventNotifText2 = " которое пройдет "
+	EventNotifText2 = " которое пройдет через 5 часов"
 )
 
 var Category = map[string]string{
