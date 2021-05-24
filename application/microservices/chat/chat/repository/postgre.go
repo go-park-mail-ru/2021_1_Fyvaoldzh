@@ -293,12 +293,13 @@ func (cd ChatDatabase) NewDialogue(uid1 uint64, uid2 uint64) (uint64, error) {
 	return id, nil
 }
 
-func (cd ChatDatabase) ReadMessages(id uint64, page int, uid uint64) error {
-	_, err := cd.pool.Exec(context.Background(),
+func (cd ChatDatabase) ReadMessages(id uint64, page int, uid uint64) (int64, error) {
+	resp, err := cd.pool.Exec(context.Background(),
 		`UPDATE messages SET read = true
 		WHERE id in
-	(SELECT id from messages where mes_to = $1 AND id_dialogue = $2
-		ORDER BY date DESC LIMIT $3 OFFSET $4)`, uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
+	(SELECT id from messages where mes_to = $1 AND id_dialogue = $2 AND read = false
+		ORDER BY date DESC LIMIT $3 OFFSET $4)`,
+		uid, id, constants.ChatPerPage, (page-1)*constants.ChatPerPage)
 	/*_, err := cd.pool.Exec(context.Background(),
 		`UPDATE messages SET read = true
 		WHERE id in
@@ -307,10 +308,10 @@ func (cd ChatDatabase) ReadMessages(id uint64, page int, uid uint64) error {
 
 	if err != nil {
 		cd.logger.Warn(err)
-		return err
+		return 0, err
 	}
 
-	return nil
+	return resp.RowsAffected(), nil
 }
 
 //По просьбе фронта делаем прочитанными все уведомления
@@ -383,6 +384,17 @@ func (cd ChatDatabase) SetZeroCountNotifications(id uint64) error {
 func (cd ChatDatabase) AddCountMessages(id uint64) error {
 	_, err := cd.ttool.Update(constants.TarantoolSpaceName2, "primary",
 		[]interface{}{id}, []interface{}{[]interface{}{"+", constants.TarantoolMessages, 1}})
+	if err != nil {
+		cd.logger.Warn(err)
+		return err
+	}
+
+	return nil
+}
+
+func (cd ChatDatabase) DecrementCountMessages(id uint64, count int64) error {
+	_, err := cd.ttool.Update(constants.TarantoolSpaceName2, "primary",
+		[]interface{}{id}, []interface{}{[]interface{}{"-", constants.TarantoolMessages, count}})
 	if err != nil {
 		cd.logger.Warn(err)
 		return err

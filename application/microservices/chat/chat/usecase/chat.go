@@ -160,7 +160,13 @@ func (c Chat) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogu
 
 	resDialogue := models.ConvertDialogue(dialogue, messages, uid1, interlocutor)
 
-	err = c.repo.ReadMessages(dialogue.ID, page, uid1)
+	count, err := c.repo.ReadMessages(dialogue.ID, page, uid1)
+	if err != nil {
+		c.logger.Warn(err)
+		return resDialogue, nil
+	}
+
+	err = c.repo.DecrementCountMessages(uid1, count)
 	if err != nil {
 		c.logger.Warn(err)
 		return resDialogue, nil

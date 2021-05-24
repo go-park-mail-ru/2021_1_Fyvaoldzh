@@ -20,10 +20,11 @@ type Repository interface {
 	CheckDialogueUsers(uid1 uint64, uid2 uint64) (bool, models.EasyDialogueMessageSQL, error)
 	CheckMessage(id uint64) (bool, models.EasyDialogueMessageSQL, error)
 	NewDialogue(uid1 uint64, uid2 uint64) (uint64, error)
-	ReadMessages(id uint64, page int, uid uint64) error
+	ReadMessages(id uint64, page int, uid uint64) (int64, error)
 	ReadNotifications(uid uint64, page int, now time.Time) error
 	AddMailNotification(id uint64, idTo uint64, now time.Time) error
 	AddCountNotification(id uint64) error
 	SetZeroCountNotifications(id uint64) error
 	AddCountMessages(id uint64) error
+	DecrementCountMessages(id uint64, count int64) error
 }
