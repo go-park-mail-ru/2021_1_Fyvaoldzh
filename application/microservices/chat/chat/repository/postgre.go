@@ -379,3 +379,14 @@ func (cd ChatDatabase) SetZeroCountNotifications(id uint64) error {
 
 	return errors.New("got no data in tarantool")
 }
+
+func (cd ChatDatabase) AddCountMessages(id uint64) error {
+	_, err := cd.ttool.Update(constants.TarantoolSpaceName2, "primary",
+		[]interface{}{id}, []interface{}{[]interface{}{"+", constants.TarantoolMessages, 1}})
+	if err != nil {
+		cd.logger.Warn(err)
+		return err
+	}
+
+	return nil
+}

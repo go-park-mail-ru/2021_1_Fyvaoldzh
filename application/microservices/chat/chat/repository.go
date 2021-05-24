@@ -25,4 +25,5 @@ type Repository interface {
 	AddMailNotification(id uint64, idTo uint64, now time.Time) error
 	AddCountNotification(id uint64) error
 	SetZeroCountNotifications(id uint64) error
+	AddCountMessages(id uint64) error
 }

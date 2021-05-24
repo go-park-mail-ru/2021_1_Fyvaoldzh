@@ -223,6 +223,12 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 		c.logger.Warn(err)
 		return err
 	}
+
+	err = c.repo.AddCountMessages(newMessage.To)
+	if err != nil {
+		c.logger.Warn(err)
+	}
+
 	return nil
 }
 
