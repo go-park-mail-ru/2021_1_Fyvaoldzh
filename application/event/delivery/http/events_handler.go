@@ -3,6 +3,8 @@ package http
 import (
 	"errors"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"kudago/application/event"
 	"kudago/application/microservices/auth/client"
 	"kudago/application/models"
@@ -185,6 +187,18 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	data, err := ioutil.ReadFile("~/project/2021_1_Fyvaoldzh/dist/index.html")
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	tmpl, _ := template.New("title").Parse(string(data))
+	err = tmpl.Execute(c.Response(), ev.Title)
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 	eh.Logger.LogInfo(c, start, requestId)
 	middleware.OkResponse(c)
 	return nil

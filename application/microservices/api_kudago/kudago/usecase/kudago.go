@@ -124,7 +124,7 @@ func (k KudagoUsecase) ConvertToNewEvent(elem models.Elem, place models.Place) (
 		return models.Event{ID: uint64(0)}, nil
 	}
 
-	fileName := constants.EventsPicDir + strconv.FormatUint(elem.Id, 10) + generator.RandStringRunes(12) +".jpg"
+	fileName := constants.EventsPicDir + strconv.FormatUint(elem.Id, 10) + generator.RandStringRunes(12) +".png"
 	err := k.repo.AddImage(elem.Images[0].Path, fileName)
 	if err != nil {
 		return models.Event{}, err
