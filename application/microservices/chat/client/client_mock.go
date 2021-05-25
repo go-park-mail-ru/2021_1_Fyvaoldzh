@@ -2,7 +2,7 @@
 // Source: client_interface.go
 
 // Package mock_client is a generated GoMock package.
-package client
+package mock_client
 
 import (
 	models "kudago/application/models"
@@ -91,6 +91,22 @@ func (mr *MockIChatClientMockRecorder) EditMessage(uid, newMessage interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditMessage", reflect.TypeOf((*MockIChatClient)(nil).EditMessage), uid, newMessage)
 }
 
+// GetAllCounts mocks base method.
+func (m *MockIChatClient) GetAllCounts(uid uint64) (models.Counts, error, int) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllCounts", uid)
+	ret0, _ := ret[0].(models.Counts)
+	ret1, _ := ret[1].(error)
+	ret2, _ := ret[2].(int)
+	return ret0, ret1, ret2
+}
+
+// GetAllCounts indicates an expected call of GetAllCounts.
+func (mr *MockIChatClientMockRecorder) GetAllCounts(uid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllCounts", reflect.TypeOf((*MockIChatClient)(nil).GetAllCounts), uid)
+}
+
 // GetAllDialogues mocks base method.
 func (m *MockIChatClient) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error, int) {
 	m.ctrl.T.Helper()
@@ -105,6 +121,22 @@ func (m *MockIChatClient) GetAllDialogues(uid uint64, page int) (models.Dialogue
 func (mr *MockIChatClientMockRecorder) GetAllDialogues(uid, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDialogues", reflect.TypeOf((*MockIChatClient)(nil).GetAllDialogues), uid, page)
+}
+
+// GetAllNotifications mocks base method.
+func (m *MockIChatClient) GetAllNotifications(uid uint64, page int) (models.Notifications, error, int) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllNotifications", uid, page)
+	ret0, _ := ret[0].(models.Notifications)
+	ret1, _ := ret[1].(error)
+	ret2, _ := ret[2].(int)
+	return ret0, ret1, ret2
+}
+
+// GetAllNotifications indicates an expected call of GetAllNotifications.
+func (mr *MockIChatClientMockRecorder) GetAllNotifications(uid, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNotifications", reflect.TypeOf((*MockIChatClient)(nil).GetAllNotifications), uid, page)
 }
 
 // GetOneDialogue mocks base method.
@@ -139,10 +171,10 @@ func (mr *MockIChatClientMockRecorder) Mailing(uid, mailing interface{}) *gomock
 }
 
 // Search mocks base method.
-func (m *MockIChatClient) Search(uid uint64, id int, str string, page int) (models.Messages, error, int) {
+func (m *MockIChatClient) Search(uid uint64, id int, str string, page int) (models.DialogueCards, error, int) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", uid, id, str, page)
-	ret0, _ := ret[0].(models.Messages)
+	ret0, _ := ret[0].(models.DialogueCards)
 	ret1, _ := ret[1].(error)
 	ret2, _ := ret[2].(int)
 	return ret0, ret1, ret2

@@ -366,15 +366,6 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 
 	title := ev.Title
 
-	tmpl, _ := template.New("data").Parse(string(data))
-	err = tmpl.Execute(c.Response(), title)
-
-	if err != nil {
-		eh.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	eh.Logger.LogInfo(c, start, requestId)
-	middleware.OkResponse(c)
-	return nil
+	tmpl, _ := template.New("title").Parse(string(data))
+	return tmpl.Execute(c.Response(), title)
 }
