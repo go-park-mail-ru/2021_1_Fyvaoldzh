@@ -364,8 +364,10 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
+	title := ev.Title
+
 	tmpl, _ := template.New("data").Parse(string(data))
-	err = tmpl.Execute(c.Response(), ev.Title)
+	err = tmpl.Execute(c.Response(), title)
 
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
