@@ -187,7 +187,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := ioutil.ReadFile("~/project/2021_1_Fyvaoldzh/dist/index.html")
+	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
