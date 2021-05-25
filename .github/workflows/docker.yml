@@ -78,16 +78,8 @@ jobs:
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.PRIVATE_KEY }}
           script: |
-            sudo docker ps | grep auth |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker stop $(sudo docker ps |grep auth| awk '{print $1}')
-            sudo docker ps | grep kudago |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker stop $(sudo docker ps |grep kudago| awk '{print $1}')
-            sudo docker ps | grep chat |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker stop $(sudo docker ps |grep chat| awk '{print $1}')
-            sudo docker ps | grep sub |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker stop $(sudo docker ps |grep sub| awk '{print $1}')
-            sudo docker ps | grep main |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker stop $(sudo docker ps |grep main| awk '{print $1}')
-            sudo docker ps -a | grep auth |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker rm $(sudo docker ps -a |grep auth| awk '{print $1}')
-            sudo docker ps -a | grep kudago |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker rm $(sudo docker ps -a |grep kudago| awk '{print $1}')
-            sudo docker ps -a | grep chat |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker rm $(sudo docker ps -a |grep chat| awk '{print $1}')
-            sudo docker ps -a | grep sub |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker rm $(sudo docker ps -a |grep sub| awk '{print $1}')
-            sudo docker ps -a | grep main |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker rm $(sudo docker ps -a |grep main| awk '{print $1}')
+            sudo docker ps | grep ${{ secrets.DOCKERHUB_USERNAME }} |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker stop $(sudo docker ps |grep ${{ secrets.DOCKERHUB_USERNAME }}| awk '{print $1}')
+            sudo docker ps -a | grep ${{ secrets.DOCKERHUB_USERNAME }} |  awk '{print $1}'  | xargs --no-run-if-empty sudo docker rm $(sudo docker ps -a |grep  ${{ secrets.DOCKERHUB_USERNAME }}| awk '{print $1}')
       - name: pull docker image
         uses: appleboy/ssh-action@master
         with:
