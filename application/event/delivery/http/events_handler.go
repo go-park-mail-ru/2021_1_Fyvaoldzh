@@ -33,6 +33,7 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents, middleware.GetPage)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent, middleware.GetId)
+	e.GET("/api/v1/link/event/:id", eventHandler.GetEventLink, middleware.GetId)
 	e.GET("/api/v1/event/name/:id", eventHandler.GetOneEventName, middleware.GetId)
 	e.POST("/api/v1/near", eventHandler.GetNear, middleware.GetPage)
 	e.GET("/api/v1/event", eventHandler.GetEvents, middleware.GetPage)
@@ -187,18 +188,6 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
-	if err != nil {
-		eh.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-
-	tmpl, _ := template.New("title").Parse(string(data))
-	err = tmpl.Execute(c.Response(), ev.Title)
-	if err != nil {
-		eh.Logger.LogError(c, start, requestId, err)
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
 	eh.Logger.LogInfo(c, start, requestId)
 	middleware.OkResponse(c)
 	return nil
@@ -347,6 +336,38 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	if _, err := easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return nil
+}
+
+func (eh EventHandler) GetEventLink(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+	id := c.Get(constants.IdKey).(int)
+
+	ev, err := eh.UseCase.GetOneEvent(uint64(id))
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return err
+	}
+
+	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	tmpl, _ := template.New("title").Parse(string(data))
+	err = tmpl.Execute(c.Response(), ev.Title)
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
