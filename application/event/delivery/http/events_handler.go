@@ -359,6 +359,7 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 	}
 
 	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
+	eh.Logger.Debug(string(data))
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -366,6 +367,8 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 
 	tmpl, _ := template.New("title").Parse(string(data))
 	err = tmpl.Execute(c.Response(), ev.Title)
+	eh.Logger.Debug("\n ======")
+	eh.Logger.Debug(string(data))
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
