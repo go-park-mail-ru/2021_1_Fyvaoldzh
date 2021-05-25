@@ -34,6 +34,12 @@ func (c Chat) GetAllCounts(uid uint64) (models.Counts, error) {
 		return models.Counts{}, err
 	}
 
+	counts.Notifications, err = c.repo.GetNotificationCounts(uid, time.Now())
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Counts{}, err
+	}
+
 	return counts, nil
 }
 
@@ -67,14 +73,14 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
-func (c Chat) AutoNotificationConstructor(notification *models.Notification, title string) {
+/*func (c Chat) AutoNotificationConstructor(notification *models.Notification, title string) {
 	if notification.Type == constants.MailNotif {
 		notification.Text = title + constants.MailNotifText
 	}
 	if notification.Type == constants.EventNotif {
 		notification.Text = constants.EventNotifText1 + title + constants.EventNotifText2
 	}
-}
+}*/
 
 //TODO: Разделить немного функцию
 func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, error) {

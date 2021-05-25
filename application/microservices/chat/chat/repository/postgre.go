@@ -430,3 +430,17 @@ func (cd ChatDatabase) GetAllCounts(uid uint64) (models.Counts, error) {
 
 	return counts, nil
 }
+
+func (cd ChatDatabase) GetNotificationCounts(uid uint64, now time.Time) (uint64, error) {
+	var counts []uint64
+	err := pgxscan.Select(context.Background(), cd.pool, &counts,
+		`SELECT count(id) FROM notifications
+		WHERE id_to = $1 AND date < $2 AND read = false`, uid, now)
+
+	if err != nil {
+		cd.logger.Warn(err)
+		return 0, err
+	}
+
+	return counts[0], nil
+}
