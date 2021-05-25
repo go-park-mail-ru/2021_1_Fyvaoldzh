@@ -28,4 +28,5 @@ type Repository interface {
 	AddCountMessages(id uint64) error
 	DecrementCountMessages(id uint64, count int64) error
 	GetAllCounts(uid uint64) (models.Counts, error)
+	GetNotificationCounts(uid uint64, now time.Time) (uint64, error)
 }
