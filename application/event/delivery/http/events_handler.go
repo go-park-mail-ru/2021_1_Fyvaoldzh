@@ -358,7 +358,7 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 		return err
 	}
 
-	_, err = ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
+	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -366,6 +366,6 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 
 	title := ev.Title
 
-	tmpl, _ := template.New("title").Parse("geool"/*string(data)*/)
+	tmpl, _ := template.New("title").Parse(string(data))
 	return tmpl.Execute(c.Response(), title)
 }
