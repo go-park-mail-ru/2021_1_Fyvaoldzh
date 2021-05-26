@@ -2,7 +2,7 @@
 // Source: client_interface.go
 
 // Package mock_client is a generated GoMock package.
-package mock_client
+package client
 
 import (
 	models "kudago/application/models"
