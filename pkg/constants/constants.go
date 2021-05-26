@@ -17,7 +17,7 @@ const (
 	AuthServicePort         = ":3001"
 	SubscriptionServicePort = ":3002"
 	ChatServicePort         = ":3003"
-	KudagoServicePort         = ":3004"
+	KudagoServicePort       = ":3004"
 	TarantoolPassword       = "fyvaoldzh"
 	TarantoolSpaceName      = "qdago"
 	TarantoolSpaceName2     = "user_count"
@@ -31,7 +31,7 @@ const (
 	//UsersPerPage            = 10
 	ChatPerPage     = 100
 	MailingText     = " приглашает Вас на мероприятие "
-	MailingAddress  = "95.163.180.8:3000/event"
+	MailingAddress  = "https://qdaqda.ru/event"
 	MailNotif       = "Mail"
 	MailNotifText   = " приглашает Вас посетить новое мероприятие"
 	EventNotif      = "Event"
