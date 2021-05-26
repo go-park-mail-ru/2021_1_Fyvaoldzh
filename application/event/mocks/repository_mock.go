@@ -123,6 +123,21 @@ func (mr *MockRepositoryMockRecorder) GetEventsByCategory(typeEvent, now, page i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsByCategory", reflect.TypeOf((*MockRepository)(nil).GetEventsByCategory), typeEvent, now, page)
 }
 
+// GetNearEvents mocks base method.
+func (m *MockRepository) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithDateSQL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNearEvents", now, coord, page)
+	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNearEvents indicates an expected call of GetNearEvents.
+func (mr *MockRepositoryMockRecorder) GetNearEvents(now, coord, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNearEvents", reflect.TypeOf((*MockRepository)(nil).GetNearEvents), now, coord, page)
+}
+
 // GetOneEventByID mocks base method.
 func (m *MockRepository) GetOneEventByID(eventId uint64) (models.EventSQL, error) {
 	m.ctrl.T.Helper()

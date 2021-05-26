@@ -24,6 +24,7 @@ import (
 	"kudago/pkg/custom_sanitizer"
 	"kudago/pkg/logger"
 	"log"
+	"os"
 
 	middleware1 "kudago/application/server/middleware"
 
@@ -80,7 +81,9 @@ func NewServer(l *zap.SugaredLogger) *Server {
 		AllowCredentials: true,
 	}))
 
-	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
+	pool, err := pgxpool.Connect(context.Background(),
+		"user=" + os.Getenv("POSTGRE_USER") +
+			" password=" + os.Getenv("DB_PASSWORD") + constants.DBConnect)
 	if err != nil {
 		lg.Fatal(err)
 	}
@@ -105,9 +108,12 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	}
 
 	rpcKudago, err := kudago_client.NewKudagoClient(constants.KudagoServicePort, lg, tracer)
+	if err != nil {
+		lg.Fatal(err)
+	}
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
-		User: constants.TarantoolUser,
-		Pass: constants.TarantoolPassword,
+		User: os.Getenv("TARANTOOL_USER"),
+		Pass: os.Getenv("DB_PASSWORD"),
 	})
 	if err != nil {
 		lg.Fatal(err)

@@ -369,7 +369,7 @@ func (cd ChatDatabase) SetZeroCountNotifications(id uint64) error {
 
 	count, ok := d[2].(uint64)
 	if !ok {
-		errors.New("cast error")
+		return errors.New("cast error")
 	}
 
 	_, err = cd.ttool.Replace(constants.TarantoolSpaceName2, []interface{}{id, 0, count})
@@ -421,11 +421,11 @@ func (cd ChatDatabase) GetAllCounts(uid uint64) (models.Counts, error) {
 
 	counts.Notifications, ok = d[1].(uint64)
 	if !ok {
-		errors.New("cast error")
+		_ = errors.New("cast error")
 	}
 	counts.Chat, ok = d[2].(uint64)
 	if !ok {
-		errors.New("cast error")
+		_ = errors.New("cast error")
 	}
 
 	return counts, nil

@@ -194,6 +194,7 @@ func TestUserUseCase_CheckUserIncorrectDBError(t *testing.T) {
 
 ///////////////////////////////////////////////////
 
+/*
 func TestUserUseCase_AddOK(t *testing.T) {
 	rep, _, uc := setUp(t)
 
@@ -207,6 +208,8 @@ func TestUserUseCase_AddOK(t *testing.T) {
 	assert.Equal(t, testUserBack.Id, actual)
 }
 
+
+ */
 func TestUserUseCase_AddExistingLogin(t *testing.T) {
 	rep, _, uc := setUp(t)
 

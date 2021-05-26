@@ -66,7 +66,7 @@ func (k *KudagoServer) AddToday(_ context.Context, _ *kudago_proto.Empty) (*kuda
 	k.logger.Debug("start pushing today's events")
 	str := "https://kudago.com/public-api/v1.4/events/?fields=id,publication_date,dates,title,place,body_text,categories,tags,images&order_by=-publication_date&categories=cinema,education,entertainment,exhibition,festival,tour,concert"
 	timeNow := time.Now().Unix()
-	for true {
+	for {
 		answer, err := k.GetEvents(str)
 		if err != nil {
 			return nil, err
@@ -99,7 +99,6 @@ func (k *KudagoServer) AddToday(_ context.Context, _ *kudago_proto.Empty) (*kuda
 		}
 	}
 
-	return &kudago_proto.Empty{}, nil
 }
 
 func (k *KudagoServer) GetPlace(url string) (models.Place, error) {

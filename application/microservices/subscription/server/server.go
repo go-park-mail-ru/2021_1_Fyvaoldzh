@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	srepo "kudago/application/microservices/subscription/subscription/repository"
 	subscriptions "kudago/application/microservices/subscription/subscription/usecase"
+	"os"
 
 	"kudago/application/microservices/subscription/proto"
 	"kudago/pkg/constants"
@@ -27,7 +28,9 @@ type Server struct {
 }
 
 func NewServer(port string, logger *logger.Logger) *Server {
-	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
+	pool, err := pgxpool.Connect(context.Background(),
+		"user=" + os.Getenv("POSTGRE_USER") +
+			" password=" + os.Getenv("DB_PASSWORD") + constants.DBConnect)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -37,8 +40,8 @@ func NewServer(port string, logger *logger.Logger) *Server {
 	}
 
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
-		User: constants.TarantoolUser,
-		Pass: constants.TarantoolPassword,
+		User: os.Getenv("TARANTOOL_USER"),
+		Pass: os.Getenv("DB_PASSWORD"),
 	})
 	if err != nil {
 		logger.Fatal(err)

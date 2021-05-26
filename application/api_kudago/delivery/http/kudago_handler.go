@@ -36,7 +36,7 @@ func (kh KudagoHandler) AddBasic(c echo.Context) error {
 	}
 	intNum, err := strconv.Atoi(num)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusTeapot, errors.New("page must be a number"))
+		return echo.NewHTTPError(http.StatusTeapot, errors.New("num must be a number"))
 	}
 	if intNum == 0 {
 		intNum = 1

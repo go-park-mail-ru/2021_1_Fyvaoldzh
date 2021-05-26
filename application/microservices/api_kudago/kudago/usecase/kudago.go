@@ -23,7 +23,7 @@ func NewKudagoUsecase(r kudago.Repository, logger logger.Logger) kudago.Usecase 
 }
 
 func (k KudagoUsecase) AddEvent(elem models.Elem, place models.Place) (bool, error) {
-	flag, eventId, err := k.repo.IsExistingEvent(elem.Id)
+	flag, _, err := k.repo.IsExistingEvent(elem.Id)
 	if err != nil {
 		return false, err
 	}
@@ -40,7 +40,7 @@ func (k KudagoUsecase) AddEvent(elem models.Elem, place models.Place) (bool, err
 		return false, nil
 	}
 
-	eventId, err = k.repo.AddEvent(newEvent)
+	eventId, err := k.repo.AddEvent(newEvent)
 	if err != nil {
 		return false, err
 	}

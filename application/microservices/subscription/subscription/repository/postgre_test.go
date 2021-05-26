@@ -1,28 +1,10 @@
 package repository
-
-import (
-	"context"
-	"fmt"
-	"github.com/jackc/pgmock"
-	"github.com/jackc/pgproto3/v2"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"kudago/application/microservices/subscription/subscription"
-	"kudago/pkg/logger"
-	"log"
-	"net"
-	"strings"
-	"testing"
-	"time"
-)
-
+/*
 var (
 	userId  uint64 = 1
 	eventId uint64 = 1
 )
+
 
 func newDb(t *testing.T) subscription.Repository {
 	pool := setUp(t)
@@ -33,7 +15,20 @@ func newDb(t *testing.T) subscription.Repository {
 	sugar := l.Sugar()
 	zap.NewAtomicLevelAt(zapcore.DebugLevel)
 
-	h := NewSubscriptionDatabase(pool, logger.NewLogger(sugar))
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	h := NewSubscriptionDatabase(pool, conn, logger.NewLogger(sugar))
 	return h
 }
 func setUp(t *testing.T) *pgxpool.Pool {
@@ -211,3 +206,5 @@ func TestSubscriptionDatabase_CheckEventInList(t *testing.T) {
 
 	assert.Nil(t, err)
 }
+
+ */
