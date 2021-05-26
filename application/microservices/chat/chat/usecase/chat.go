@@ -34,7 +34,7 @@ func (c Chat) GetAllCounts(uid uint64) (models.Counts, error) {
 		return models.Counts{}, err
 	}
 
-	counts.Notifications, err = c.repo.GetNotificationCounts(uid, time.Now())
+	counts.Notifications, err = c.repo.GetNotificationCounts(uid, time.Now().Add(5*time.Hour))
 	if err != nil {
 		c.logger.Warn(err)
 		return models.Counts{}, err
