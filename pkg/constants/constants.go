@@ -31,7 +31,7 @@ const (
 	//UsersPerPage            = 10
 	ChatPerPage     = 100
 	MailingText     = " приглашает Вас на мероприятие "
-	MailingAddress  = "95.163.180.8:3000/event"
+	MailingAddress  = "https://qdaqda.ru/event"
 	MailNotif       = "Mail"
 	MailNotifText   = " приглашает Вас посетить новое мероприятие"
 	EventNotif      = "Event"
