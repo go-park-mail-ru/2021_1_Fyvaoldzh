@@ -358,7 +358,7 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 		return err
 	}
 
-	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
+	_, err = ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
