@@ -33,7 +33,7 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents, middleware.GetPage)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent, middleware.GetId)
-	e.GET("/api/v1/link/event/:id", eventHandler.GetEventLink, middleware.GetId)
+	e.GET("/link/event/:id", eventHandler.GetEventLink, middleware.GetId)
 	e.GET("/api/v1/event/name/:id", eventHandler.GetOneEventName, middleware.GetId)
 	e.POST("/api/v1/near", eventHandler.GetNear, middleware.GetPage)
 	e.GET("/api/v1/event", eventHandler.GetEvents, middleware.GetPage)
@@ -366,6 +366,6 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 
 	title := ev.Title
 
-	tmpl, _ := template.New("title").Parse(string(data))
+	tmpl, _ := template.New("title").Parse("geool"/*string(data)*/)
 	return tmpl.Execute(c.Response(), title)
 }
