@@ -7,7 +7,7 @@ const (
 	UserIdKey         = "user_id"
 	PageKey           = "page"
 	IdKey             = "id"
-	//CSRFHeader              = "header:X-XSRF-TOKEN"
+	CSRFHeader              = "header:X-XSRF-TOKEN"
 	DBConnect      = " dbname=qdago host=localhost port=5432 sslmode=disable pool_max_conns=10"
 	DateFormat     = "2006-01-02"
 	DateTimeFormat = "2006-01-02T15:04:05"
