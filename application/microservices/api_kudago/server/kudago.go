@@ -24,7 +24,7 @@ func NewKudagoServer(usecase kudago.Usecase, lg *logger.Logger) *KudagoServer {
 
 func (k *KudagoServer) AddBasic(_ context.Context, input *kudago_proto.Input) (*kudago_proto.Empty, error) {
 
-	str := "https://kudago.com/public-api/v1.4/events/?fields=id,publication_date,dates,title,place,body_text,categories,tags,images&order_by=-publication_date&categories=cinema,education,entertainment,exhibition,festival,tour,concert"
+	str := "https://kudago.com/public-api/v1.4/events/?" + input.Path //fields=id,publication_date,dates,title,place,body_text,categories,tags,images&order_by=-publication_date&categories=cinema,education,entertainment,exhibition,festival,tour,concert"
 	for i := uint64(0); i < input.Num; {
 		answer, err := k.GetEvents(str)
 		if err != nil {
@@ -33,13 +33,13 @@ func (k *KudagoServer) AddBasic(_ context.Context, input *kudago_proto.Input) (*
 		str = answer.Next
 		for _, elem := range answer.Results {
 
-			if elem.Place.Id != 0 && len(elem.Tags) > 0 && len(elem.Title) <= 60 {
+			if elem.Place.Id != 0 && len(elem.Tags) > 0 && len(elem.Title) <= 100 {
 				url := "https://kudago.com/public-api/v1.4/places/" + strconv.FormatUint(elem.Place.Id, 10) + "/?fields=title,coords,subway,address"
 				place, err := k.GetPlace(url)
 				if err != nil {
 					return nil, err
 				}
-				if len(place.Title) <= 60 && len(place.Subway) <= 60 && len(place.Subway) <= 60 && place.Map.Longitude != 0 {
+				if len(place.Title) <= 100 && len(place.Subway) <= 60 && len(place.Address) <= 60 && place.Map.Longitude != 0 {
 					flag, err := k.usecase.AddEvent(elem, place)
 					if err != nil {
 						return nil, err
@@ -64,7 +64,7 @@ func (k *KudagoServer) AddBasic(_ context.Context, input *kudago_proto.Input) (*
 
 func (k *KudagoServer) AddToday(_ context.Context, _ *kudago_proto.Empty) (*kudago_proto.Empty, error) {
 	k.logger.Debug("start pushing today's events")
-	str := "https://kudago.com/public-api/v1.4/events/?fields=id,publication_date,dates,title,place,body_text,categories,tags,images&order_by=-publication_date&categories=cinema,education,entertainment,exhibition,festival,tour,concert"
+	str := "https://kudago.com/public-api/v1.4/events/?fields=id,publication_date,dates,title,place,body_text,categories,tags,images&order_by=-publication_date&categories=cinema,education,entertainment,exhibition,festival,tour"
 	timeNow := time.Now().Unix()
 	for {
 		answer, err := k.GetEvents(str)

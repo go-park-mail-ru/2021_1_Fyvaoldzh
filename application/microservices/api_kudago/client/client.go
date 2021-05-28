@@ -34,8 +34,8 @@ func NewKudagoClient(port string, logger logger.Logger, tracer opentracing.Trace
 	return &KudagoClient{client: kudago_proto.NewKudagoClient(gConn), gConn: gConn, logger: logger}, nil
 }
 
-func (k *KudagoClient) AddBasic(c context.Context, num uint64) (error, int) {
-	input := &kudago_proto.Input{Num: num}
+func (k *KudagoClient) AddBasic(c context.Context, num uint64, path string) (error, int) {
+	input := &kudago_proto.Input{Num: num, Path: path}
 
 	_, err := k.client.AddBasic(c, input)
 	if err != nil {
