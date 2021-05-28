@@ -42,7 +42,9 @@ func (kh KudagoHandler) AddBasic(c echo.Context) error {
 		intNum = 1
 	}
 
-	err, code := kh.rpcKudago.AddBasic(context.Background(), uint64(intNum))
+	path := c.QueryParam("path")
+
+	err, code := kh.rpcKudago.AddBasic(context.Background(), uint64(intNum), path)
 	if err != nil {
 		kh.Logger.Warn(err)
 		middleware.ErrResponse(c, code)
