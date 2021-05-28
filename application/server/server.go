@@ -142,10 +142,10 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	chhttp.CreateChatHandler(e, rpcAuth, sanitizer, lg, auth, rpcChat)
 	kudago_http.CreateKudagoHandler(e, rpcKudago, lg)
 
-	//e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-	//	TokenLookup: constants.CSRFHeader,
-	//	CookiePath:  "/",
-	//}))
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		TokenLookup: constants.CSRFHeader,
+		CookiePath:  "/",
+	}))
 
 	prometheus.MustRegister(middleware1.FooCount, middleware1.Hits)
 	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
