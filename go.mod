@@ -13,7 +13,7 @@ require (
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jackc/pgx/v4 v4.11.0
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/labstack/gommon v0.3.0 // indirect
+	github.com/labstack/gommon v0.3.0
 	github.com/lib/pq v1.10.0
 	github.com/mailru/easyjson v0.7.7
 	github.com/microcosm-cc/bluemonday v1.0.8
@@ -31,6 +31,7 @@ require (
 	golang.org/x/net v0.0.0-20210423174036-e997de6604e2 // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
 	golang.org/x/tools v0.1.1-0.20210504170620-03ebc2c9fca8 // indirect
+	gonum.org/v1/gonum v0.8.2
 	google.golang.org/genproto v0.0.0-20210423144448-3a41ef94ed2b // indirect
 	google.golang.org/grpc v1.37.0
 	google.golang.org/protobuf v1.26.0

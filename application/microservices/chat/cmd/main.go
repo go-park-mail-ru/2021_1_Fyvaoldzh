@@ -5,12 +5,16 @@ import (
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"log"
+	"os"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 func main() {
+	os.Setenv("DB_PASSWORD", "fyvaoldzh")
+	os.Setenv("POSTGRE_USER", "postgre")
+	os.Setenv("TARANTOOL_USER", "admin")
 	lg, err := zap.NewProduction()
 	if err != nil {
 		log.Fatal(err)

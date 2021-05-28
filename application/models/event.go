@@ -47,6 +47,16 @@ type EventCard struct {
 	EndDate     string `json:"endDate"`
 }
 
+type EventCardWithCoords struct {
+	ID          uint64  `json:"id"`
+	Title       string  `json:"title"`
+	Place       string  `json:"place"`
+	Description string  `json:"description"`
+	StartDate   string  `json:"startDate"`
+	EndDate     string  `json:"endDate"`
+	Distance    float64 `json:"distance"`
+}
+
 type EventCardWithDateSQL struct {
 	ID          uint64
 	Title       string
@@ -54,6 +64,16 @@ type EventCardWithDateSQL struct {
 	Description string
 	StartDate   time.Time
 	EndDate     time.Time
+}
+
+type EventCardWithCoordsSQL struct {
+	ID          uint64
+	Title       string
+	Place       string
+	Description string
+	StartDate   time.Time
+	EndDate     time.Time
+	Distance    float64 `db:"distance"`
 }
 
 type Tag struct {
@@ -68,9 +88,13 @@ type IsAddedEvent struct {
 }
 
 type Recomend struct {
-	Show    uint64 `json:"show"`
-	Movie   uint64 `json:"movie"`
-	Concert uint64 `json:"concert"`
+	Entertainment uint64
+	Education     uint64
+	Cinema        uint64
+	Exhibition    uint64
+	Festival      uint64
+	Tour          uint64
+	Concert       uint64
 }
 
 type Coordinates struct {
@@ -86,6 +110,18 @@ func ConvertDateCard(old EventCardWithDateSQL) EventCard {
 	newCard.Place = old.Place
 	newCard.StartDate = old.StartDate.String()
 	newCard.EndDate = old.EndDate.String()
+	return newCard
+}
+
+func ConvertCoordsCard(old EventCardWithCoordsSQL, point Coordinates) EventCardWithCoords {
+	var newCard EventCardWithCoords
+	newCard.ID = old.ID
+	newCard.Title = old.Title
+	newCard.Description = old.Description
+	newCard.Place = old.Place
+	newCard.StartDate = old.StartDate.String()
+	newCard.EndDate = old.EndDate.String()
+	newCard.Distance = old.Distance
 	return newCard
 }
 
@@ -119,6 +155,9 @@ type EventCards []EventCard
 
 //easyjson:json
 type Tags []Tag
+
+//easyjson:json
+type EventCardsWithCoords []EventCardWithCoords
 
 type ViewData struct {
 	Id    uint64

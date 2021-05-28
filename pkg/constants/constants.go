@@ -7,10 +7,10 @@ const (
 	UserIdKey         = "user_id"
 	PageKey           = "page"
 	IdKey             = "id"
-	CSRFHeader              = "header:X-XSRF-TOKEN"
-	DBConnect      = " dbname=qdago host=localhost port=5432 sslmode=disable pool_max_conns=10"
-	DateFormat     = "2006-01-02"
-	DateTimeFormat = "2006-01-02T15:04:05"
+	CSRFHeader        = "header:X-XSRF-TOKEN"
+	DBConnect         = " dbname=qdago host=localhost port=5432 sslmode=disable pool_max_conns=10"
+	DateFormat        = "2006-01-02"
+	DateTimeFormat    = "2006-01-02T15:04:05"
 	//DefaultAvatar           = "public/default.png"
 	TarantoolAddress        = "127.0.0.1:3301"
 	AuthServicePort         = ":3001"
@@ -38,9 +38,13 @@ const (
 )
 
 var Category = map[string]string{
-	"Музей":    "concert",
-	"Выставка": "show",
-	"Кино":     "movie",
+	"Развлечения": "entertainment",
+	"Образование": "education",
+	"Кино":        "cinema",
+	"Выставка":    "exhibition",
+	"Фестиваль":   "festival",
+	"Экскурсия":   "tour",
+	"Концерт":     "concert",
 }
 
 var LetterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")

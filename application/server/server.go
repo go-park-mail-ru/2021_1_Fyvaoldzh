@@ -43,11 +43,11 @@ import (
 )
 
 type Server struct {
-	rpcAuth clientAuth.IAuthClient
-	rpcSub  clientSub.ISubscriptionClient
-	rpcChat clientChat.IChatClient
+	rpcAuth   clientAuth.IAuthClient
+	rpcSub    clientSub.ISubscriptionClient
+	rpcChat   clientChat.IChatClient
 	rpcKudago *kudago_client.KudagoClient
-	e       *echo.Echo
+	e         *echo.Echo
 }
 
 func NewServer(l *zap.SugaredLogger) *Server {
@@ -82,8 +82,8 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	}))
 
 	pool, err := pgxpool.Connect(context.Background(),
-		"user=" + os.Getenv("POSTGRE_USER") +
-			" password=" + os.Getenv("DB_PASSWORD") + constants.DBConnect)
+		"user="+os.Getenv("POSTGRE_USER")+
+			" password="+os.Getenv("DB_PASSWORD")+constants.DBConnect)
 	if err != nil {
 		lg.Fatal(err)
 	}
@@ -142,10 +142,10 @@ func NewServer(l *zap.SugaredLogger) *Server {
 	chhttp.CreateChatHandler(e, rpcAuth, sanitizer, lg, auth, rpcChat)
 	kudago_http.CreateKudagoHandler(e, rpcKudago, lg)
 
-	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+	/*e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup: constants.CSRFHeader,
 		CookiePath:  "/",
-	}))
+	}))*/
 
 	prometheus.MustRegister(middleware1.FooCount, middleware1.Hits)
 	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))

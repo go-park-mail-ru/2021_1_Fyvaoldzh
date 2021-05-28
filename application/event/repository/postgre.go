@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/labstack/gommon/log"
+	"gonum.org/v1/gonum/floats"
 	"kudago/application/event"
 	"kudago/application/models"
 	"kudago/pkg/constants"
@@ -27,17 +29,22 @@ func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository
 }
 
 //Так будет работать, потому что все мерроприятия и люди в России, нулевой меридиан и экватор не проходит через РФ
-func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithDateSQL, error) {
-	var events []models.EventCardWithDateSQL
+func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithCoordsSQL, error) {
+	var events []models.EventCardWithCoordsSQL
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
-		`SELECT id, title, place, description, start_date, end_date FROM events
+		`SELECT id, title, place, description, start_date, end_date, (
+		2*6371*asin(sqrt(sin(radians((latitude- $2)/2))*sin(radians((latitude- $2)/2))+
+                     sin(radians((longitude- $3)/2))*sin(radians((longitude- $3)/2))
+                         *cos(latitude)*cos($2)))) AS distance FROM events
+
 		WHERE end_date > $1
-		ORDER BY (pow(($2 - latitude),2) + pow(($3 - longitude),2))
+		ORDER BY distance
 		LIMIT $4 OFFSET $5`, now, coord.Latitude, coord.Longitude, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
+	log.Info(events)
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method GetNearEvents")
-		return []models.EventCardWithDateSQL{}, nil
+		return []models.EventCardWithCoordsSQL{}, nil
 	}
 
 	if err != nil {
@@ -233,40 +240,10 @@ func (ed EventDatabase) RecomendSystem(uid uint64, category string) error {
 	return nil
 }
 
-//Вынести на уровень выше
-func (ed EventDatabase) GetSixPreference(recomend models.Recomend) models.Recomend {
-	var sixPreference models.Recomend
-	recomendSumm := recomend.Concert + recomend.Movie + recomend.Show
-	if recomendSumm == 0 {
-		sixPreference.Show = 2
-		sixPreference.Movie = sixPreference.Show
-		sixPreference.Concert = sixPreference.Movie
-		return sixPreference
-	}
-	concertProcent := float64(recomend.Concert) / float64(recomendSumm)
-	showProcent := float64(recomend.Show) / float64(recomendSumm)
-	sixPreference.Concert = uint64(concertProcent * 6)
-	if sixPreference.Concert == 0 {
-		sixPreference.Concert = 1
-	}
-	if sixPreference.Concert > 4 {
-		sixPreference.Concert = 4
-	}
-	sixPreference.Show = uint64(showProcent * 6)
-	if sixPreference.Show == 0 {
-		sixPreference.Show = 1
-	}
-	if sixPreference.Show > 4 {
-		sixPreference.Show = 4
-	}
-	sixPreference.Movie = 6 - sixPreference.Concert - sixPreference.Show
-	return sixPreference
-}
-
 func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
 	var recomend []models.Recomend
 	err := pgxscan.Select(context.Background(), ed.pool, &recomend,
-		`SELECT show, movie, concert
+		`SELECT entertainment, education, cinema, exhibition, festival, tour, concert
 		FROM user_preference
 		WHERE user_id = $1`, uid)
 
@@ -279,8 +256,8 @@ func (ed EventDatabase) GetPreference(uid uint64) (models.Recomend, error) {
 		ed.logger.Warn(err)
 		return models.Recomend{}, err
 	}
-	//return recomend[0], nil
-	return ed.GetSixPreference(recomend[0]), nil
+
+	return recomend[0], nil
 }
 
 func (ed EventDatabase) CategorySearch(str string, category string, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
@@ -310,43 +287,130 @@ func (ed EventDatabase) CategorySearch(str string, category string, now time.Tim
 }
 
 func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {
-	recomend, err := ed.GetPreference(uid)
+	recommend, err := ed.GetPreference(uid)
 	if err != nil {
 		ed.logger.Debug(string(err.Error()))
 		return ed.GetAllEvents(now, 1)
 	}
-	var eventsConcert, eventsShow, eventsMovie []models.EventCardWithDateSQL
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsConcert,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = 'Музей' AND end_date > $1
-			ORDER BY id DESC
-			LIMIT $2 OFFSET $3`, now, recomend.Concert, (page-1)*int(recomend.Concert))
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsShow,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = 'Выставка' AND end_date > $1
-			ORDER BY id DESC
-			LIMIT $2 OFFSET $3`, now, recomend.Show, (page-1)*int(recomend.Show))
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-	err = pgxscan.Select(context.Background(), ed.pool, &eventsMovie,
-		`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = 'Кино' AND end_date > $1
-			ORDER BY id DESC
-			LIMIT $2 OFFSET $3`, now, recomend.Movie, (page-1)*int(recomend.Movie))
-	if err != nil {
-		ed.logger.Warn(err)
-		return nil, err
-	}
-	eventsConcert = append(eventsConcert, eventsShow...)
-	eventsConcert = append(eventsConcert, eventsMovie...)
+	var eventsFirst, eventsSecond, eventsThird []models.EventCardWithDateSQL
+	var s []float64
+	s = append(s, float64(recommend.Concert), float64(recommend.Tour), float64(recommend.Entertainment),
+		float64(recommend.Festival), float64(recommend.Exhibition),
+		float64(recommend.Cinema), float64(recommend.Education))
 
-	return eventsConcert, nil
+	var first string
+	if float64(recommend.Concert) == floats.Max(s) {
+		first = "Концерт"
+	}
+	if float64(recommend.Cinema) == floats.Max(s) {
+		first = "Кино"
+	}
+	if float64(recommend.Exhibition) == floats.Max(s) {
+		first = "Выставка"
+	}
+	if float64(recommend.Education) == floats.Max(s) {
+		first = "Образование"
+	}
+	if float64(recommend.Tour) == floats.Max(s) {
+		first = "Экскурсия"
+	}
+	if float64(recommend.Festival) == floats.Max(s) {
+		first = "Фестиваль"
+	}
+	if float64(recommend.Entertainment) == floats.Max(s) {
+		first = "Развлечения"
+	}
+
+	err = pgxscan.Select(context.Background(), ed.pool, &eventsFirst,
+		`SELECT id, title, place, description, start_date, end_date FROM events
+			WHERE category = $1 AND end_date > $2
+			ORDER BY id DESC
+			LIMIT $3 OFFSET $4`, first, now, 3, (page-1)*3)
+	if errors.As(err, &pgx.ErrNoRows) || len(eventsFirst) == 0 {
+		ed.logger.Debug("debug")
+	} else {
+		if err != nil {
+			ed.logger.Warn(err)
+			return nil, err
+		}
+	}
+
+	if first != "Концерт" {
+		err = pgxscan.Select(context.Background(), ed.pool, &eventsSecond,
+			`SELECT id, title, place, description, start_date, end_date FROM events
+			WHERE category = "Концерт" AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, 1, (page-1)*1)
+
+		if errors.As(err, &pgx.ErrNoRows) || len(eventsSecond) == 0 {
+			ed.logger.Debug("debug")
+		} else {
+			if err != nil {
+				ed.logger.Warn(err)
+				return nil, err
+			}
+		}
+		if first != "Выставка" {
+			err = pgxscan.Select(context.Background(), ed.pool, &eventsThird,
+				`SELECT id, title, place, description, start_date, end_date FROM events
+			WHERE category = "Выставка" AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, 1, (page-1)*1)
+			if errors.As(err, &pgx.ErrNoRows) || len(eventsThird) == 0 {
+				ed.logger.Debug("debug")
+			} else {
+				if err != nil {
+					ed.logger.Warn(err)
+					return nil, err
+				}
+			}
+		} else {
+			err = pgxscan.Select(context.Background(), ed.pool, &eventsThird,
+				`SELECT id, title, place, description, start_date, end_date FROM events
+			WHERE category = "Фестиваль" AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, 1, (page-1)*1)
+			if errors.As(err, &pgx.ErrNoRows) || len(eventsThird) == 0 {
+				ed.logger.Debug("debug")
+			} else {
+				if err != nil {
+					ed.logger.Warn(err)
+					return nil, err
+				}
+			}
+		}
+	} else {
+		err = pgxscan.Select(context.Background(), ed.pool, &eventsSecond,
+			`SELECT id, title, place, description, start_date, end_date FROM events
+			WHERE category = "Выставка" AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, 1, (page-1)*1)
+		if errors.As(err, &pgx.ErrNoRows) || len(eventsSecond) == 0 {
+			ed.logger.Debug("debug")
+		} else {
+			if err != nil {
+				ed.logger.Warn(err)
+				return nil, err
+			}
+		}
+		err = pgxscan.Select(context.Background(), ed.pool, &eventsThird,
+			`SELECT id, title, place, description, start_date, end_date FROM events
+			WHERE category = "Фестиваль" AND end_date > $1
+			ORDER BY id DESC
+			LIMIT $2 OFFSET $3`, now, 1, (page-1)*1)
+		if errors.As(err, &pgx.ErrNoRows) || len(eventsThird) == 0 {
+			ed.logger.Debug("debug")
+		} else {
+			if err != nil {
+				ed.logger.Warn(err)
+				return nil, err
+			}
+		}
+	}
+	eventsFirst = append(eventsFirst, eventsSecond...)
+	eventsFirst = append(eventsFirst, eventsThird...)
+
+	return eventsFirst, nil
 }
 
 /*func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]models.EventCardWithDateSQL, error) {

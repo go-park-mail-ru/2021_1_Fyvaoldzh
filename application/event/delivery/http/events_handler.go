@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"fmt"
+	"github.com/labstack/gommon/log"
 	"html/template"
 	"io/ioutil"
 	"kudago/application/event"
@@ -59,9 +60,10 @@ func (eh EventHandler) GetNear(c echo.Context) error {
 		middleware.ErrResponse(c, http.StatusTeapot)
 		return echo.NewHTTPError(http.StatusTeapot, err.Error())
 	}
+	log.Info(coord)
 
 	events, err := eh.UseCase.GetNear(*coord, page)
-	events = eh.sanitizer.SanitizeEventCards(events)
+	events = eh.sanitizer.SanitizeEventCardsWithCoords(events)
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		return err
@@ -168,7 +170,9 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	requestId := fmt.Sprintf("%016x", rand.Int())
 	id := c.Get(constants.IdKey).(int)
 
+	log.Info("here")
 	ev, err := eh.UseCase.GetOneEvent(uint64(id))
+	log.Info("here2")
 	if err != nil {
 		eh.Logger.LogError(c, start, requestId, err)
 		middleware.ErrResponse(c, http.StatusInternalServerError)
@@ -176,6 +180,7 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	}
 	eh.sanitizer.SanitizeEvent(&ev)
 	if uid, err := eh.GetUserID(c); err == nil {
+		log.Info(ev.Category)
 		if err := eh.UseCase.RecomendSystem(uid, ev.Category); err != nil {
 			eh.Logger.LogWarn(c, start, requestId, err)
 		}
@@ -365,7 +370,7 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 	}
 
 	input := models.ViewData{
-		Id: ev.ID,
+		Id:    ev.ID,
 		Title: ev.Title,
 	}
 

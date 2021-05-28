@@ -45,6 +45,18 @@ func (cs *CustomSanitizer) SanitizeEventCards(events models.EventCards) models.E
 	return newEvents
 }
 
+func (cs *CustomSanitizer) SanitizeEventCardsWithCoords(events models.EventCardsWithCoords) models.EventCardsWithCoords {
+	var newEvents models.EventCardsWithCoords
+	for _, elem := range events {
+		elem.Place = cs.sanitizer.Sanitize(elem.Place)
+		elem.Description = cs.sanitizer.Sanitize(elem.Description)
+		elem.Title = cs.sanitizer.Sanitize(elem.Title)
+		newEvents = append(newEvents, elem)
+	}
+
+	return newEvents
+}
+
 func (cs *CustomSanitizer) SanitizeUsersOnEvent(users models.UsersOnEvent) models.UsersOnEvent {
 	var newUsers models.UsersOnEvent
 	for _, elem := range users {
