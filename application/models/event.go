@@ -119,3 +119,8 @@ type EventCards []EventCard
 
 //easyjson:json
 type Tags []Tag
+
+type ViewData struct {
+	Id    uint64
+	Title string
+}

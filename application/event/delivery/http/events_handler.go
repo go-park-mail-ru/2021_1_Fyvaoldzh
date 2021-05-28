@@ -364,8 +364,11 @@ func (eh EventHandler) GetEventLink(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	title := ev.Title
+	input := models.ViewData{
+		Id: ev.ID,
+		Title: ev.Title,
+	}
 
-	tmpl, _ := template.New("title").Parse(string(data))
-	return tmpl.Execute(c.Response(), title)
+	tmpl, _ := template.New("input").Parse(string(data))
+	return tmpl.Execute(c.Response(), input)
 }

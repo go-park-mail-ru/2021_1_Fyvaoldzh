@@ -108,24 +108,24 @@ jobs:
             -e POSTGRE_USER=${{ secrets.POSTGRE_USERNAME }} \
             -e TARANTOOL_USER=${{ secrets.TARANTOOL_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            --network="host" -v ~/go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public:/./project/public -p 3004:3004 --name backend_kudago ${{ secrets.DOCKERHUB_USERNAME }}/kudago:${GITHUB_SHA::8}
+            --network -v ~/go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public:/./project/public -p 3004:3004 --name backend_kudago ${{ secrets.DOCKERHUB_USERNAME }}/kudago:${GITHUB_SHA::8}
             sudo docker run -d \
             -e POSTGRE_USER=${{ secrets.POSTGRE_USERNAME }} \
             -e TARANTOOL_USER=${{ secrets.TARANTOOL_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            --network="host" -p 3003:3003 --name backend_chat ${{ secrets.DOCKERHUB_USERNAME }}/chat:${GITHUB_SHA::8}
+            --network -p 3003:3003 --name backend_chat ${{ secrets.DOCKERHUB_USERNAME }}/chat:${GITHUB_SHA::8}
             sudo docker run -d \
             -e POSTGRE_USER=${{ secrets.POSTGRE_USERNAME }} \
             -e TARANTOOL_USER=${{ secrets.TARANTOOL_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            --network="host" -p 3002:3002 --name backend_sub ${{ secrets.DOCKERHUB_USERNAME }}/sub:${GITHUB_SHA::8}
+            --network -p 3002:3002 --name backend_sub ${{ secrets.DOCKERHUB_USERNAME }}/sub:${GITHUB_SHA::8}
             sudo docker run -d \
             -e POSTGRE_USER=${{ secrets.POSTGRE_USERNAME }} \
             -e TARANTOOL_USER=${{ secrets.TARANTOOL_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            --network="host" -p 3001:3001 --name backend_auth ${{ secrets.DOCKERHUB_USERNAME }}/auth:${GITHUB_SHA::8}
+            --network -p 3001:3001 --name backend_auth ${{ secrets.DOCKERHUB_USERNAME }}/auth:${GITHUB_SHA::8}
             sudo docker run -d \
             -e POSTGRE_USER=${{ secrets.POSTGRE_USERNAME }} \
             -e TARANTOOL_USER=${{ secrets.TARANTOOL_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            --network="host" -v ~/go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public:/./project/public -v ~/project/2021_1_Fyvaoldzh/dist:/./project/2021_1_Fyvaoldzh/dist -p 1323:1323 --name backend_main ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8}
+            --network -v ~/go/src/github.com/go-park-mail-ru/2021_1_Fyvaoldzh/public:/./project/public -v ~/dist:/./project/2021_1_Fyvaoldzh/dist -p 1323:1323 --name backend_main ${{ secrets.DOCKERHUB_USERNAME }}/main:${GITHUB_SHA::8}
