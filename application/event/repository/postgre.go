@@ -408,6 +408,8 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 			}
 		}
 	}
+	log.Info(eventsSecond)
+	log.Info(eventsThird)
 	eventsFirst = append(eventsFirst, eventsSecond...)
 	eventsFirst = append(eventsFirst, eventsThird...)
 
