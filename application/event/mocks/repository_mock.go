@@ -124,10 +124,10 @@ func (mr *MockRepositoryMockRecorder) GetEventsByCategory(typeEvent, now, page i
 }
 
 // GetNearEvents mocks base method.
-func (m *MockRepository) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithDateSQL, error) {
+func (m *MockRepository) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithCoordsSQL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNearEvents", now, coord, page)
-	ret0, _ := ret[0].([]models.EventCardWithDateSQL)
+	ret0, _ := ret[0].([]models.EventCardWithCoordsSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

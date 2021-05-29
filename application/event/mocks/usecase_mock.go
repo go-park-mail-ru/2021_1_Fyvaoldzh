@@ -124,10 +124,10 @@ func (mr *MockUseCaseMockRecorder) GetImage(eventId interface{}) *gomock.Call {
 }
 
 // GetNear mocks base method.
-func (m *MockUseCase) GetNear(coord models.Coordinates, page int) (models.EventCards, error) {
+func (m *MockUseCase) GetNear(coord models.Coordinates, page int) (models.EventCardsWithCoords, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNear", coord, page)
-	ret0, _ := ret[0].(models.EventCards)
+	ret0, _ := ret[0].(models.EventCardsWithCoords)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

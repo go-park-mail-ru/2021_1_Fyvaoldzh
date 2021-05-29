@@ -33,13 +33,13 @@ func (k *KudagoServer) AddBasic(_ context.Context, input *kudago_proto.Input) (*
 		str = answer.Next
 		for _, elem := range answer.Results {
 
-			if elem.Place.Id != 0 && len(elem.Tags) > 0 && len(elem.Title) <= 100 {
+			if  len(elem.Tags) > 0 {
 				url := "https://kudago.com/public-api/v1.4/places/" + strconv.FormatUint(elem.Place.Id, 10) + "/?fields=title,coords,subway,address"
 				place, err := k.GetPlace(url)
 				if err != nil {
 					return nil, err
 				}
-				if len(place.Title) <= 100 && len(place.Subway) <= 60 && len(place.Address) <= 60 && place.Map.Longitude != 0 {
+				if place.Map.Longitude != 0 {
 					flag, err := k.usecase.AddEvent(elem, place)
 					if err != nil {
 						return nil, err
