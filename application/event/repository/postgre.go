@@ -338,7 +338,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 			`SELECT id, title, place, description, start_date, end_date FROM events
 			WHERE category = 'Концерт' AND end_date > $1
 			ORDER BY id DESC
-			LIMIT 1 OFFSET $2`, now, (page-1)*1)
+			LIMIT 2 OFFSET $2`, now, (page-1)*2)
 
 		if errors.As(err, &pgx.ErrNoRows) || len(eventsSecond) == 0 {
 			ed.logger.Debug("debug")
@@ -382,7 +382,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 			`SELECT id, title, place, description, start_date, end_date FROM events
 			WHERE category = 'Выставка' AND end_date > $1
 			ORDER BY id DESC
-			LIMIT 1 OFFSET $2`, now, (page-1)*1)
+			LIMIT 2 OFFSET $2`, now, (page-1)*2)
 		if errors.As(err, &pgx.ErrNoRows) || len(eventsSecond) == 0 {
 			ed.logger.Debug("debug")
 		} else {
