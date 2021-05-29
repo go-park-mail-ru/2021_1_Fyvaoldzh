@@ -24,7 +24,7 @@ func NewKudagoServer(usecase kudago.Usecase, lg *logger.Logger) *KudagoServer {
 
 func (k *KudagoServer) AddBasic(_ context.Context, input *kudago_proto.Input) (*kudago_proto.Empty, error) {
 
-	str := "https://kudago.com/public-api/v1.4/events/?fields=id,publication_date,dates,title,place,body_text,categories,tags,images&actual_since=1622268741&categories=cinema,education,entertainment,exhibition,festival,tour"
+	str := "https://kudago.com/public-api/v1.4/events/?fields=id,publication_date,dates,title,place,body_text,categories,tags,images&actual_since=1622268741&categories=cinema,education,entertainment,tour"
 	for i := uint64(0); i < input.Num; {
 		answer, err := k.GetEvents(str)
 		if err != nil {
