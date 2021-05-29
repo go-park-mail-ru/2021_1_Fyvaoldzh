@@ -39,7 +39,7 @@ func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, p
                          *cos(latitude)*cos($2))))) AS distance FROM events
 
 		WHERE end_date > $1
-		ORDER BY distance
+		ORDER BY distance, id
 		LIMIT $4 OFFSET $5`, now, coord.Latitude, coord.Longitude, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
 	log.Info(events)
