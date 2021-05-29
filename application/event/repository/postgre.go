@@ -31,11 +31,12 @@ func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository
 //Так будет работать, потому что все мерроприятия и люди в России, нулевой меридиан и экватор не проходит через РФ
 func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithCoordsSQL, error) {
 	var events []models.EventCardWithCoordsSQL
+	log.Info(now, coord, page)
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
 		`SELECT id, title, place, description, start_date, end_date, (
-		2*6371*asin(sqrt(sin(radians((latitude- $2)/2))*sin(radians((latitude- $2)/2))+
+		2*6371*asin(sqrt(abs(sin(radians((latitude- $2)/2))*sin(radians((latitude- $2)/2))+
                      sin(radians((longitude- $3)/2))*sin(radians((longitude- $3)/2))
-                         *cos(latitude)*cos($2)))) AS distance FROM events
+                         *cos(latitude)*cos($2))))) AS distance FROM events
 
 		WHERE end_date > $1
 		ORDER BY distance
