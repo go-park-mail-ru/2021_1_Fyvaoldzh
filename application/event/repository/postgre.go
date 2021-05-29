@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/labstack/gommon/log"
 	"gonum.org/v1/gonum/floats"
 	"kudago/application/event"
 	"kudago/application/models"
@@ -31,7 +30,6 @@ func NewEventDatabase(conn *pgxpool.Pool, logger logger.Logger) event.Repository
 //Так будет работать, потому что все мерроприятия и люди в России, нулевой меридиан и экватор не проходит через РФ
 func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithCoordsSQL, error) {
 	var events []models.EventCardWithCoordsSQL
-	log.Info(now, coord, page)
 	err := pgxscan.Select(context.Background(), ed.pool, &events,
 		`SELECT id, title, place, description, start_date, end_date, (
 		2*6371*asin(sqrt(abs(sin(radians((latitude- $2)/2))*sin(radians((latitude- $2)/2))+
@@ -42,7 +40,6 @@ func (ed EventDatabase) GetNearEvents(now time.Time, coord models.Coordinates, p
 		ORDER BY distance, id
 		LIMIT $4 OFFSET $5`, now, coord.Latitude, coord.Longitude, constants.EventsPerPage, (page-1)*constants.EventsPerPage)
 
-	log.Info(events)
 	if errors.As(err, &pgx.ErrNoRows) || len(events) == 0 {
 		ed.logger.Debug("no rows in method GetNearEvents")
 		return []models.EventCardWithCoordsSQL{}, nil
@@ -339,7 +336,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 	if first != "Концерт" {
 		err = pgxscan.Select(context.Background(), ed.pool, &eventsSecond,
 			`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = "Концерт" AND end_date > $1
+			WHERE category = 'Концерт' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT 1 OFFSET $2`, now, (page-1)*1)
 
@@ -354,7 +351,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 		if first != "Выставка" {
 			err = pgxscan.Select(context.Background(), ed.pool, &eventsThird,
 				`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = "Выставка" AND end_date > $1
+			WHERE category = 'Выставка' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT 1 OFFSET $2`, now, (page-1)*1)
 			if errors.As(err, &pgx.ErrNoRows) || len(eventsThird) == 0 {
@@ -368,7 +365,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 		} else {
 			err = pgxscan.Select(context.Background(), ed.pool, &eventsThird,
 				`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = "Фестиваль" AND end_date > $1
+			WHERE category = 'Фестиваль' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT 1 OFFSET $2`, now, (page-1)*1)
 			if errors.As(err, &pgx.ErrNoRows) || len(eventsThird) == 0 {
@@ -383,7 +380,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 	} else {
 		err = pgxscan.Select(context.Background(), ed.pool, &eventsSecond,
 			`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = "Выставка" AND end_date > $1
+			WHERE category = 'Выставка' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT 1 OFFSET $2`, now, (page-1)*1)
 		if errors.As(err, &pgx.ErrNoRows) || len(eventsSecond) == 0 {
@@ -396,7 +393,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 		}
 		err = pgxscan.Select(context.Background(), ed.pool, &eventsThird,
 			`SELECT id, title, place, description, start_date, end_date FROM events
-			WHERE category = "Фестиваль" AND end_date > $1
+			WHERE category = 'Фестиваль' AND end_date > $1
 			ORDER BY id DESC
 			LIMIT 1 OFFSET $2`, now, (page-1)*1)
 		if errors.As(err, &pgx.ErrNoRows) || len(eventsThird) == 0 {
@@ -408,8 +405,6 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 			}
 		}
 	}
-	log.Info(eventsSecond)
-	log.Info(eventsThird)
 	eventsFirst = append(eventsFirst, eventsSecond...)
 	eventsFirst = append(eventsFirst, eventsThird...)
 
