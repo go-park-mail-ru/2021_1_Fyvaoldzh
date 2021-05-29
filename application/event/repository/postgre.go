@@ -291,7 +291,7 @@ func (ed EventDatabase) GetRecommended(uid uint64, now time.Time, page int) ([]m
 	recommend, err := ed.GetPreference(uid)
 	if err != nil {
 		ed.logger.Debug(string(err.Error()))
-		return ed.GetAllEvents(now, 1)
+		return ed.GetAllEvents(now, page)
 	}
 	var eventsFirst, eventsSecond, eventsThird []models.EventCardWithDateSQL
 	var s []float64
