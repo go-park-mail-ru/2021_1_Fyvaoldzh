@@ -24,5 +24,5 @@ func main() {
 	l := logger.NewLogger(sugar)
 
 	s := server.NewServer(constants.AuthServicePort, &l)
-	s.ListenAndServe()
+	_ = s.ListenAndServe()
 }

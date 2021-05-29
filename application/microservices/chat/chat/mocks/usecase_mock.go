@@ -90,6 +90,21 @@ func (mr *MockUseCaseMockRecorder) EditMessage(uid, newMessage interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditMessage", reflect.TypeOf((*MockUseCase)(nil).EditMessage), uid, newMessage)
 }
 
+// GetAllCounts mocks base method.
+func (m *MockUseCase) GetAllCounts(uid uint64) (models.Counts, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllCounts", uid)
+	ret0, _ := ret[0].(models.Counts)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllCounts indicates an expected call of GetAllCounts.
+func (mr *MockUseCaseMockRecorder) GetAllCounts(uid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllCounts", reflect.TypeOf((*MockUseCase)(nil).GetAllCounts), uid)
+}
+
 // GetAllDialogues mocks base method.
 func (m *MockUseCase) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error) {
 	m.ctrl.T.Helper()
@@ -103,6 +118,21 @@ func (m *MockUseCase) GetAllDialogues(uid uint64, page int) (models.DialogueCard
 func (mr *MockUseCaseMockRecorder) GetAllDialogues(uid, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDialogues", reflect.TypeOf((*MockUseCase)(nil).GetAllDialogues), uid, page)
+}
+
+// GetAllNotifications mocks base method.
+func (m *MockUseCase) GetAllNotifications(uid uint64, page int) (models.Notifications, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllNotifications", uid, page)
+	ret0, _ := ret[0].(models.Notifications)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllNotifications indicates an expected call of GetAllNotifications.
+func (mr *MockUseCaseMockRecorder) GetAllNotifications(uid, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNotifications", reflect.TypeOf((*MockUseCase)(nil).GetAllNotifications), uid, page)
 }
 
 // GetOneDialogue mocks base method.
@@ -163,10 +193,10 @@ func (mr *MockUseCaseMockRecorder) Mailing(uid, mailing interface{}) *gomock.Cal
 }
 
 // Search mocks base method.
-func (m *MockUseCase) Search(uid uint64, id int, str string, page int) (models.Messages, error) {
+func (m *MockUseCase) Search(uid uint64, id int, str string, page int) (models.DialogueCards, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Search", uid, id, str, page)
-	ret0, _ := ret[0].(models.Messages)
+	ret0, _ := ret[0].(models.DialogueCards)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

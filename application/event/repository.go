@@ -8,7 +8,9 @@ import (
 type Repository interface {
 	AddEvent(newEvent *models.Event) error
 	GetAllEvents(now time.Time, page int) ([]models.EventCardWithDateSQL, error)
+	GetNearEvents(now time.Time, coord models.Coordinates, page int) ([]models.EventCardWithCoordsSQL, error)
 	GetOneEventByID(eventId uint64) (models.EventSQL, error)
+	GetOneEventNameByID(eventId uint64) (string, error)
 	DeleteById(eventId uint64) error
 	GetTags(eventId uint64) (models.Tags, error)
 	UpdateEventAvatar(eventId uint64, path string) error

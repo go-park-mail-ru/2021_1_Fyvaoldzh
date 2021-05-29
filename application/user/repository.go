@@ -18,4 +18,5 @@ type Repository interface {
 	FindUsers(str string, page int) ([]models.UserCardSQL, error)
 	GetUserByID(id uint64) (models.UserOnEvent, error)
 	GetActions(id uint64, page int) ([]*models.ActionCard, error)
+	AddToUserCount(id uint64) error
 }

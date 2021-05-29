@@ -6,9 +6,9 @@ import (
 	"image/png"
 	"io/ioutil"
 	"kudago/application/models"
-	mock_subscription "kudago/application/subscription/mocks"
+	mocksubscription "kudago/application/subscription/mocks"
 	"kudago/application/user"
-	mock_user "kudago/application/user/mocks"
+	mockuser "kudago/application/user/mocks"
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"log"
@@ -34,43 +34,11 @@ var (
 	badBackPassword        = "1111IvJrQEdIeoTzLsMX_839spM7MzaXS7aJ_b3xTzmYqbotq3HRKAs="
 	email                  = "email@mail.ru"
 	birthdayStr            = "1999-01-01"
-	birthday, err          = time.Parse(constants.DateFormat, "1999-01-01")
+	birthday, _            = time.Parse(constants.DateFormat, "1999-01-01")
 	city                   = "City"
 	about                  = "some personal information"
 	avatar                 = "public/users/default.png"
 	imageName              = "image.png"
-	evPlanningSQL          = models.EventCardWithDateSQL{
-		ID:        1,
-		StartDate: time.Now(),
-		EndDate:   time.Now().Add(10 * time.Hour),
-	}
-	evPlanning = models.EventCard{
-		ID:        1,
-		StartDate: evPlanningSQL.StartDate.String(),
-		EndDate:   evPlanningSQL.EndDate.String(),
-	}
-	evVisitedSQL = models.EventCardWithDateSQL{
-		ID:        2,
-		StartDate: time.Now(),
-		EndDate:   time.Now(),
-	}
-	evVisited = models.EventCard{
-		ID:        2,
-		StartDate: evVisitedSQL.StartDate.String(),
-		EndDate:   evVisitedSQL.EndDate.String(),
-	}
-	eventsPlanningSQL = []models.EventCardWithDateSQL{
-		evPlanningSQL, evVisitedSQL,
-	}
-	eventsVisitedSQL = []models.EventCardWithDateSQL{
-		evVisitedSQL,
-	}
-	eventsPlanning = []models.EventCard{
-		evPlanning,
-	}
-	eventsVisited = []models.EventCard{
-		evVisited,
-	}
 
 	followers = uint64(5)
 )
@@ -108,16 +76,6 @@ var testUserDataWithAvatar = &models.UserDataSQL{
 	Avatar: sql.NullString{String: imageName, Valid: true},
 }
 
-var testOtherUserProfile = &models.OtherUserProfile{
-	Uid:       userId,
-	Followers: followers,
-}
-
-var testOwnUserProfile = &models.UserOwnProfile{
-	Uid:       userId,
-	Login:     login,
-	Followers: followers,
-}
 var testOwnUserProfileToUpdate = &models.UserOwnProfile{
 	Uid:      userId,
 	Name:     name,
@@ -139,11 +97,6 @@ var testNewUserData = &models.UserDataSQL{
 	About:    sql.NullString{String: about, Valid: true},
 }
 
-var testUserOnEvent = &models.UserOnEvent{
-	Id:   userId,
-	Name: name,
-}
-
 var testUserCardSQL = &models.UserCardSQL{
 	Id:   userId,
 	Name: name,
@@ -161,11 +114,11 @@ var testActionCard = &models.ActionCard{
 var testUserCardsSQL = []models.UserCardSQL{*testUserCardSQL}
 var testActionCards = []*models.ActionCard{testActionCard}
 
-func setUp(t *testing.T) (*mock_user.MockRepository, *mock_subscription.MockRepository, user.UseCase) {
+func setUp(t *testing.T) (*mockuser.MockRepository, *mocksubscription.MockRepository, user.UseCase) {
 	ctrl := gomock.NewController(t)
 
-	rep := mock_user.NewMockRepository(ctrl)
-	repSub := mock_subscription.NewMockRepository(ctrl)
+	rep := mockuser.NewMockRepository(ctrl)
+	repSub := mocksubscription.NewMockRepository(ctrl)
 
 	l, err := zap.NewProduction()
 	if err != nil {
@@ -185,13 +138,13 @@ func createImage() {
 	upLeft := image.Point{}
 	lowRight := image.Point{X: width, Y: height}
 
-	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+	img := image.NewRGBA(image.Rectangle{Min: upLeft, Max: lowRight})
 	f, _ := os.Create(imageName)
-	png.Encode(f, img)
+	_ = png.Encode(f, img)
 }
 
 func deleteImage() {
-	os.Remove(imageName)
+	_ = os.Remove(imageName)
 }
 
 ///////////////////////////////////////////////////
@@ -241,6 +194,7 @@ func TestUserUseCase_CheckUserIncorrectDBError(t *testing.T) {
 
 ///////////////////////////////////////////////////
 
+/*
 func TestUserUseCase_AddOK(t *testing.T) {
 	rep, _, uc := setUp(t)
 
@@ -254,6 +208,8 @@ func TestUserUseCase_AddOK(t *testing.T) {
 	assert.Equal(t, testUserBack.Id, actual)
 }
 
+
+ */
 func TestUserUseCase_AddExistingLogin(t *testing.T) {
 	rep, _, uc := setUp(t)
 

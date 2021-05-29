@@ -5,20 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/tarantool/go-tarantool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"kudago/application/microservices/subscription/subscription"
+	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"time"
 )
 
 type SubscriptionDatabase struct {
 	pool   *pgxpool.Pool
+	ttool  *tarantool.Connection
 	logger logger.Logger
 }
 
-func NewSubscriptionDatabase(conn *pgxpool.Pool, logger logger.Logger) subscription.Repository {
-	return &SubscriptionDatabase{pool: conn, logger: logger}
+func NewSubscriptionDatabase(conn *pgxpool.Pool, ttool *tarantool.Connection, logger logger.Logger) subscription.Repository {
+	return &SubscriptionDatabase{pool: conn, ttool: ttool, logger: logger}
 }
 
 func (sd SubscriptionDatabase) SubscribeUser(subscriberId uint64, subscribedToId uint64) error {
@@ -183,4 +186,55 @@ func (sd SubscriptionDatabase) CheckEventInList(eventId uint64) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (sd SubscriptionDatabase) GetTimeEvent(eventId uint64) (time.Time, error) {
+	var date sql.NullTime
+	err := sd.pool.
+		QueryRow(context.Background(),
+			`SELECT start_date
+			FROM events WHERE id = $1`,
+			eventId).Scan(&date)
+	if err != nil {
+		sd.logger.Warn(err)
+		return time.Time{}, status.Error(codes.Internal, err.Error())
+	}
+
+	return date.Time, nil
+}
+
+func (sd SubscriptionDatabase) AddPlanningNotification(eventId uint64, userId uint64,
+	eventDate time.Time, now time.Time) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`INSERT INTO notifications 
+		VALUES ($1, $2, $3, $4, $5, default)`,
+		eventId, constants.EventNotif, userId, eventDate, now)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+	return nil
+}
+
+func (sd SubscriptionDatabase) RemovePlanningNotification(eventId uint64, userId uint64) error {
+	_, err := sd.pool.Exec(context.Background(),
+		`DELETE FROM notifications WHERE id = $1 AND id_to = $2 AND type = $3`,
+		eventId, userId, constants.EventNotif)
+	if err != nil {
+		sd.logger.Warn(err)
+		return status.Error(codes.Internal, err.Error())
+	}
+
+	return nil
+}
+
+func (sd SubscriptionDatabase) AddCountNotification(id uint64) error {
+	_, err := sd.ttool.Update(constants.TarantoolSpaceName2, "primary",
+		[]interface{}{id}, []interface{}{[]interface{}{"+", constants.TarantoolNotifications, 1}})
+	if err != nil {
+		sd.logger.Warn(err)
+		return err
+	}
+
+	return nil
 }

@@ -26,7 +26,10 @@ CREATE TABLE events
     category    varchar(60)  not null,
     start_date  timestamp    not null,
     end_date    timestamp    not null,
-    image       varchar(60) default 'public/events/default.png'
+    image       varchar(60)           default 'public/events/default.png',
+    latitude    numeric      not null default 55.751999,
+    longitude   numeric      not null default 37.617734
+
 );
 
 
@@ -69,14 +72,6 @@ CREATE TABLE user_preference
     concert int DEFAULT 0
 );
 
-
-CREATE TABLE categories
-(
-    id   serial primary key,
-    name varchar(60) not null,
-    CONSTRAINT unique_categories_names UNIQUE (name)
-);
-
 CREATE TABLE actions_user_event
 (
     user_id  bigint references users (id) on delete cascade,
@@ -86,26 +81,36 @@ CREATE TABLE actions_user_event
 
 CREATE TABLE actions_subscription
 (
-    subscriber_id bigint references users (id) on delete cascade,
+    subscriber_id    bigint references users (id) on delete cascade,
     subscribed_to_id bigint references users (id) on delete cascade,
-    time    timestamp not null
+    time             timestamp not null
 );
 
 create table dialogues
 (
-    id serial primary key,
-    user_1 bigint references users(id) on delete cascade,
-    user_2 bigint references users(id) on delete cascade
+    id     serial primary key,
+    user_1 bigint references users (id) on delete cascade,
+    user_2 bigint references users (id) on delete cascade
 );
 
 create table messages
 (
-    id serial primary key,
-    id_dialogue bigint references dialogues(id) on delete cascade,
-    mes_from bigint references users(id) on delete cascade,
-    mes_to bigint references users(id) on delete cascade,
-    text text,
-    date timestamp not null,
-    redact bool default false,
-    read bool default false
+    id          serial primary key,
+    id_dialogue bigint references dialogues (id) on delete cascade,
+    mes_from    bigint references users (id) on delete cascade,
+    mes_to      bigint references users (id) on delete cascade,
+    text        text,
+    date        timestamp not null,
+    redact      bool default false,
+    read        bool default false
+);
+
+create table notifications
+(
+    id          bigint,
+    type        varchar(60),
+    id_to       bigint,
+    date        timestamp not null,
+    date_create timestamp not null,
+    read        bool default false
 );

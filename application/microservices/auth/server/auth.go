@@ -17,7 +17,7 @@ func NewAuthServer(usecase session.UseCase) *AuthServer {
 	return &AuthServer{usecase: usecase}
 }
 
-func (a *AuthServer) Login(c context.Context, usr *proto.User) (*proto.LoginAnswer, error) {
+func (a *AuthServer) Login(_ context.Context, usr *proto.User) (*proto.LoginAnswer, error) {
 	sessionValue := usr.Value
 	if len(sessionValue) != 0 {
 		flag, _, err := a.usecase.Check(sessionValue)
@@ -44,7 +44,7 @@ func (a *AuthServer) Login(c context.Context, usr *proto.User) (*proto.LoginAnsw
 	return &proto.LoginAnswer{Value: sessionValue, Flag: false}, nil
 }
 
-func (a *AuthServer) Check(c context.Context, s *proto.Session) (*proto.CheckAnswer, error) {
+func (a *AuthServer) Check(_ context.Context, s *proto.Session) (*proto.CheckAnswer, error) {
 	flag, userId, err := a.usecase.Check(s.Value)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -53,7 +53,7 @@ func (a *AuthServer) Check(c context.Context, s *proto.Session) (*proto.CheckAns
 	return &proto.CheckAnswer{Answer: flag, UserId: userId}, nil
 }
 
-func (a *AuthServer) Logout(c context.Context, s *proto.Session) (*proto.LogoutAnswer, error) {
+func (a *AuthServer) Logout(_ context.Context, s *proto.Session) (*proto.LogoutAnswer, error) {
 	flag, _, err := a.usecase.Check(s.Value)
 	if err != nil {
 		return &proto.LogoutAnswer{}, status.Error(codes.Internal, err.Error())

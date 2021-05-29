@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "../kudago_proto";
+
+service Kudago {
+  rpc AddBasic(Input) returns (Empty) {}
+  rpc AddToday(Empty) returns (Empty) {}
+}
+
+message Input {
+  uint64 num = 1;
+  string path = 2;
+}
+message Empty {
+}

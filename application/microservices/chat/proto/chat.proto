@@ -10,7 +10,13 @@ service Chat {
   rpc EditMessage(SendEditMessage) returns (Answer) {}
   rpc DeleteMessage(IdId) returns (Answer) {}
   rpc Mailing(MailingIn) returns (Answer) {}
-  rpc Search(SearchIn) returns (Messages) {}
+  rpc Search(SearchIn) returns (DialogueCards) {}
+  rpc GetAllNotifications(IdPage) returns (Notifications) {}
+  rpc GetAllCounts(Id) returns (Counts) {}
+}
+
+message Id {
+  uint64 id = 1;
 }
 
 message Ids {
@@ -50,6 +56,24 @@ message IdIdPage {
   uint64 id1 = 1;
   uint64 id2 = 2;
   int32 page = 3;
+}
+
+message Counts {
+  uint64 Notifications = 1;
+  uint64 Chat = 2;
+}
+
+message Notification {
+  uint64 ID = 1;
+  uint64 IDToImage = 2;
+  string Type = 3;
+  string Date = 4;
+  string Text = 5;
+  bool Read = 6;
+}
+
+message Notifications {
+  repeated Notification list = 1;
 }
 
 message DialogueCard {

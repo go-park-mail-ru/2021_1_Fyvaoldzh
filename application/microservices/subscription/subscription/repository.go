@@ -1,5 +1,7 @@
 package subscription
 
+import "time"
+
 type Repository interface {
 	SubscribeUser(subscriberId uint64, subscribedToId uint64) error
 	UnsubscribeUser(subscriberId uint64, subscribedToId uint64) error
@@ -13,4 +15,8 @@ type Repository interface {
 	AddSubscriptionAction(subscriberId uint64, subscribedToId uint64) error
 	RemoveSubscriptionAction(userId uint64, eventId uint64) error
 	RemoveUserEventAction(userId uint64, eventId uint64) error
+	GetTimeEvent(eventId uint64) (time.Time, error)
+	AddPlanningNotification(eventId uint64, userId uint64, eventDate time.Time, now time.Time) error
+	RemovePlanningNotification(eventId uint64, userId uint64) error
+	AddCountNotification(id uint64) error
 }

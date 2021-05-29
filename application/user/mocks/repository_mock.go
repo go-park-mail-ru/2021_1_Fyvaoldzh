@@ -63,6 +63,20 @@ func (mr *MockRepositoryMockRecorder) AddToPreferences(id interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddToPreferences", reflect.TypeOf((*MockRepository)(nil).AddToPreferences), id)
 }
 
+// AddToUserCount mocks base method.
+func (m *MockRepository) AddToUserCount(id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddToUserCount", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddToUserCount indicates an expected call of AddToUserCount.
+func (mr *MockRepositoryMockRecorder) AddToUserCount(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddToUserCount", reflect.TypeOf((*MockRepository)(nil).AddToUserCount), id)
+}
+
 // ChangeAvatar mocks base method.
 func (m *MockRepository) ChangeAvatar(id uint64, path string) error {
 	m.ctrl.T.Helper()

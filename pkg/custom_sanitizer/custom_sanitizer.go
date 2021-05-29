@@ -1,8 +1,9 @@
 package custom_sanitizer
 
 import (
-	"github.com/microcosm-cc/bluemonday"
 	"kudago/application/models"
+
+	"github.com/microcosm-cc/bluemonday"
 )
 
 type CustomSanitizer struct {
@@ -34,6 +35,18 @@ func (cs *CustomSanitizer) SanitizeOtherProfile(profile *models.OtherUserProfile
 
 func (cs *CustomSanitizer) SanitizeEventCards(events models.EventCards) models.EventCards {
 	var newEvents models.EventCards
+	for _, elem := range events {
+		elem.Place = cs.sanitizer.Sanitize(elem.Place)
+		elem.Description = cs.sanitizer.Sanitize(elem.Description)
+		elem.Title = cs.sanitizer.Sanitize(elem.Title)
+		newEvents = append(newEvents, elem)
+	}
+
+	return newEvents
+}
+
+func (cs *CustomSanitizer) SanitizeEventCardsWithCoords(events models.EventCardsWithCoords) models.EventCardsWithCoords {
+	var newEvents models.EventCardsWithCoords
 	for _, elem := range events {
 		elem.Place = cs.sanitizer.Sanitize(elem.Place)
 		elem.Description = cs.sanitizer.Sanitize(elem.Description)
@@ -97,6 +110,19 @@ func (cs *CustomSanitizer) SanitizeActions(actions models.ActionCards) models.Ac
 	}
 	return newActions
 }
+
+func (cs *CustomSanitizer) SanitizeNotifications(notifications models.Notifications) models.Notifications {
+	var sanitizeNotifications models.Notifications
+	for _, elem := range notifications {
+		elem.Text = cs.sanitizer.Sanitize(elem.Text)
+		elem.Date = cs.sanitizer.Sanitize(elem.Date)
+		elem.Type = cs.sanitizer.Sanitize(elem.Type)
+		sanitizeNotifications = append(sanitizeNotifications, elem)
+	}
+
+	return sanitizeNotifications
+}
+
 func (cs *CustomSanitizer) SanitizeDialogueCards(dialogues models.DialogueCards) models.DialogueCards {
 	var sanitizeDialogues models.DialogueCards
 	for _, elem := range dialogues {
@@ -123,4 +149,8 @@ func (cs *CustomSanitizer) SanitizeDialogue(dialogue *models.Dialogue) {
 	dialogue.Interlocutor.Name = cs.sanitizer.Sanitize(dialogue.Interlocutor.Name)
 	dialogue.Interlocutor.Avatar = cs.sanitizer.Sanitize(dialogue.Interlocutor.Avatar)
 	dialogue.DialogMessages = cs.SanitizeMessages(dialogue.DialogMessages)
+}
+
+func (cs *CustomSanitizer) SanitizeEventName(name string) string {
+	return cs.sanitizer.Sanitize(name)
 }

@@ -35,6 +35,48 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddCountMessages mocks base method.
+func (m *MockRepository) AddCountMessages(id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddCountMessages", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddCountMessages indicates an expected call of AddCountMessages.
+func (mr *MockRepositoryMockRecorder) AddCountMessages(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCountMessages", reflect.TypeOf((*MockRepository)(nil).AddCountMessages), id)
+}
+
+// AddCountNotification mocks base method.
+func (m *MockRepository) AddCountNotification(id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddCountNotification", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddCountNotification indicates an expected call of AddCountNotification.
+func (mr *MockRepositoryMockRecorder) AddCountNotification(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCountNotification", reflect.TypeOf((*MockRepository)(nil).AddCountNotification), id)
+}
+
+// AddMailNotification mocks base method.
+func (m *MockRepository) AddMailNotification(id, idTo uint64, now time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddMailNotification", id, idTo, now)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddMailNotification indicates an expected call of AddMailNotification.
+func (mr *MockRepositoryMockRecorder) AddMailNotification(id, idTo, now interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMailNotification", reflect.TypeOf((*MockRepository)(nil).AddMailNotification), id, idTo, now)
+}
+
 // CheckDialogueID mocks base method.
 func (m *MockRepository) CheckDialogueID(id uint64) (bool, models.EasyDialogueMessageSQL, error) {
 	m.ctrl.T.Helper()
@@ -83,6 +125,20 @@ func (mr *MockRepositoryMockRecorder) CheckMessage(id interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckMessage", reflect.TypeOf((*MockRepository)(nil).CheckMessage), id)
 }
 
+// DecrementCountMessages mocks base method.
+func (m *MockRepository) DecrementCountMessages(id uint64, count int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DecrementCountMessages", id, count)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DecrementCountMessages indicates an expected call of DecrementCountMessages.
+func (mr *MockRepositoryMockRecorder) DecrementCountMessages(id, count interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DecrementCountMessages", reflect.TypeOf((*MockRepository)(nil).DecrementCountMessages), id, count)
+}
+
 // DeleteDialogue mocks base method.
 func (m *MockRepository) DeleteDialogue(id uint64) error {
 	m.ctrl.T.Helper()
@@ -112,10 +168,10 @@ func (mr *MockRepositoryMockRecorder) DeleteMessage(id interface{}) *gomock.Call
 }
 
 // DialogueMessagesSearch mocks base method.
-func (m *MockRepository) DialogueMessagesSearch(uid, id uint64, str string, page int) (models.MessagesSQL, error) {
+func (m *MockRepository) DialogueMessagesSearch(uid, id uint64, str string, page int) (models.DialogueCardsSQL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DialogueMessagesSearch", uid, id, str, page)
-	ret0, _ := ret[0].(models.MessagesSQL)
+	ret0, _ := ret[0].(models.DialogueCardsSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -140,6 +196,21 @@ func (mr *MockRepositoryMockRecorder) EditMessage(id, text interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditMessage", reflect.TypeOf((*MockRepository)(nil).EditMessage), id, text)
 }
 
+// GetAllCounts mocks base method.
+func (m *MockRepository) GetAllCounts(uid uint64) (models.Counts, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllCounts", uid)
+	ret0, _ := ret[0].(models.Counts)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllCounts indicates an expected call of GetAllCounts.
+func (mr *MockRepositoryMockRecorder) GetAllCounts(uid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllCounts", reflect.TypeOf((*MockRepository)(nil).GetAllCounts), uid)
+}
+
 // GetAllDialogues mocks base method.
 func (m *MockRepository) GetAllDialogues(uid uint64, page int) (models.DialogueCardsSQL, error) {
 	m.ctrl.T.Helper()
@@ -153,6 +224,21 @@ func (m *MockRepository) GetAllDialogues(uid uint64, page int) (models.DialogueC
 func (mr *MockRepositoryMockRecorder) GetAllDialogues(uid, page interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllDialogues", reflect.TypeOf((*MockRepository)(nil).GetAllDialogues), uid, page)
+}
+
+// GetAllNotifications mocks base method.
+func (m *MockRepository) GetAllNotifications(uid uint64, page int, now time.Time) (models.NotificationsSQL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllNotifications", uid, page, now)
+	ret0, _ := ret[0].(models.NotificationsSQL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllNotifications indicates an expected call of GetAllNotifications.
+func (mr *MockRepositoryMockRecorder) GetAllNotifications(uid, page, now interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllNotifications", reflect.TypeOf((*MockRepository)(nil).GetAllNotifications), uid, page, now)
 }
 
 // GetEasyMessage mocks base method.
@@ -185,11 +271,26 @@ func (mr *MockRepositoryMockRecorder) GetMessages(id, page interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessages", reflect.TypeOf((*MockRepository)(nil).GetMessages), id, page)
 }
 
+// GetNotificationCounts mocks base method.
+func (m *MockRepository) GetNotificationCounts(uid uint64, now time.Time) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNotificationCounts", uid, now)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNotificationCounts indicates an expected call of GetNotificationCounts.
+func (mr *MockRepositoryMockRecorder) GetNotificationCounts(uid, now interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNotificationCounts", reflect.TypeOf((*MockRepository)(nil).GetNotificationCounts), uid, now)
+}
+
 // MessagesSearch mocks base method.
-func (m *MockRepository) MessagesSearch(uid uint64, str string, page int) (models.MessagesSQL, error) {
+func (m *MockRepository) MessagesSearch(uid uint64, str string, page int) (models.DialogueCardsSQL, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MessagesSearch", uid, str, page)
-	ret0, _ := ret[0].(models.MessagesSQL)
+	ret0, _ := ret[0].(models.DialogueCardsSQL)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -216,17 +317,32 @@ func (mr *MockRepositoryMockRecorder) NewDialogue(uid1, uid2 interface{}) *gomoc
 }
 
 // ReadMessages mocks base method.
-func (m *MockRepository) ReadMessages(id uint64, page int, uid uint64) error {
+func (m *MockRepository) ReadMessages(id uint64, page int, uid uint64) (int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadMessages", id, page, uid)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // ReadMessages indicates an expected call of ReadMessages.
 func (mr *MockRepositoryMockRecorder) ReadMessages(id, page, uid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadMessages", reflect.TypeOf((*MockRepository)(nil).ReadMessages), id, page, uid)
+}
+
+// ReadNotifications mocks base method.
+func (m *MockRepository) ReadNotifications(uid uint64, page int, now time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadNotifications", uid, page, now)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReadNotifications indicates an expected call of ReadNotifications.
+func (mr *MockRepositoryMockRecorder) ReadNotifications(uid, page, now interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadNotifications", reflect.TypeOf((*MockRepository)(nil).ReadNotifications), uid, page, now)
 }
 
 // SendMessage mocks base method.
@@ -241,4 +357,18 @@ func (m *MockRepository) SendMessage(id uint64, newMessage *models.NewMessage, u
 func (mr *MockRepositoryMockRecorder) SendMessage(id, newMessage, uid, now interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockRepository)(nil).SendMessage), id, newMessage, uid, now)
+}
+
+// SetZeroCountNotifications mocks base method.
+func (m *MockRepository) SetZeroCountNotifications(id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetZeroCountNotifications", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetZeroCountNotifications indicates an expected call of SetZeroCountNotifications.
+func (mr *MockRepositoryMockRecorder) SetZeroCountNotifications(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetZeroCountNotifications", reflect.TypeOf((*MockRepository)(nil).SetZeroCountNotifications), id)
 }

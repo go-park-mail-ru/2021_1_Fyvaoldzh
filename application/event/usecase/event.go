@@ -30,6 +30,26 @@ func NewEvent(e event.Repository, repoSubscription subscription.Repository, logg
 	return &Event{repo: e, repoSub: repoSubscription, logger: logger}
 }
 
+func (e Event) GetNear(coord models.Coordinates, page int) (models.EventCardsWithCoords, error) {
+	sqlEvents, err := e.repo.GetNearEvents(time.Now(), coord, page)
+	if err != nil {
+		e.logger.Warn(err)
+		return models.EventCardsWithCoords{}, err
+	}
+
+	var pageEvents models.EventCardsWithCoords
+
+	for i := range sqlEvents {
+		pageEvents = append(pageEvents, models.ConvertCoordsCard(sqlEvents[i], coord))
+	}
+	if len(pageEvents) == 0 {
+		e.logger.Debug("page" + fmt.Sprint(page) + "is empty")
+		return models.EventCardsWithCoords{}, nil
+	}
+
+	return pageEvents, nil
+}
+
 func (e Event) GetAllEvents(page int) (models.EventCards, error) {
 	sqlEvents, err := e.repo.GetAllEvents(time.Now(), page)
 	if err != nil {
@@ -76,6 +96,16 @@ func (e Event) GetOneEvent(eventId uint64) (models.Event, error) {
 	jsonEvent.Followers = followers
 
 	return jsonEvent, nil
+}
+
+func (e Event) GetOneEventName(eventId uint64) (string, error) {
+	name, err := e.repo.GetOneEventNameByID(eventId)
+	if err != nil {
+		e.logger.Warn(err)
+		return "", err
+	}
+
+	return name, nil
 }
 
 func (e Event) Delete(eventId uint64) error {

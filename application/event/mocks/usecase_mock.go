@@ -123,6 +123,21 @@ func (mr *MockUseCaseMockRecorder) GetImage(eventId interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockUseCase)(nil).GetImage), eventId)
 }
 
+// GetNear mocks base method.
+func (m *MockUseCase) GetNear(coord models.Coordinates, page int) (models.EventCardsWithCoords, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNear", coord, page)
+	ret0, _ := ret[0].(models.EventCardsWithCoords)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNear indicates an expected call of GetNear.
+func (mr *MockUseCaseMockRecorder) GetNear(coord, page interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNear", reflect.TypeOf((*MockUseCase)(nil).GetNear), coord, page)
+}
+
 // GetOneEvent mocks base method.
 func (m *MockUseCase) GetOneEvent(eventId uint64) (models.Event, error) {
 	m.ctrl.T.Helper()
@@ -136,6 +151,21 @@ func (m *MockUseCase) GetOneEvent(eventId uint64) (models.Event, error) {
 func (mr *MockUseCaseMockRecorder) GetOneEvent(eventId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEvent", reflect.TypeOf((*MockUseCase)(nil).GetOneEvent), eventId)
+}
+
+// GetOneEventName mocks base method.
+func (m *MockUseCase) GetOneEventName(eventId uint64) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOneEventName", eventId)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOneEventName indicates an expected call of GetOneEventName.
+func (mr *MockUseCaseMockRecorder) GetOneEventName(eventId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOneEventName", reflect.TypeOf((*MockUseCase)(nil).GetOneEventName), eventId)
 }
 
 // GetRecommended mocks base method.

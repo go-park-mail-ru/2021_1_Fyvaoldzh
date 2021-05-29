@@ -74,6 +74,12 @@ func (uc UserUseCase) Add(usr *models.RegData) (uint64, error) {
 		return 0, err
 	}
 
+	err = uc.repo.AddToUserCount(id)
+	if err != nil {
+		uc.Logger.Warn(err)
+		return 0, err
+	}
+
 	return id, nil
 }
 

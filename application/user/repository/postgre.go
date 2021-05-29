@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/tarantool/go-tarantool"
 	"kudago/application/models"
 	"kudago/application/user"
+	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"net/http"
 
@@ -17,11 +19,12 @@ import (
 
 type UserDatabase struct {
 	pool   *pgxpool.Pool
+	ttool  *tarantool.Connection
 	logger logger.Logger
 }
 
-func NewUserDatabase(conn *pgxpool.Pool, logger logger.Logger) user.Repository {
-	return &UserDatabase{pool: conn, logger: logger}
+func NewUserDatabase(conn *pgxpool.Pool, ttool *tarantool.Connection, logger logger.Logger) user.Repository {
+	return &UserDatabase{pool: conn, ttool: ttool, logger: logger}
 }
 
 func (ud UserDatabase) ChangeAvatar(uid uint64, path string) error {
@@ -244,4 +247,14 @@ func (ud UserDatabase) GetActions(id uint64, page int) ([]*models.ActionCard, er
 	}
 
 	return actions, nil
+}
+
+func (ud UserDatabase) AddToUserCount(id uint64) error {
+	_, err := ud.ttool.Insert(constants.TarantoolSpaceName2, []interface{}{id, 0, 0})
+	if err != nil {
+		ud.logger.Warn(err)
+		return err
+	}
+
+	return nil
 }

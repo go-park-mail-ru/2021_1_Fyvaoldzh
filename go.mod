@@ -3,11 +3,11 @@ module kudago
 go 1.13
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
+	github.com/PuerkitoBio/goquery v1.6.1
 	github.com/georgysavva/scany v0.2.7
 	github.com/golang/mock v1.5.0
 	github.com/jackc/fake v0.0.0-20150926172116-812a484cc733 // indirect
-	github.com/jackc/pgconn v1.8.1
 	github.com/jackc/pgmock v0.0.0-20190831213851-13a1b77aafa2
 	github.com/jackc/pgproto3/v2 v2.0.6
 	github.com/jackc/pgx v3.6.2+incompatible
@@ -30,8 +30,10 @@ require (
 	go.uber.org/zap v1.16.0
 	golang.org/x/net v0.0.0-20210423174036-e997de6604e2 // indirect
 	golang.org/x/sys v0.0.0-20210423082822-04245dca01da // indirect
+	golang.org/x/tools v0.1.1-0.20210504170620-03ebc2c9fca8 // indirect
+	gonum.org/v1/gonum v0.8.2
 	google.golang.org/genproto v0.0.0-20210423144448-3a41ef94ed2b // indirect
 	google.golang.org/grpc v1.37.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0 // indirect
 	google.golang.org/protobuf v1.26.0
+	honnef.co/go/tools v0.1.3 // indirect
 )

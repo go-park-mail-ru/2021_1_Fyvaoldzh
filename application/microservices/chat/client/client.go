@@ -1,19 +1,23 @@
 package client
 
 /*
-protoc --go_out=plugins=grpc:. *.proto
+	protoc --go_out=plugins=grpc:. *.proto
+
+protoc --go_out=. *.proto
+protoc --go-grpc_out=. *.proto
 */
 
 import (
 	"context"
-	traceutils "github.com/opentracing-contrib/go-grpc"
-	"github.com/opentracing/opentracing-go"
-	"google.golang.org/grpc"
 	chat_proto "kudago/application/microservices/chat/proto"
 	"kudago/application/models"
 	"kudago/pkg/constants"
 	"kudago/pkg/logger"
 	"net/http"
+
+	traceutils "github.com/opentracing-contrib/go-grpc"
+	"github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc"
 )
 
 type ChatClient struct {
@@ -47,6 +51,31 @@ func (c *ChatClient) GetAllDialogues(uid uint64, page int) (models.DialogueCards
 	}
 
 	return ConvertDialogueCards(cards), nil, http.StatusOK
+}
+
+func (c *ChatClient) GetAllNotifications(uid uint64, page int) (models.Notifications, error, int) {
+	idPage := &chat_proto.IdPage{
+		Id:   uid,
+		Page: int32(page),
+	}
+
+	notifications, err := c.client.GetAllNotifications(context.Background(), idPage)
+	if err != nil {
+		return models.Notifications{}, err, http.StatusInternalServerError
+	}
+
+	return ConvertNotifications(notifications), nil, http.StatusOK
+}
+
+func (c *ChatClient) GetAllCounts(uid uint64) (models.Counts, error, int) {
+	id := &chat_proto.Id{Id: uid}
+
+	counts, err := c.client.GetAllCounts(context.Background(), id)
+	if err != nil {
+		return models.Counts{}, err, http.StatusInternalServerError
+	}
+
+	return ConvertCounts(counts), nil, http.StatusOK
 }
 
 func (c *ChatClient) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogue, error, int) {
@@ -137,7 +166,7 @@ func (c *ChatClient) Mailing(uid uint64, mailing *models.Mailing) (error, int) {
 	return nil, http.StatusOK
 }
 
-func (c *ChatClient) Search(uid uint64, id int, str string, page int) (models.Messages, error, int) {
+func (c *ChatClient) Search(uid uint64, id int, str string, page int) (models.DialogueCards, error, int) {
 	in := &chat_proto.SearchIn{
 		Uid:  uid,
 		Id:   int32(id),
@@ -147,10 +176,10 @@ func (c *ChatClient) Search(uid uint64, id int, str string, page int) (models.Me
 
 	answer, err := c.client.Search(context.Background(), in)
 	if err != nil {
-		return models.Messages{}, err, http.StatusInternalServerError
+		return models.DialogueCards{}, err, http.StatusInternalServerError
 	}
 
-	return ConvertMessages(answer), nil, http.StatusOK
+	return ConvertDialogueCards(answer), nil, http.StatusOK
 }
 
 func (c *ChatClient) Close() {
