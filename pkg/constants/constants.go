@@ -23,7 +23,6 @@ const (
 	UserPicDir              = "public/users/"
 	EventsPicDir            = "public/events/"
 	SaltLength              = 8
-	//CookiePath              = "/"
 	EventsPerPage = 6
 	//UsersPerPage            = 10
 	ChatPerPage     = 100
