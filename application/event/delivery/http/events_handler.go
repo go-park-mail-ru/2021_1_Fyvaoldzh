@@ -3,6 +3,8 @@ package http
 import (
 	"errors"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"kudago/application/event"
 	"kudago/application/microservices/auth/client"
 	"kudago/application/models"
@@ -31,6 +33,9 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 
 	e.GET("/api/v1/", eventHandler.GetAllEvents, middleware.GetPage)
 	e.GET("/api/v1/event/:id", eventHandler.GetOneEvent, middleware.GetId)
+	e.GET("/link/event/:id", eventHandler.GetEventLink, middleware.GetId)
+	e.GET("/api/v1/event/name/:id", eventHandler.GetOneEventName, middleware.GetId)
+	e.POST("/api/v1/near", eventHandler.GetNear, middleware.GetPage)
 	e.GET("/api/v1/event", eventHandler.GetEvents, middleware.GetPage)
 	e.GET("/api/v1/search", eventHandler.FindEvents, middleware.GetPage)
 	//create & delete & save вообще не должно быть, пользователь НИКАК не может создавать и удалять что-либо, только админ работает с БД
@@ -38,8 +43,38 @@ func CreateEventHandler(e *echo.Echo, uc event.UseCase, rpcA client.IAuthClient,
 	e.DELETE("/api/v1/event/:id", eventHandler.Delete, middleware.GetId)
 	e.POST("/api/v1/save/:id", eventHandler.Save, middleware.GetId)
 	e.GET("api/v1/event/:id/image", eventHandler.GetImage, middleware.GetId)
-	// TODO фикс названия ручки был
 	e.GET("/api/v1/recommend", eventHandler.Recommend, middleware.GetPage, auth.GetSession)
+}
+
+func (eh EventHandler) GetNear(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+	page := c.Get(constants.PageKey).(int)
+
+	coord := &models.Coordinates{}
+
+	if err := easyjson.UnmarshalFromReader(c.Request().Body, coord); err != nil {
+		middleware.ErrResponse(c, http.StatusTeapot)
+		return echo.NewHTTPError(http.StatusTeapot, err.Error())
+	}
+
+	events, err := eh.UseCase.GetNear(*coord, page)
+	events = eh.sanitizer.SanitizeEventCardsWithCoords(events)
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(events, c.Response().Writer); err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (eh EventHandler) Recommend(c echo.Context) error {
@@ -156,6 +191,26 @@ func (eh EventHandler) GetOneEvent(c echo.Context) error {
 	eh.Logger.LogInfo(c, start, requestId)
 	middleware.OkResponse(c)
 	return nil
+}
+
+func (eh EventHandler) GetOneEventName(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+	id := c.Get(constants.IdKey).(int)
+
+	name, err := eh.UseCase.GetOneEventName(uint64(id))
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return err
+	}
+	sanName := eh.sanitizer.SanitizeEventName(name)
+
+	eh.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return c.String(http.StatusOK, sanName)
 }
 
 func (eh EventHandler) GetEvents(c echo.Context) error {
@@ -287,4 +342,33 @@ func (eh EventHandler) FindEvents(c echo.Context) error {
 	eh.Logger.LogInfo(c, start, requestId)
 	middleware.OkResponse(c)
 	return nil
+}
+
+func (eh EventHandler) GetEventLink(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+	id := c.Get(constants.IdKey).(int)
+
+	ev, err := eh.UseCase.GetOneEvent(uint64(id))
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return err
+	}
+
+	data, err := ioutil.ReadFile("2021_1_Fyvaoldzh/dist/index.html")
+	if err != nil {
+		eh.Logger.LogError(c, start, requestId, err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	input := models.ViewData{
+		Id:    ev.ID,
+		Title: ev.Title,
+	}
+
+	tmpl, _ := template.New("input").Parse(string(data))
+	return tmpl.Execute(c.Response(), input)
 }

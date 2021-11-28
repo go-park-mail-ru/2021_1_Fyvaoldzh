@@ -5,6 +5,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	traceutils "github.com/opentracing-contrib/go-grpc"
 	"github.com/opentracing/opentracing-go"
+	"github.com/tarantool/go-tarantool"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	srepo "kudago/application/microservices/subscription/subscription/repository"
 	subscriptions "kudago/application/microservices/subscription/subscription/usecase"
+	"os"
 
 	"kudago/application/microservices/subscription/proto"
 	"kudago/pkg/constants"
@@ -26,7 +28,9 @@ type Server struct {
 }
 
 func NewServer(port string, logger *logger.Logger) *Server {
-	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
+	pool, err := pgxpool.Connect(context.Background(),
+		"user=" + os.Getenv("POSTGRE_USER") +
+			" password=" + os.Getenv("DB_PASSWORD") + constants.DBConnect)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -35,7 +39,20 @@ func NewServer(port string, logger *logger.Logger) *Server {
 		logger.Fatal(err)
 	}
 
-	sRepo := srepo.NewSubscriptionDatabase(pool, *logger)
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: os.Getenv("TARANTOOL_USER"),
+		Pass: os.Getenv("DB_PASSWORD"),
+	})
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	sRepo := srepo.NewSubscriptionDatabase(pool, conn, *logger)
 	sUseCase := subscriptions.NewSubscription(sRepo, *logger)
 
 	return &Server{
@@ -69,11 +86,11 @@ func (s *Server) ListenAndServe() error {
 		UnaryInterceptor(traceutils.OpenTracingServerInterceptor(tracer)))
 
 	listener, err := net.Listen("tcp", s.port)
-	defer listener.Close()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	defer listener.Close()
 	proto.RegisterSubscriptionServer(gServer, s.ss)
 	log.Println("starting server at " + s.port)
 	err = gServer.Serve(listener)

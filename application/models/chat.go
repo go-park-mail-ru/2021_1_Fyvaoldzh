@@ -2,6 +2,27 @@ package models
 
 import "time"
 
+type Counts struct {
+	Notifications uint64 `json:"notifications"`
+	Chat          uint64 `json:"chat"`
+}
+
+type NotificationSQL struct {
+	ID   uint64
+	Type string
+	Date time.Time
+	Read bool
+}
+
+type Notification struct {
+	ID        uint64 `json:"id"`
+	IDToImage uint64 `json:"id_to_image"`
+	Type      string `json:"type"`
+	Date      string `json:"date"`
+	Text      string `json:"text"`
+	Read      bool   `json:"read"`
+}
+
 type NewMessage struct {
 	To   uint64
 	Text string
@@ -107,7 +128,22 @@ type DialogueCardsSQL []DialogueCardSQL
 //easyjson:json
 type DialoguesSQL []DialogueSQL
 
-//Возможно тут как-то объединить эти функции, что-то типа template?
+//easyjson:json
+type Notifications []Notification
+
+//easyjson:json
+type NotificationsSQL []NotificationSQL
+
+func ConvertNotification(old NotificationSQL, imageId uint64) Notification {
+	var newNotification Notification
+	newNotification.ID = old.ID
+	newNotification.IDToImage = imageId
+	newNotification.Type = old.Type
+	newNotification.Date = old.Date.String()
+	newNotification.Read = old.Read
+	return newNotification
+}
+
 func ConvertMessage(old MessageSQL, uid uint64) Message {
 	var newMessage Message
 	newMessage.ID = old.ID

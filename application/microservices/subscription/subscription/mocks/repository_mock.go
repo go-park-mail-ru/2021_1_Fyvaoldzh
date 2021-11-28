@@ -6,6 +6,7 @@ package mock_subscription
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -33,6 +34,20 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddCountNotification mocks base method.
+func (m *MockRepository) AddCountNotification(id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddCountNotification", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddCountNotification indicates an expected call of AddCountNotification.
+func (mr *MockRepositoryMockRecorder) AddCountNotification(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCountNotification", reflect.TypeOf((*MockRepository)(nil).AddCountNotification), id)
+}
+
 // AddPlanning mocks base method.
 func (m *MockRepository) AddPlanning(userId, eventId uint64) error {
 	m.ctrl.T.Helper()
@@ -45,6 +60,20 @@ func (m *MockRepository) AddPlanning(userId, eventId uint64) error {
 func (mr *MockRepositoryMockRecorder) AddPlanning(userId, eventId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPlanning", reflect.TypeOf((*MockRepository)(nil).AddPlanning), userId, eventId)
+}
+
+// AddPlanningNotification mocks base method.
+func (m *MockRepository) AddPlanningNotification(eventId, userId uint64, eventDate, now time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPlanningNotification", eventId, userId, eventDate, now)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddPlanningNotification indicates an expected call of AddPlanningNotification.
+func (mr *MockRepositoryMockRecorder) AddPlanningNotification(eventId, userId, eventDate, now interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPlanningNotification", reflect.TypeOf((*MockRepository)(nil).AddPlanningNotification), eventId, userId, eventDate, now)
 }
 
 // AddSubscriptionAction mocks base method.
@@ -134,6 +163,21 @@ func (mr *MockRepositoryMockRecorder) CheckSubscription(subscriberId, subscribed
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckSubscription", reflect.TypeOf((*MockRepository)(nil).CheckSubscription), subscriberId, subscribedToId)
 }
 
+// GetTimeEvent mocks base method.
+func (m *MockRepository) GetTimeEvent(eventId uint64) (time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTimeEvent", eventId)
+	ret0, _ := ret[0].(time.Time)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTimeEvent indicates an expected call of GetTimeEvent.
+func (mr *MockRepositoryMockRecorder) GetTimeEvent(eventId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTimeEvent", reflect.TypeOf((*MockRepository)(nil).GetTimeEvent), eventId)
+}
+
 // RemoveEvent mocks base method.
 func (m *MockRepository) RemoveEvent(userId, eventId uint64) error {
 	m.ctrl.T.Helper()
@@ -146,6 +190,20 @@ func (m *MockRepository) RemoveEvent(userId, eventId uint64) error {
 func (mr *MockRepositoryMockRecorder) RemoveEvent(userId, eventId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveEvent", reflect.TypeOf((*MockRepository)(nil).RemoveEvent), userId, eventId)
+}
+
+// RemovePlanningNotification mocks base method.
+func (m *MockRepository) RemovePlanningNotification(eventId, userId uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePlanningNotification", eventId, userId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemovePlanningNotification indicates an expected call of RemovePlanningNotification.
+func (mr *MockRepositoryMockRecorder) RemovePlanningNotification(eventId, userId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePlanningNotification", reflect.TypeOf((*MockRepository)(nil).RemovePlanningNotification), eventId, userId)
 }
 
 // RemoveSubscriptionAction mocks base method.

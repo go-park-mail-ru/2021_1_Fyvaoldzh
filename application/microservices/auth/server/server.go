@@ -20,6 +20,7 @@ import (
 	"kudago/pkg/logger"
 	"log"
 	"net"
+	"os"
 )
 
 type Server struct {
@@ -28,7 +29,9 @@ type Server struct {
 }
 
 func NewServer(port string, logger *logger.Logger) *Server {
-	pool, err := pgxpool.Connect(context.Background(), constants.DBConnect)
+	pool, err := pgxpool.Connect(context.Background(),
+		"user=" + os.Getenv("POSTGRE_USER") +
+			" password=" + os.Getenv("DB_PASSWORD") + constants.DBConnect)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -38,8 +41,8 @@ func NewServer(port string, logger *logger.Logger) *Server {
 	}
 
 	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
-		User: constants.TarantoolUser,
-		Pass: constants.TarantoolPassword,
+		User: os.Getenv("TARANTOOL_USER"),
+		Pass: os.Getenv("DB_PASSWORD"),
 	})
 	if err != nil {
 		logger.Fatal(err)
@@ -86,11 +89,11 @@ func (s *Server) ListenAndServe() error {
 		UnaryInterceptor(traceutils.OpenTracingServerInterceptor(tracer)))
 
 	listener, err := net.Listen("tcp", s.port)
-	defer listener.Close()
 	if err != nil {
 		log.Println(err)
 		return err
 	}
+	defer listener.Close()
 	proto.RegisterAuthServer(gServer, s.auth)
 	log.Println("starting server at " + s.port)
 	err = gServer.Serve(listener)

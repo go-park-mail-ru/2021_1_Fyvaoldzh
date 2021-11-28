@@ -1,11 +1,10 @@
 package main
 
 import (
-	"kudago/application/server"
-	"log"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"kudago/application/server"
+	"log"
 )
 
 func main() {

@@ -32,7 +32,6 @@ func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 
 	chatHandler := ChatHandler{rpcChat: rpcC, rpcAuth: rpcA, Logger: logger, sanitizer: sz}
 
-	//TODO групповой чат
 	e.GET("/api/v1/dialogues", chatHandler.GetDialogues, auth.GetSession, middleware.GetPage)
 	e.GET("/api/v1/dialogues/:id", chatHandler.GetOneDialogue, auth.GetSession, middleware.GetPage, middleware.GetId) //Здесь id собеседника, по просьбе Димы
 	e.DELETE("/api/v1/dialogues/:id", chatHandler.DeleteDialogue, auth.GetSession, middleware.GetId)                  //Везде дальше и здесь id сообщения/диалога
@@ -41,6 +40,60 @@ func CreateChatHandler(e *echo.Echo, rpcA client.IAuthClient,
 	e.POST("/api/v1/message", chatHandler.EditMessage, auth.GetSession)
 	e.POST("/api/v1/message/mailing", chatHandler.Mailing, auth.GetSession)
 	e.GET("/api/v1/dialogues/search", chatHandler.Search, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/notifications", chatHandler.GetNotifications, auth.GetSession, middleware.GetPage)
+	e.GET("/api/v1/counts", chatHandler.GetCounts, auth.GetSession)
+}
+
+func (ch ChatHandler) GetCounts(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+
+	uid := c.Get(constants.UserIdKey).(uint64)
+
+	counts, err, code := ch.rpcChat.GetAllCounts(uid)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
+		return err
+	}
+
+	if _, err = easyjson.MarshalToWriter(counts, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return nil
+}
+
+func (ch ChatHandler) GetNotifications(c echo.Context) error {
+	defer c.Request().Body.Close()
+
+	start := time.Now()
+	requestId := fmt.Sprintf("%016x", rand.Int())
+
+	page := c.Get(constants.PageKey).(int)
+	uid := c.Get(constants.UserIdKey).(uint64)
+
+	notifications, err, code := ch.rpcChat.GetAllNotifications(uid, page)
+	if err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, code)
+		return err
+	}
+	notifications = ch.sanitizer.SanitizeNotifications(notifications)
+
+	if _, err = easyjson.MarshalToWriter(notifications, c.Response().Writer); err != nil {
+		ch.Logger.LogError(c, start, requestId, err)
+		middleware.ErrResponse(c, http.StatusInternalServerError)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	ch.Logger.LogInfo(c, start, requestId)
+	middleware.OkResponse(c)
+	return nil
 }
 
 func (ch ChatHandler) GetDialogues(c echo.Context) error {
@@ -312,15 +365,15 @@ func (ch ChatHandler) Search(c echo.Context) error {
 		return err
 	}
 
-	messages, err, code := ch.rpcChat.Search(uid, id, str, page)
+	dialogues, err, code := ch.rpcChat.Search(uid, id, str, page)
 	if err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		middleware.ErrResponse(c, code)
 		return err
 	}
-	messages = ch.sanitizer.SanitizeMessages(messages)
+	dialogues = ch.sanitizer.SanitizeDialogueCards(dialogues)
 
-	if _, err = easyjson.MarshalToWriter(messages, c.Response().Writer); err != nil {
+	if _, err = easyjson.MarshalToWriter(dialogues, c.Response().Writer); err != nil {
 		ch.Logger.LogError(c, start, requestId, err)
 		middleware.ErrResponse(c, http.StatusInternalServerError)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

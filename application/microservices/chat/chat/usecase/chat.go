@@ -27,6 +27,22 @@ func NewChat(c chat.Repository, repoSubscription subscription.Repository,
 	return &Chat{repo: c, repoSub: repoSubscription, repoUser: repoUser, repoEvent: repoEvent, logger: logger}
 }
 
+func (c Chat) GetAllCounts(uid uint64) (models.Counts, error) {
+	counts, err := c.repo.GetAllCounts(uid)
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Counts{}, err
+	}
+
+	counts.Notifications, err = c.repo.GetNotificationCounts(uid, time.Now().Add(5*time.Hour))
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Counts{}, err
+	}
+
+	return counts, nil
+}
+
 func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error) {
 	dialogues, err := c.repo.GetAllDialogues(uid, page)
 	if err != nil {
@@ -57,6 +73,86 @@ func (c Chat) GetAllDialogues(uid uint64, page int) (models.DialogueCards, error
 	return dialogueCards, nil
 }
 
+/*func (c Chat) AutoNotificationConstructor(notification *models.Notification, title string) {
+	if notification.Type == constants.MailNotif {
+		notification.Text = title + constants.MailNotifText
+	}
+	if notification.Type == constants.EventNotif {
+		notification.Text = constants.EventNotifText1 + title + constants.EventNotifText2
+	}
+}*/
+
+//TODO: Разделить немного функцию
+func (c Chat) GetAllNotifications(uid uint64, page int) (models.Notifications, error) {
+	flagTime := time.Now().Add(5 * time.Hour)
+	notificationsSQL, err := c.repo.GetAllNotifications(uid, page, flagTime)
+	if err != nil {
+		c.logger.Warn(err)
+		return models.Notifications{}, err
+	}
+
+	err = c.repo.ReadNotifications(uid, page, flagTime)
+	if err != nil {
+		c.logger.Warn(err)
+	}
+
+	err = c.repo.SetZeroCountNotifications(uid)
+	if err != nil {
+		c.logger.Warn(err)
+	}
+
+	var notifications models.Notifications
+
+	for i := range notificationsSQL {
+		var newNotif models.Notification
+		if notificationsSQL[i].Type == constants.MailNotif {
+			isDialogue, dialogue, err := c.repo.CheckDialogueID(notificationsSQL[i].ID)
+			if err != nil {
+				c.logger.Warn(err)
+				continue
+			}
+			if !isDialogue {
+				c.logger.Warn(err)
+				continue
+			}
+
+			if dialogue.User1 == uid {
+				newNotif = models.ConvertNotification(notificationsSQL[i], dialogue.User2)
+				interlocutor, err := c.repoUser.GetUserByID(dialogue.User2)
+				if err != nil {
+					c.logger.Warn(err)
+					continue
+				}
+				newNotif.Text = interlocutor.Name
+			} else {
+				newNotif = models.ConvertNotification(notificationsSQL[i], dialogue.User1)
+				interlocutor, err := c.repoUser.GetUserByID(dialogue.User1)
+				if err != nil {
+					c.logger.Warn(err)
+					continue
+				}
+				newNotif.Text = interlocutor.Name
+			}
+		} else {
+			newNotif = models.ConvertNotification(notificationsSQL[i], notificationsSQL[i].ID)
+			eventNot, err := c.repoEvent.GetOneEventByID(notificationsSQL[i].ID)
+			if err != nil {
+				c.logger.Warn(err)
+				continue
+			}
+			newNotif.Text = eventNot.Title
+		}
+		notifications = append(notifications, newNotif)
+	}
+
+	if len(notifications) == 0 {
+		c.logger.Debug("page" + fmt.Sprint(page) + "is empty")
+		return models.Notifications{}, nil
+	}
+
+	return notifications, nil
+}
+
 func (c Chat) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogue, error) {
 	interlocutor, err := c.repoUser.GetUserByID(uid2)
 	if err != nil {
@@ -80,7 +176,13 @@ func (c Chat) GetOneDialogue(uid1 uint64, uid2 uint64, page int) (models.Dialogu
 
 	resDialogue := models.ConvertDialogue(dialogue, messages, uid1, interlocutor)
 
-	err = c.repo.ReadMessages(dialogue.ID, page, uid1)
+	count, err := c.repo.ReadMessages(dialogue.ID, page, uid1)
+	if err != nil {
+		c.logger.Warn(err)
+		return resDialogue, nil
+	}
+
+	err = c.repo.DecrementCountMessages(uid1, count)
 	if err != nil {
 		c.logger.Warn(err)
 		return resDialogue, nil
@@ -97,10 +199,7 @@ func (c Chat) IsInterlocutor(uid uint64, elem models.EasyDialogueMessageSQL) boo
 }
 
 func (c Chat) IsSenderMessage(uid uint64, elem models.EasyDialogueMessageSQL) bool {
-	if uid != elem.User1 {
-		return false
-	}
-	return true
+	return uid == elem.User1
 }
 
 func (c Chat) DeleteDialogue(uid uint64, id uint64) error {
@@ -146,6 +245,12 @@ func (c Chat) SendMessage(newMessage *models.NewMessage, uid uint64) error {
 		c.logger.Warn(err)
 		return err
 	}
+
+	err = c.repo.AddCountMessages(newMessage.To)
+	if err != nil {
+		c.logger.Warn(err)
+	}
+
 	return nil
 }
 
@@ -204,63 +309,97 @@ func (c Chat) AutoMailingConstructor(to uint64, from, eventName, eventID string)
 func (c Chat) Mailing(uid uint64, mailing *models.Mailing) error {
 	sender, err := c.repoUser.GetUserByID(uid)
 	if err != nil {
+		c.logger.Warn(err)
 		return err
 	}
-	event, err := c.repoEvent.GetOneEventByID(mailing.EventID)
+	ev, err := c.repoEvent.GetOneEventByID(mailing.EventID)
 	if err != nil {
+		c.logger.Warn(err)
 		return err
 	}
 
 	for _, id := range mailing.To {
-		message := c.AutoMailingConstructor(id, sender.Name, event.Title, fmt.Sprint(event.ID))
+		message := c.AutoMailingConstructor(id, sender.Name, ev.Title, fmt.Sprint(ev.ID))
 		err := c.SendMessage(&message, uid)
 		if err != nil {
+			c.logger.Warn(err)
 			return err
+		}
+
+		isDialogue, dialogue, err := c.repo.CheckDialogueUsers(uid, message.To)
+		if err != nil {
+			c.logger.Warn(err)
+			continue
+		}
+		if !isDialogue {
+			c.logger.Warn(errors.New("cannot create notification"))
+			continue
+		}
+
+		err = c.repo.AddMailNotification(dialogue.ID, message.To, time.Now())
+		if err != nil {
+			c.logger.Warn(err)
+		}
+		err = c.repo.AddCountNotification(message.To)
+		if err != nil {
+			c.logger.Warn(err)
 		}
 	}
 	return nil
 }
 
-func (c Chat) Search(uid uint64, id int, str string, page int) (models.Messages, error) {
+func (c Chat) Search(uid uint64, id int, str string, page int) (models.DialogueCards, error) {
 	str = strings.ToLower(str)
 
-	var sqlMessages []models.MessageSQL
+	var sqlDialogues models.DialogueCardsSQL
 	var err error
 	if id == 0 {
-		sqlMessages, err = c.repo.MessagesSearch(uid, str, page)
+		sqlDialogues, err = c.repo.MessagesSearch(uid, str, page)
 		if err != nil {
 			c.logger.Warn(err)
-			return models.Messages{}, err
+			return models.DialogueCards{}, err
 		}
 	} else {
 		isDialogue, dialogue, err := c.repo.CheckDialogueID(uint64(id))
 		if err != nil {
-			return models.Messages{}, err
+			return models.DialogueCards{}, err
 		}
 		if !isDialogue {
-			return models.Messages{}, errors.New("no dialogue with this id")
+			return models.DialogueCards{}, errors.New("no dialogue with this id")
 		}
 
 		isInterlocutor := c.IsInterlocutor(uid, dialogue)
 		if isInterlocutor {
-			sqlMessages, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
+			sqlDialogues, err = c.repo.DialogueMessagesSearch(uid, uint64(id), str, page)
 			if err != nil {
 				c.logger.Warn(err)
-				return models.Messages{}, err
+				return models.DialogueCards{}, err
 			}
 		} else {
-			return models.Messages{}, errors.New("user is not interlocutor")
+			return models.DialogueCards{}, errors.New("user is not interlocutor")
 		}
 	}
-	var messages models.Messages
 
-	for i := range sqlMessages {
-		messages = append(messages, models.ConvertMessage(sqlMessages[i], uid))
+	var dialogueCards models.DialogueCards
+
+	for i := range sqlDialogues {
+		var interlocutor models.UserOnEvent
+		if sqlDialogues[i].User1 == uid {
+			interlocutor, err = c.repoUser.GetUserByID(sqlDialogues[i].User2)
+		} else {
+			interlocutor, err = c.repoUser.GetUserByID(sqlDialogues[i].User1)
+		}
+		if err != nil {
+			c.logger.Warn(err)
+			return models.DialogueCards{}, err
+		}
+		dialogueCards = append(dialogueCards, models.ConvertDialogueCard(sqlDialogues[i], uid, interlocutor))
 	}
-	if len(messages) == 0 {
+
+	if len(dialogueCards) == 0 {
 		c.logger.Debug("page" + fmt.Sprint(page) + "is empty")
-		return models.Messages{}, nil
+		return models.DialogueCards{}, nil
 	}
 
-	return messages, nil
+	return dialogueCards, nil
 }

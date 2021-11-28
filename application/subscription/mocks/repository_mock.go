@@ -154,6 +154,21 @@ func (mr *MockRepositoryMockRecorder) IsAddedEvent(userId, eventId interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAddedEvent", reflect.TypeOf((*MockRepository)(nil).IsAddedEvent), userId, eventId)
 }
 
+// IsSubscribedUser mocks base method.
+func (m *MockRepository) IsSubscribedUser(subscriberId, subscribedToId uint64) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsSubscribedUser", subscriberId, subscribedToId)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsSubscribedUser indicates an expected call of IsSubscribedUser.
+func (mr *MockRepositoryMockRecorder) IsSubscribedUser(subscriberId, subscribedToId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsSubscribedUser", reflect.TypeOf((*MockRepository)(nil).IsSubscribedUser), subscriberId, subscribedToId)
+}
+
 // UpdateEventStatus mocks base method.
 func (m *MockRepository) UpdateEventStatus(userId, eventId uint64) error {
 	m.ctrl.T.Helper()

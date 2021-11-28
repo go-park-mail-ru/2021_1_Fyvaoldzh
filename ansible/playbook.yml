@@ -1,0 +1,11 @@
+# ansible-playbook -i ./ansible/inventory ./ansible/playbook.yml
+- name: "Restart nginx"
+  hosts: web
+  become: yes
+  tasks:
+    - name: "Copy nginx config"
+      copy:
+        src: files/qdaqda.ru.conf
+        dest: /etc/nginx/conf.d/qdaqda.ru.conf
+    - name: "Reload nginx configuration"
+      command: nginx -s reload

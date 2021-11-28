@@ -14,7 +14,7 @@ func NewSubscriptionServer(usecase subscription.UseCase) *SubscriptionServer {
 	return &SubscriptionServer{usecase: usecase}
 }
 
-func (s *SubscriptionServer) Subscribe(c context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
+func (s *SubscriptionServer) Subscribe(_ context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
 	subscriberId := users.SubscriberId
 	subscribedToId := users.SubscribedToId
 
@@ -26,7 +26,7 @@ func (s *SubscriptionServer) Subscribe(c context.Context, users *proto.Users) (*
 	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) Unsubscribe(ctx context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
+func (s *SubscriptionServer) Unsubscribe(_ context.Context, users *proto.Users) (*proto.SubscriptionAnswer, error) {
 	subscriberId := users.SubscriberId
 	subscribedToId := users.SubscribedToId
 
@@ -38,7 +38,7 @@ func (s *SubscriptionServer) Unsubscribe(ctx context.Context, users *proto.Users
 	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) AddPlanningEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
+func (s *SubscriptionServer) AddPlanningEvent(_ context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
 	userId := userEvent.UserId
 	eventId := userEvent.EventId
 
@@ -50,7 +50,7 @@ func (s *SubscriptionServer) AddPlanningEvent(ctx context.Context, userEvent *pr
 	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) AddVisitedEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
+func (s *SubscriptionServer) AddVisitedEvent(_ context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
 	userId := userEvent.UserId
 	eventId := userEvent.EventId
 
@@ -62,7 +62,7 @@ func (s *SubscriptionServer) AddVisitedEvent(ctx context.Context, userEvent *pro
 	return &proto.SubscriptionAnswer{Flag: flag, Msg: msg}, nil
 }
 
-func (s *SubscriptionServer) RemoveEvent(ctx context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
+func (s *SubscriptionServer) RemoveEvent(_ context.Context, userEvent *proto.UserEvent) (*proto.SubscriptionAnswer, error) {
 	userId := userEvent.UserId
 	eventId := userEvent.EventId
 

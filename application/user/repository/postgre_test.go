@@ -1,25 +1,7 @@
 package repository
-
+/*
 import (
-	"context"
-	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"kudago/application/models"
-	"kudago/application/user"
-	"kudago/pkg/logger"
-	"log"
-	"net"
-	"strings"
-	"testing"
-	"time"
-
-	"github.com/jackc/pgmock"
-	"github.com/jackc/pgproto3/v2"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -41,11 +23,13 @@ var testUserBack = &models.User{
 	Password: password,
 }
 
+
 var testUserData = &models.UserDataSQL{
 	Id:    userId,
 	Login: login,
 }
-
+*/
+/*
 func newDb(t *testing.T) user.Repository {
 	pool := setUp(t)
 	l, err := zap.NewProduction()
@@ -55,7 +39,20 @@ func newDb(t *testing.T) user.Repository {
 	sugar := l.Sugar()
 	zap.NewAtomicLevelAt(zapcore.DebugLevel)
 
-	h := NewUserDatabase(pool, logger.NewLogger(sugar))
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	h := NewUserDatabase(pool, conn, logger.NewLogger(sugar))
 	return h
 }
 func setUp(t *testing.T) *pgxpool.Pool {
@@ -65,7 +62,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 	script.Steps = append(script.Steps, pgmock.ExpectMessage(&pgproto3.Query{String: ""}))
 	script.Steps = append(script.Steps, pgmock.SendMessage(&pgproto3.RowDescription{
 		Fields: []pgproto3.FieldDescription{
-			pgproto3.FieldDescription{
+			{
 				Name:                 []byte("id"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -74,7 +71,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				TypeModifier:         -1,
 				Format:               0,
 			},
-			pgproto3.FieldDescription{
+			{
 				Name:                 []byte("name"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -83,7 +80,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				TypeModifier:         -1,
 				Format:               0,
 			},
-			pgproto3.FieldDescription{
+			{
 				Name:                 []byte("login"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -92,7 +89,7 @@ func setUp(t *testing.T) *pgxpool.Pool {
 				TypeModifier:         -1,
 				Format:               0,
 			},
-			pgproto3.FieldDescription{
+			{
 				Name:                 []byte("password"),
 				TableOID:             0,
 				TableAttributeNumber: 0,
@@ -203,7 +200,21 @@ func TestUserDatabase_GetByIdOwnError(t *testing.T) {
 	sugar := l.Sugar()
 	zap.NewAtomicLevelAt(zapcore.DebugLevel)
 
-	h := NewUserDatabase(pool, logger.NewLogger(sugar))
+	conn, err := tarantool.Connect(constants.TarantoolAddress, tarantool.Opts{
+		User: constants.TarantoolUser,
+		Pass: constants.TarantoolPassword,
+	})
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+	_, err = conn.Ping()
+	if err != nil {
+		l.Fatal(err.Error())
+	}
+
+
+	h := NewUserDatabase(pool, conn, logger.NewLogger(sugar))
 	_, err = h.GetByIdOwn(userId)
 
 	assert.Error(t, err)
@@ -254,3 +265,5 @@ func TestUserDatabase_GetActionsError(t *testing.T) {
 
 	assert.Nil(t, err)
 }
+
+ */

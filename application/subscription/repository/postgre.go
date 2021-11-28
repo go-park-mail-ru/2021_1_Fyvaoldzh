@@ -92,7 +92,6 @@ func (sd SubscriptionDatabase) IsAddedEvent(userId uint64, eventId uint64) (bool
 			eventId, userId).Scan(&id)
 
 	if errors.As(err, &sql.ErrNoRows) {
-		sd.logger.Debug("no rows in method IsAddedEvent")
 		return false, nil
 	}
 	if err != nil {
@@ -175,4 +174,22 @@ func (sd SubscriptionDatabase) GetVisitedEvents(id uint64, page int) ([]models.E
 	}
 
 	return events, nil
+}
+
+func (sd SubscriptionDatabase) IsSubscribedUser(subscriberId uint64, subscribedToId uint64) (bool, error) {
+	var id uint64
+	err := sd.pool.
+		QueryRow(context.Background(),
+			`SELECT subscriber_id FROM subscriptions WHERE subscriber_id = $1 AND subscribed_to_id = $2`,
+			subscriberId, subscribedToId).Scan(&id)
+
+	if errors.As(err, &sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		sd.logger.Warn(err)
+		return false, err
+	}
+
+	return true, nil
 }

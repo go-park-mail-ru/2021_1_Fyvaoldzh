@@ -5,13 +5,35 @@ import (
 	"kudago/application/models"
 )
 
-func ConvertDialogueCards (cards *proto.DialogueCards) models.DialogueCards {
+func ConvertDialogueCards(cards *proto.DialogueCards) models.DialogueCards {
 	var newCards models.DialogueCards
 	for _, elem := range cards.List {
 		var oneCard models.DialogueCard
 		oneCard.ID = elem.ID
 		oneCard.Interlocutor = ConvertUserOnEvent(elem.Interlocutor)
 		oneCard.LastMessage = ConvertMessage(elem.LastMessage)
+		newCards = append(newCards, oneCard)
+	}
+	return newCards
+}
+
+func ConvertCounts(cards *proto.Counts) models.Counts {
+	var newCards models.Counts
+	newCards.Chat = cards.Chat
+	newCards.Notifications = cards.Notifications
+	return newCards
+}
+
+func ConvertNotifications(cards *proto.Notifications) models.Notifications {
+	var newCards models.Notifications
+	for _, elem := range cards.List {
+		var oneCard models.Notification
+		oneCard.ID = elem.ID
+		oneCard.IDToImage = elem.IDToImage
+		oneCard.Type = elem.Type
+		oneCard.Date = elem.Date
+		oneCard.Text = elem.Text
+		oneCard.Read = elem.Read
 		newCards = append(newCards, oneCard)
 	}
 	return newCards
@@ -62,9 +84,7 @@ func ConvertDialogue(d *proto.Dialogue) models.Dialogue {
 
 func ConvertIdsToProto(massiv []uint64) *proto.Ids {
 	var n proto.Ids
-	for _, elem := range massiv {
-		n.List = append(n.List, elem)
-	}
+	n.List = append(n.List, massiv...)
 	return &n
 }
 
@@ -80,7 +100,29 @@ func ConvertDialogueCardsToProto(cards models.DialogueCards) *proto.DialogueCard
 	return &newCards
 }
 
-func ConvertUserOnEventToProto (usr models.UserOnEvent) *proto.UserOnEvent{
+func ConvertNotificationsToProto(cards models.Notifications) *proto.Notifications {
+	var newCards proto.Notifications
+	for _, elem := range cards {
+		var oneCard proto.Notification
+		oneCard.ID = elem.ID
+		oneCard.IDToImage = elem.IDToImage
+		oneCard.Type = elem.Type
+		oneCard.Date = elem.Date
+		oneCard.Text = elem.Text
+		oneCard.Read = elem.Read
+		newCards.List = append(newCards.List, &oneCard)
+	}
+	return &newCards
+}
+
+func ConvertCountsToProto(cards models.Counts) *proto.Counts {
+	var newCards proto.Counts
+	newCards.Chat = cards.Chat
+	newCards.Notifications = cards.Notifications
+	return &newCards
+}
+
+func ConvertUserOnEventToProto(usr models.UserOnEvent) *proto.UserOnEvent {
 	var newUser proto.UserOnEvent
 	newUser.Id = usr.Id
 	newUser.Name = usr.Name
@@ -88,7 +130,7 @@ func ConvertUserOnEventToProto (usr models.UserOnEvent) *proto.UserOnEvent{
 	return &newUser
 }
 
-func ConvertMessageToProto(msg models.Message) *proto.Message{
+func ConvertMessageToProto(msg models.Message) *proto.Message {
 	var newMsg proto.Message
 	newMsg.ID = msg.ID
 	newMsg.Date = msg.Date
@@ -109,8 +151,6 @@ func ConvertDialogueToProto(d models.Dialogue) *proto.Dialogue {
 
 func ConvertIds(massiv *proto.Ids) []uint64 {
 	var n []uint64
-	for _, elem := range massiv.List {
-		n = append(n, elem)
-	}
+	n = append(n, massiv.List...)
 	return n
 }

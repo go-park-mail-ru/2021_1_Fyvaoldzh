@@ -1,0 +1,11 @@
+FROM golang:alpine
+
+COPY . /project
+
+WORKDIR /project
+
+RUN go build -o build/go_kudago_service ./application/microservices/api_kudago/cmd/
+RUN ls | grep -v 'go' | grep -v 'Docker' | grep -v 'Readme' | grep -v 'build' | grep -v 'public' | xargs rm -rfv
+RUN ls | grep -v 'build' | grep -v 'public' | xargs rm
+
+CMD ["/project/build/go_kudago_service"]

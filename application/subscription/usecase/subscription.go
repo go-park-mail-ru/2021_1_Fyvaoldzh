@@ -103,3 +103,7 @@ func (s Subscription) GetVisitedEvents(id uint64, page int) (models.EventCards, 
 
 	return events, nil
 }
+
+func (s Subscription) IsSubscribedUser(subscriberId uint64, subscribedToId uint64) (bool, error) {
+	return s.repo.IsSubscribedUser(subscriberId, subscribedToId)
+}
