@@ -24,7 +24,6 @@ const (
 	EventsPicDir            = "public/events/"
 	SaltLength              = 8
 	EventsPerPage = 6
-	//UsersPerPage            = 10
 	ChatPerPage     = 100
 	MailingText     = " приглашает Вас на мероприятие "
 	MailingAddress  = "https://qdaqda.ru/event"
